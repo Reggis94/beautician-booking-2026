@@ -1,0 +1,20 @@
+security:
+    providers: 
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+    firewalls:
+        pro:
+            login_link:
+                check_route: login_check
+                signature_properties: ['id']
+            pattern:
+                - ^/pro
+                - ^/login
+            logout:
+                path: /pro/logout
+                target: /pro
+
+    access_control:
+    - { path: ^/pro/, roles: IS_AUTHENTICATED_FULLY }
