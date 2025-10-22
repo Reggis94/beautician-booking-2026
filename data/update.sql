@@ -1,4 +1,4 @@
--- Ticket 3 --
+-- Branch or commit v0 --
 -- Login --
 CREATE TABLE IF NOT EXISTS pro (
   id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -19,7 +19,6 @@ ALTER TABLE pro
 ALTER TABLE pro
   ADD CONSTRAINT uq_pro_link_slug UNIQUE (link_slug);
 
--- Ticket 6 --
 -- Create availability per day by pro and soft delete --
 CREATE TABLE availability (
   id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -35,3 +34,13 @@ CREATE TABLE availability (
 CREATE UNIQUE INDEX uq_availability_pro_date_active
   ON availability (pro_id, date_local)
   WHERE deleted_at IS NULL;
+
+-- Create service --
+CREATE TABLE service (
+  id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id         BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name           VARCHAR(50) NOT NULL,
+  duration_min   INT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at     TIMESTAMPTZ
+);
