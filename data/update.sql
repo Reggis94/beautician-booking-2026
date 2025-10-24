@@ -44,3 +44,18 @@ CREATE TABLE service (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at     TIMESTAMPTZ
 );
+
+-- Create appointment --
+CREATE TABLE appointment (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id       BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  service_id   BIGINT REFERENCES service(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  start_dt     TIMESTAMPTZ NOT NULL,
+  end_dt       TIMESTAMPTZ,
+  last_name    VARCHAR(50),
+  first_name   VARCHAR(50),
+  email        VARCHAR(255),
+  phone        VARCHAR(40),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at   TIMESTAMPTZ
+);

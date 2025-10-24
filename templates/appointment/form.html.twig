@@ -1,0 +1,7 @@
+<h1>{{ form.vars.value.id ? 'Edit appointment' : 'New appointment' }}</h1>
+
+{{ form(form) }}
+
+{% if form.vars.value.id %}
+    {{ include('appointment/_delete_appointment_form.html.twig', { id: form.vars.value.id }) }}
+{% endif %}
