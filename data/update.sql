@@ -20,7 +20,7 @@ ALTER TABLE pro
   ADD CONSTRAINT uq_pro_link_slug UNIQUE (link_slug);
 
 -- Create availability per day by pro and soft delete --
-CREATE TABLE availability (
+CREATE TABLE IF NOT EXISTS availability (
   id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   pro_id     BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
   date_local  DATE NOT NULL,
@@ -36,7 +36,7 @@ CREATE UNIQUE INDEX uq_availability_pro_date_active
   WHERE deleted_at IS NULL;
 
 -- Create service --
-CREATE TABLE service (
+CREATE TABLE IF NOT EXISTS service (
   id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   pro_id         BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
   name           VARCHAR(50) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE service (
 );
 
 -- Create appointment --
-CREATE TABLE appointment (
+CREATE TABLE IF NOT EXISTS appointment (
   id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   pro_id       BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
   service_id   BIGINT REFERENCES service(id) ON UPDATE CASCADE ON DELETE SET NULL,
@@ -58,4 +58,14 @@ CREATE TABLE appointment (
   phone        VARCHAR(40),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at   TIMESTAMPTZ
+);
+
+-- Create client lead (minimal info for callback)
+CREATE TABLE IF NOT EXISTS lead (
+  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id     BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  firstname  VARCHAR(50),
+  lastname   VARCHAR(50),
+  phone      VARCHAR(40) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
