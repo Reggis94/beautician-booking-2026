@@ -15,5 +15,10 @@ class ProDao
         $id = $this->connection->fetchOne($sql, ['slug' => $slug], ['slug' => Types::STRING]);
         return $id !== false ? (int) $id : null;
     }
-}
 
+    public function findFirstLinkSlug(): ?string
+    {
+        $slug = $this->connection->fetchOne('SELECT link_slug FROM pro WHERE deleted_at IS NULL ORDER BY id ASC LIMIT 1');
+        return ($slug !== false && $slug !== null && $slug !== '') ? (string) $slug : null;
+    }
+}

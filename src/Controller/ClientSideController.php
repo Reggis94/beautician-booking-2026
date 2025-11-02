@@ -11,6 +11,15 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ClientSideController extends AbstractController
 {
+    #[Route('/', name: 'front_home', methods: ['GET'])]
+    public function index(): Response
+    {
+        $slug = $this->proDao->findFirstLinkSlug();
+        if ($slug === null) {
+            throw $this->createNotFoundException('No professional found');
+        }
+        return $this->redirectToRoute('front_pro_home', ['proLinkSlug' => $slug]);
+    }
     public function __construct(
         private readonly ProDao $proDao,
         private readonly LeadDao $leadDao,
