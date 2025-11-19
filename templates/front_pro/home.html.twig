@@ -2,6 +2,40 @@
 {% set proId = pro_id|default(null) %}
 
 {% block body %}
+    {% set successMessages = app.flashes('success') %}
+    {% if successMessages %}
+        <div class="lead-success-modal" id="lead-success-modal" role="alertdialog" aria-modal="true">
+            <div class="lead-success-modal__panel">
+                <h2 class="h5 mb-3">Demande envoyée</h2>
+                {% for message in successMessages %}
+                    <p class="mb-3">{{ message }}</p>
+                {% endfor %}
+                <button type="button" class="btn btn-primary w-100" id="lead-success-close">Compris</button>
+            </div>
+        </div>
+        <script>
+            //Modal for successful lead form
+            (function() {
+                const modal = document.getElementById('lead-success-modal');
+                const btn = document.getElementById('lead-success-close');
+                if (!modal || !btn) return;
+                function closeModal() {
+                    modal.classList.add('is-hidden');
+                }
+                btn.addEventListener('click', closeModal);
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                });
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeModal();
+                    }
+                });
+            })();
+        </script>
+    {% endif %}
     <div class="page-content">
         {% if proId %}
             {% set base = '/pro-banners/' ~ proId ~ '/' %}
@@ -45,6 +79,31 @@
                 <div id="lead-phone-error" class="invalid-feedback">Format attendu: +33 suivi de 9 chiffres (ex: +33612345678).</div>
                 <input type="hidden" name="phone_cc" value="+33">
             </div>
+
+            {% if availability_choices is defined and availability_choices %}
+            <div class="mt-4" id="lead-availability">
+                {% set availabilityErrors = app.flashes('availability_error') %}
+                {% if availabilityErrors %}
+                    <div class="alert alert-danger mb-2" role="alert">
+                        {% for message in availabilityErrors %}
+                            <div>{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <label class="form-label">Disponibilités pour être rappelé(e)</label>
+                <div class="row g-2">
+                    {% for label, value in availability_choices %}
+                        <div class="col-12 col-sm-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="avail_{{ loop.index }}" name="availability[]" value="{{ value }}">
+                                <label class="form-check-label" for="avail_{{ loop.index }}">{{ label }}</label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="form-text text-muted">Plusieurs choix possibles.</div>
+            </div>
+            {% endif %}
 
             <div class="d-flex align-items-center gap-3 mt-4">
                 <button type="submit" class="btn btn-primary">Envoyer ma demande de rendez-vous</button>
@@ -121,5 +180,25 @@
     }
     #lead-booking-form { scroll-margin-top: 80px; padding: 0 1rem }
     body { padding-top: 72px; }
+    .lead-success-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 1.5rem;
+    }
+    .lead-success-modal.is-hidden { display: none; }
+    .lead-success-modal__panel {
+        background: #fff;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        max-width: 420px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        text-align: center;
+    }
 </style>
 {% endblock %}

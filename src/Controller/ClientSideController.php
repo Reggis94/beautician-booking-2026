@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Dao\ProDao;
 use App\Dao\LeadDao;
+use App\Enum\LeadAvailabilityEnum;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,6 +29,8 @@ class ClientSideController extends AbstractController
     #[Route('/{proLinkSlug}', name:'front_pro_home', methods: ['GET','POST'])]
     public function home(string $proLinkSlug, Request $request): Response
     {
+        // Build availability choices (French labels) and handle submission
+        $availabilityChoices = LeadAvailabilityEnum::choicesFr();
         $proId = $this->proDao->findIdByLinkSlug($proLinkSlug);
 
         if ($request->isMethod('POST') && $proId) {
@@ -35,6 +38,23 @@ class ClientSideController extends AbstractController
             $lastname  = trim((string) $request->request->get('lastname', ''));
             $phoneCc   = trim((string) $request->request->get('phone_cc', '+33')) ?: '+33';
             $phoneLocal= trim((string) $request->request->get('phone', ''));
+            // dump(vars: $request->request->all('availability'));
+            $submittedAvail = $request->request->all('availability');
+
+            if (!\is_array($submittedAvail)) {
+                $submittedAvail = $submittedAvail !== null && $submittedAvail !== '' ? [(string) $submittedAvail] : [];
+            }
+            if ($submittedAvail === []) {
+                $this->addFlash('availability_error', 'Veuillez sélectionner au moins une disponibilité.');
+                $url = $this->generateUrl('front_pro_home', ['proLinkSlug' => $proLinkSlug]) . '#lead-availability';
+                return $this->redirect($url);
+            }
+            $allowedAvail = [];
+            foreach (LeadAvailabilityEnum::cases() as $case) {
+                $allowedAvail[] = $case->value;
+            }
+            //Check that submitted availability values are valid
+            $availability = array_values(array_unique(array_intersect($submittedAvail, $allowedAvail)));
 
             if ($firstname !== '' && $lastname !== '' && $phoneCc !== '' && $phoneLocal !== '') {
                 // Normalize French numbers: accept 9 digits (no 0) or 10 digits with leading 0
@@ -53,7 +73,10 @@ class ClientSideController extends AbstractController
 
                 $phoneFull = trim($phoneCc . ' ' . $normalizedLocal);
                 try {
-                    $this->leadDao->create((int) $proId, $firstname, $lastname, $phoneFull);
+                    $ip = $request->getClientIp();
+                    $ua = $request->headers->get('User-Agent', '');
+                    $ua = $ua !== null ? substr($ua, 0, 255) : null;
+                    $this->leadDao->create((int) $proId, $firstname, $lastname, $phoneFull, $availability, $ip, $ua);
                     $this->addFlash('success', 'Vos coordonnées ont été envoyées. Le professionnel vous recontactera.');
                 } catch (\Throwable $e) {
                     $this->addFlash('error', 'Une erreur est survenue. Merci de réessayer.');
@@ -65,6 +88,9 @@ class ClientSideController extends AbstractController
             return $this->redirectToRoute('front_pro_home', ['proLinkSlug' => $proLinkSlug]);
         }
 
-        return $this->render('front_pro/home.html.twig', ['pro_id' => $proId]);
+        return $this->render('front_pro/home.html.twig', [
+            'pro_id' => $proId,
+            'availability_choices' => $availabilityChoices,
+        ]);
     }
 }

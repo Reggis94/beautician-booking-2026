@@ -69,3 +69,9 @@ CREATE TABLE IF NOT EXISTS lead (
   phone      VARCHAR(40) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Lead form feature branch v0-feat-lead
+ALTER TABLE lead
+  ADD COLUMN availability JSONB,
+  ADD COLUMN ip VARCHAR(45),
+  ADD COLUMN user_agent VARCHAR(255);
