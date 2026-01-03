@@ -5,9 +5,20 @@ namespace App\Dao;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
 
-class ProDao
+class ProDao implements ProDaoInterface
 {
     public function __construct(private readonly Connection $connection) {}
+
+    public function existsById(int $id): bool
+    {
+        $result = $this->connection->fetchOne(
+            'SELECT 1 FROM pro WHERE id = :id AND deleted_at IS NULL',
+            ['id' => $id],
+            ['id' => Types::INTEGER]
+        );
+
+        return $result !== false;
+    }
 
     public function findIdByLinkSlug(string $slug): ?int
     {
