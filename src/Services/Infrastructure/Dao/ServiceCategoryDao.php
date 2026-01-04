@@ -30,7 +30,7 @@ final class ServiceCategoryDao implements ServiceCategoryDaoInterface
     public function delete(int $id): void
     {
         $this->connection->executeStatement(
-            'UPDATE service_category SET deleted_at = NOW() WHERE id = :id',
+            'UPDATE service_category SET deleted_at = NOW() WHERE id = :id AND deleted_at IS NULL',
             [
                 'id' => $id
             ],
@@ -43,7 +43,7 @@ final class ServiceCategoryDao implements ServiceCategoryDaoInterface
     public function doesBelongToPro(int $id, int $proId): bool
     {
         return (bool) $this->connection->fetchOne(
-            'SELECT 1 FROM service_category WHERE id = :id AND pro_id = :pro_id',
+            'SELECT 1 FROM service_category WHERE id = :id AND pro_id = :pro_id AND deleted_at IS NULL',
             [
                 'id'     => $id,
                 'pro_id' => $proId,
