@@ -2,9 +2,9 @@
 
 namespace App\Services\Infrastructure\Dao;
 
+use App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
-use App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface;
 
 final class ServiceCategoryDao implements ServiceCategoryDaoInterface
 {
@@ -18,11 +18,11 @@ final class ServiceCategoryDao implements ServiceCategoryDaoInterface
             'INSERT INTO service_category (pro_id, name) VALUES (:pro_id, :name)',
             [
                 'pro_id' => $proId,
-                'name'   => $name,
+                'name' => $name,
             ],
             [
                 'pro_id' => Types::INTEGER,
-                'name'   => Types::STRING,
+                'name' => Types::STRING,
             ]
         );
     }
@@ -32,10 +32,10 @@ final class ServiceCategoryDao implements ServiceCategoryDaoInterface
         $this->connection->executeStatement(
             'UPDATE service_category SET deleted_at = NOW() WHERE id = :id AND deleted_at IS NULL',
             [
-                'id' => $id
+                'id' => $id,
             ],
             [
-                'id' => Types::INTEGER
+                'id' => Types::INTEGER,
             ]
         );
     }
@@ -45,11 +45,11 @@ final class ServiceCategoryDao implements ServiceCategoryDaoInterface
         return (bool) $this->connection->fetchOne(
             'SELECT 1 FROM service_category WHERE id = :id AND pro_id = :pro_id AND deleted_at IS NULL',
             [
-                'id'     => $id,
+                'id' => $id,
                 'pro_id' => $proId,
             ],
             [
-                'id'     => Types::INTEGER,
+                'id' => Types::INTEGER,
                 'pro_id' => Types::INTEGER,
             ]
         );

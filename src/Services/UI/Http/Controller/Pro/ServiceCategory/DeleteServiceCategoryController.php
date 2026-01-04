@@ -18,12 +18,12 @@ final class DeleteServiceCategoryController extends AbstractController
         $serviceCategoryId = (int) ($data['service_category_id']);
         $proId = (int) ($data['pro_id']);
         $command = new DeleteServiceCategoryCommand($serviceCategoryId, $proId);
-        try{
+        try {
             $handler($command);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return $this->json(['errors' => [$e->getMessage()]], 403);
         }
-        
+
         return $this->json(null, 204);
     }
 }
