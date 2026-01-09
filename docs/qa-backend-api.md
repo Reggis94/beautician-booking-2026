@@ -20,6 +20,36 @@
 2. Verify the response is `201`.
 3. Confirm the row is inserted with `is_active = false` and `deleted_at` as `NULL`.
 
+#### Failure cases
+
+- Missing required fields should fail.
+
+  ```bash
+  curl -X POST "http://localhost:8000/api/pro/service/new" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "pro_id": 1,
+      "name": ""
+    }'
+  ```
+
+  Expect a `400` with validation errors.
+
+- Invalid numeric values should fail.
+
+  ```bash
+  curl -X POST "http://localhost:8000/api/pro/service/new" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "pro_id": 0,
+      "name": "Invalid Pro",
+      "duration_min": -5,
+      "price_cents": -1
+    }'
+  ```
+
+  Expect a `400` with validation errors.
+
 ### Service deletion (soft delete)
 
 1. Send a request to delete a service.
@@ -35,3 +65,28 @@
 
 2. Verify the response is `204`.
 3. Confirm the row remains, but `deleted_at` is set.
+
+#### Failure cases
+
+- Service not owned by the pro should fail.
+
+  ```bash
+  curl -X DELETE "http://localhost:8000/api/pro/service/delete" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "service_id": 1,
+      "pro_id": 999
+    }'
+  ```
+
+  Expect a `403` with an ownership error.
+
+- Missing identifiers should fail.
+
+  ```bash
+  curl -X DELETE "http://localhost:8000/api/pro/service/delete" \
+    -H "Content-Type: application/json" \
+    -d '{}'
+  ```
+
+  Expect a `403` with an error message.
