@@ -78,3 +78,16 @@ CREATE TABLE IF NOT EXISTS service_category (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at  TIMESTAMPTZ
 );
+
+-- ft-SERVICE-7-create-service --
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS category_id BIGINT;
+
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS description TEXT;
+
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS price_cents INT;
+
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT FALSE;
