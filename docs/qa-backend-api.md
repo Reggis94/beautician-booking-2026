@@ -50,6 +50,61 @@
 
   Expect a `400` with validation errors.
 
+- Category does not exist should fail.
+
+  ```bash
+  curl -X POST "http://localhost:8000/api/pro/service/new" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "pro_id": 1,
+      "name": "Missing Category",
+      "category_id": 999999
+    }'
+  ```
+
+  Expect a `400` with a category ownership/validation error.
+
+- Category belongs to another pro should fail.
+
+  ```bash
+  curl -X POST "http://localhost:8000/api/pro/service/new" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "pro_id": 1,
+      "name": "Other Pro Category",
+      "category_id": 2
+    }'
+  ```
+
+  Expect a `400` with a category ownership error.
+
+### Service creation with category
+
+1. Create a category for the pro.
+
+   ```bash
+   curl -X POST "http://localhost:8000/api/pro/service/category/new" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "pro_id": 1,
+       "name": "Hair Care"
+     }'
+   ```
+
+2. Use the returned `service_category_id` to create a service in that category.
+
+   ```bash
+   curl -X POST "http://localhost:8000/api/pro/service/new" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "pro_id": 1,
+       "name": "Hair Wash",
+       "category_id": 1
+     }'
+   ```
+
+3. Verify the response is `201` and the service row stores the category ID.
+
 ### Service deletion (soft delete)
 
 1. Send a request to delete a service.
