@@ -69,4 +69,34 @@ final class ServiceDao implements ServiceDaoInterface
             ]
         );
     }
+
+    public function update(
+        int $id,
+        ?int $categoryId,
+        string $name,
+        ?string $description,
+        ?int $durationMin,
+        ?int $priceCents
+    ): void {
+        $this->connection->executeStatement(
+            'UPDATE service SET category_id = :category_id, name = :name, description = :description, '
+            . 'duration_min = :duration_min, price_cents = :price_cents WHERE id = :id AND deleted_at IS NULL',
+            [
+                'id' => $id,
+                'category_id' => $categoryId,
+                'name' => $name,
+                'description' => $description,
+                'duration_min' => $durationMin,
+                'price_cents' => $priceCents,
+            ],
+            [
+                'id' => Types::INTEGER,
+                'category_id' => Types::INTEGER,
+                'name' => Types::STRING,
+                'description' => Types::TEXT,
+                'duration_min' => Types::INTEGER,
+                'price_cents' => Types::INTEGER,
+            ]
+        );
+    }
 }
