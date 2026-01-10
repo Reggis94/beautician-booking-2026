@@ -91,3 +91,14 @@ ALTER TABLE service
 
 ALTER TABLE service
   ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- ft-SERVICE-11-create-service-option --
+CREATE TABLE IF NOT EXISTS service_option (
+  id                BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  service_id        BIGINT NOT NULL REFERENCES service(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name              VARCHAR(100) NOT NULL,
+  price_extra_cents INT,
+  is_active         BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at        TIMESTAMPTZ
+);
