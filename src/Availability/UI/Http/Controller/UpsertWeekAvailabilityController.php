@@ -2,17 +2,17 @@
 
 namespace App\Availability\UI\Http\Controller;
 
-use App\Availability\Application\CommandHandler\CreateWeekAvailabilityCommandHandler;
-use App\Availability\Domain\Application\Command\CreateWeekAvailabilityCommand;
+use App\Availability\Application\CommandHandler\UpsertWeekAvailabilityCommandHandler;
+use App\Availability\Domain\Application\Command\UpsertWeekAvailabilityCommand;
 use App\Availability\Domain\ValueObject\WeekAvailability;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route(path: '/api/create-week-availability', name: 'createWeekAvailability', methods: ['POST'])]
-class CreateWeekAvailabilityController
+#[Route(path: '/api/upsert-week-availability', name: 'upsertWeekAvailability', methods: ['POST'])]
+class UpsertWeekAvailabilityController
 {
-    public function __invoke(Request $request, CreateWeekAvailabilityCommandHandler $handler): JsonResponse
+    public function __invoke(Request $request, UpsertWeekAvailabilityCommandHandler $handler): JsonResponse
     {
         $data = json_decode($request->getContent(), true) ?? [];
         try {
@@ -41,7 +41,7 @@ class CreateWeekAvailabilityController
                 if ($proId === null) {
                     $proId = $weekAvailability->getProId();
                 } elseif ($proId !== $weekAvailability->getProId()) {
-                    // Duplicated proId consistency check in CreateWeekAvailabilityCommandHandler.
+                    // Duplicated proId consistency check in UpsertWeekAvailabilityCommandHandler.
                     throw new \LogicException('All availabilities must share the same proId.');
                 }
 
@@ -50,7 +50,7 @@ class CreateWeekAvailabilityController
                 if ($weekRange === null) {
                     $weekRange = [$startTs, $endTs];
                 } elseif ($weekRange[0] !== $startTs || $weekRange[1] !== $endTs) {
-                    // Duplicated week range consistency check in CreateWeekAvailabilityCommandHandler and AvailabilityService::resolveExistingOverlaps.
+                    // Duplicated week range consistency check in UpsertWeekAvailabilityCommandHandler and AvailabilityService::resolveExistingOverlaps.
                     throw new \LogicException('All availabilities must share the same week range.');
                 }
 
@@ -60,7 +60,7 @@ class CreateWeekAvailabilityController
             return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $command = new CreateWeekAvailabilityCommand($newAvailabilities);
+        $command = new UpsertWeekAvailabilityCommand($newAvailabilities);
         $handler($command);
         return new JsonResponse(null, JsonResponse::HTTP_CREATED);
     }

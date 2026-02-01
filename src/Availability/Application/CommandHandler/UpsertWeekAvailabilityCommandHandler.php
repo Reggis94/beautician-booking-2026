@@ -2,19 +2,19 @@
 
 namespace App\Availability\Application\CommandHandler;
 
-use App\Availability\Domain\Application\Command\CreateWeekAvailabilityCommand;
+use App\Availability\Domain\Application\Command\UpsertWeekAvailabilityCommand;
 use App\Availability\Domain\Entity\AvailabilityEntity;
 use App\Availability\Domain\Repository\AvailabilityRepositoryInterface;
 use App\Availability\Domain\Service\AvailabilityService;
 use App\Availability\Domain\ValueObject\WeekAvailability;
 
-final class CreateWeekAvailabilityCommandHandler
+final class UpsertWeekAvailabilityCommandHandler
 {
     public function __construct(private readonly AvailabilityRepositoryInterface $repository)
     {
     }
 
-    public function __invoke(CreateWeekAvailabilityCommand $command): int
+    public function __invoke(UpsertWeekAvailabilityCommand $command): int
     {
         $newAvailabilities = $command->getNewAvailabilities();
         if ($newAvailabilities === []) {
@@ -29,14 +29,14 @@ final class CreateWeekAvailabilityCommandHandler
 
         foreach ($newAvailabilities as $newAvailability) {
             if ($newAvailability->getProId() !== $proId) {
-                // Duplicated proId consistency check in CreateWeekAvailabilityController.
+                // Duplicated proId consistency check in UpsertWeekAvailabilityController.
                 throw new \LogicException('All availabilities must share the same proId.');
             }
 
             $startTs = $newAvailability->getStartDateTime()->getTimestamp();
             $endTs = $newAvailability->getEndDateTime()->getTimestamp();
             if ($weekRange[0] !== $startTs || $weekRange[1] !== $endTs) {
-                // Duplicated week range consistency check in CreateWeekAvailabilityController and AvailabilityService::resolveExistingOverlaps.
+                // Duplicated week range consistency check in UpsertWeekAvailabilityController and AvailabilityService::resolveExistingOverlaps.
                 throw new \LogicException('All availabilities must share the same week range.');
             }
         }
