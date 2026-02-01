@@ -19,21 +19,6 @@ ALTER TABLE pro
 ALTER TABLE pro
   ADD CONSTRAINT uq_pro_link_slug UNIQUE (link_slug);
 
--- Create availability per day by pro and soft delete --
-CREATE TABLE IF NOT EXISTS availability (
-  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  pro_id     BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  date_local  DATE NOT NULL,
-  start_at  TIMESTAMPTZ NOT NULL,
-  end_at    TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ,
-  CONSTRAINT chk_window_time CHECK (end_at > start_at)
-);
-
-CREATE UNIQUE INDEX uq_availability_pro_date_active
-  ON availability (pro_id, date_local)
-  WHERE deleted_at IS NULL;
 
 -- Create service --
 CREATE TABLE IF NOT EXISTS service (
@@ -68,4 +53,16 @@ CREATE TABLE IF NOT EXISTS lead (
   lastname   VARCHAR(50),
   phone      VARCHAR(40) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ft-AVAIL-15-create-avail --
+CREATE TABLE IF NOT EXISTS availability (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id          BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  week_start_date DATE NOT NULL,
+  week_end_date   DATE NOT NULL,
+  day_of_week     SMALLINT NOT NULL,
+  start_time      TIME(0) WITHOUT TIME ZONE NOT NULL,
+  end_time        TIME(0) WITHOUT TIME ZONE NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

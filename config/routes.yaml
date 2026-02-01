@@ -3,3 +3,9 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+availability_controllers:
+    resource:
+        path: ../src/Availability/UI/Http/Controller/
+        namespace: App\Availability\UI\Http\Controller
+    type: attribute
