@@ -28,4 +28,9 @@ interface AvailabilityRepositoryInterface
         \DateTimeImmutable $weekStartDate,
         \DateTimeImmutable $weekEndDate
     ): void;
+
+    /**
+     * @return array<int, AvailabilityEntity>
+     */
+    public function findCoveringDate(int $proId, \DateTimeImmutable $date): array;
 }

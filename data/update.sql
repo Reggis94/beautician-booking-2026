@@ -66,3 +66,14 @@ CREATE TABLE IF NOT EXISTS availability (
   end_time        TIME(0) WITHOUT TIME ZONE NOT NULL,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ft-AVAIL-20-create-off-full-day --
+CREATE TABLE IF NOT EXISTS off_full_day (
+  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id     BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  date       DATE NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE off_full_day
+  ADD CONSTRAINT uq_off_full_day_pro_date UNIQUE (pro_id, date);

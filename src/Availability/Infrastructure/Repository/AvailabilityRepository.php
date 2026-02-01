@@ -96,6 +96,52 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         );
     }
 
+    public function findCoveringDate(int $proId, \DateTimeImmutable $date): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT pro_id, week_start_date, week_end_date, day_of_week, start_time, end_time
+             FROM availability
+             WHERE pro_id = :pro_id
+               AND week_start_date <= :date
+               AND week_end_date >= :date',
+            [
+                'pro_id' => $proId,
+                'date' => $date,
+            ],
+            [
+                'pro_id' => Types::INTEGER,
+                'date' => Types::DATE_IMMUTABLE,
+            ]
+        );
+
+        $covering = [];
+        foreach ($rows as $row) {
+            $weekStart = $row['week_start_date'] instanceof \DateTimeImmutable
+                ? $row['week_start_date']
+                : new \DateTimeImmutable((string) $row['week_start_date']);
+            $weekEnd = $row['week_end_date'] instanceof \DateTimeImmutable
+                ? $row['week_end_date']
+                : new \DateTimeImmutable((string) $row['week_end_date']);
+            $startTime = $row['start_time'] instanceof \DateTimeImmutable
+                ? $row['start_time']
+                : new \DateTimeImmutable((string) $row['start_time']);
+            $endTime = $row['end_time'] instanceof \DateTimeImmutable
+                ? $row['end_time']
+                : new \DateTimeImmutable((string) $row['end_time']);
+
+            $covering[] = new AvailabilityEntity(
+                (int) $row['pro_id'],
+                $weekStart,
+                $weekEnd,
+                (int) $row['day_of_week'],
+                $startTime,
+                $endTime
+            );
+        }
+
+        return $covering;
+    }
+
     public function create(AvailabilityEntity $availability): int
     {
         $this->connection->executeStatement(
