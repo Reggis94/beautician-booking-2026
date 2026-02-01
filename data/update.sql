@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS lead (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Create availability
+-- ft-AVAIL-15-create-avail --
 CREATE TABLE IF NOT EXISTS availability (
   id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   pro_id          BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
