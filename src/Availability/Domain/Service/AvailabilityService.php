@@ -29,7 +29,7 @@ class AvailabilityService
             }
 
             if ($newRange[0] !== $startTs || $newRange[1] !== $endTs) {
-                // Duplicated week range consistency check in CreateWeekAvailabilityCommandHandler and CreateWeekAvailabilityController.
+                // Duplicated week range consistency check in UpsertWeekAvailabilityCommandHandler and UpsertWeekAvailabilityController.
                 throw new \LogicException('All new availabilities must share the same week range.');
             }
         }
