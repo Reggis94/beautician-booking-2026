@@ -4,7 +4,7 @@ namespace App\Availability\Domain\Application\Command;
 
 use App\Availability\Domain\ValueObject\WeekAvailability;
 
-final readonly class CreateWeekAvailabilityCommand
+final readonly class UpsertWeekAvailabilityCommand
 {
     public function __construct(
         /** @var array<int, WeekAvailability> */
