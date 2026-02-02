@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Availability\Domain\Application\Command;
+namespace App\Availability\Application\Command;
 
 use App\Availability\Domain\ValueObject\WeekAvailability;
 

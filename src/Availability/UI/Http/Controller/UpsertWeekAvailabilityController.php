@@ -3,7 +3,7 @@
 namespace App\Availability\UI\Http\Controller;
 
 use App\Availability\Application\CommandHandler\UpsertWeekAvailabilityCommandHandler;
-use App\Availability\Domain\Application\Command\UpsertWeekAvailabilityCommand;
+use App\Availability\Application\Command\UpsertWeekAvailabilityCommand;
 use App\Availability\Domain\ValueObject\WeekAvailability;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +14,7 @@ class UpsertWeekAvailabilityController
 {
     public function __invoke(Request $request, UpsertWeekAvailabilityCommandHandler $handler): JsonResponse
     {
+        // TODO: Authentication/authorization for this endpoint will be handled in a follow-up ticket.
         $data = json_decode($request->getContent(), true) ?? [];
         try {
             if (!is_array($data) || $data === []) {

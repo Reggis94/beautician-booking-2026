@@ -2,7 +2,7 @@
 
 namespace App\Availability\Application\CommandHandler;
 
-use App\Availability\Domain\Application\Command\UpsertWeekAvailabilityCommand;
+use App\Availability\Application\Command\UpsertWeekAvailabilityCommand;
 use App\Availability\Domain\Entity\AvailabilityEntity;
 use App\Availability\Domain\Repository\AvailabilityRepositoryInterface;
 use App\Availability\Domain\Service\AvailabilityService;
