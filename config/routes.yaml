@@ -9,3 +9,9 @@ availability_controllers:
         path: ../src/Availability/UI/Http/Controller/
         namespace: App\Availability\UI\Http\Controller
     type: attribute
+        
+domain_ui_controllers:
+    resource:
+        path: ../src/Services/UI/Http/Controller/
+        namespace: App\Services\UI\Http\Controller\
+    type: attribute

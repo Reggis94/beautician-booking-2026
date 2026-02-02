@@ -21,5 +21,9 @@ services:
         resource: '../src/Availability/UI/Http/Controller/'
         tags: ['controller.service_arguments']
 
+    App\Dao\ProDaoInterface: '@App\Dao\ProDao'
+    App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface: '@App\Services\Infrastructure\Dao\ServiceCategoryDao'
+    App\Services\Application\Service\Dao\ServiceDaoInterface: '@App\Services\Infrastructure\Dao\ServiceDao'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

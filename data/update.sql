@@ -66,3 +66,25 @@ CREATE TABLE IF NOT EXISTS availability (
   end_time        TIME(0) WITHOUT TIME ZONE NOT NULL,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ft-SERVICE-5-create-category --
+CREATE TABLE IF NOT EXISTS service_category (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id      BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name        VARCHAR(150) NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at  TIMESTAMPTZ
+);
+
+-- ft-SERVICE-7-create-service --
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS category_id BIGINT;
+
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS description TEXT;
+
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS price_cents INT;
+
+ALTER TABLE service
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT FALSE;
