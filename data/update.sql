@@ -1,4 +1,4 @@
--- Branch or commit ft-PROFILEPRO-23-upsert-timezone-business-location --
+-- Branch or commit v0 --
 -- Login --
 CREATE TABLE IF NOT EXISTS pro (
   id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
