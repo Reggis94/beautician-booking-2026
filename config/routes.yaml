@@ -15,3 +15,9 @@ domain_ui_controllers:
         path: ../src/Services/UI/Http/Controller/
         namespace: App\Services\UI\Http\Controller\
     type: attribute
+
+profilepro_controllers:
+    resource:
+        path: ../src/ProfilePro/UI/Http/Controller/
+        namespace: App\ProfilePro\UI\Http\Controller
+    type: attribute
