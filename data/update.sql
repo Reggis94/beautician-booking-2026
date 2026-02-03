@@ -1,4 +1,4 @@
--- Branch or commit v0 --
+-- Branch or commit ft-PROFILEPRO-23-upsert-timezone-business-location --
 -- Login --
 CREATE TABLE IF NOT EXISTS pro (
   id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -88,3 +88,17 @@ ALTER TABLE service
 
 ALTER TABLE service
   ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- ft-PROFILEPRO-23-upsert-timezone-business-location --
+ALTER TABLE pro
+  ADD COLUMN IF NOT EXISTS location_full_text VARCHAR(255);
+
+ALTER TABLE pro
+  ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+
+ALTER TABLE pro
+  ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+
+ALTER TABLE pro
+  ADD COLUMN IF NOT EXISTS timezone_iana VARCHAR(64);
+
