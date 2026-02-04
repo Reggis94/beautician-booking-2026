@@ -3,6 +3,7 @@
 ## Documentation Use
 
 Always consult `README.md` when making or reviewing changes, to ensure alignment with current architecture guidance and conventions.
+When a future improvement in `docs/future-improvements` is implemented, delete its file to keep the backlog accurate.
 
 ## Coding Standard
 

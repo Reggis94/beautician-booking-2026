@@ -1,0 +1,14 @@
+AVAIL-0001: IsWithinProHours Use Case
+
+Goal
+- Provide a fast, read-only check that answers: is the given pro-local datetime within the pro's configured business hours?
+
+Proposed behavior
+- Input: proId and a DateTimeImmutable already in the pro's local timezone.
+- Determine the ISO day of week from the provided datetime.
+- Check whether the time portion (HH:MM) falls within any availability window for that day.
+- Availability data should be sourced from persisted weekly availability rules.
+
+Performance notes
+- Prefer a targeted repository query by pro_id, day_of_week, and time window to avoid loading an entire week.
+- Avoid timezone conversions in this use case; the caller must supply local time.

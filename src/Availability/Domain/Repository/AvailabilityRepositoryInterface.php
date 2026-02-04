@@ -28,4 +28,6 @@ interface AvailabilityRepositoryInterface
         \DateTimeImmutable $weekStartDate,
         \DateTimeImmutable $weekEndDate
     ): void;
+
+    public function isWithinProBusinessTime(int $proId, \DateTimeImmutable $proLocalDateTime): bool;
 }
