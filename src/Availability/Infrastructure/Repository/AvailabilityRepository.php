@@ -121,4 +121,37 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
 
         return (int) $this->connection->lastInsertId();
     }
+
+    public function isWithinProBusinessTime(int $proId, \DateTimeImmutable $proLocalDateTime): bool
+    {
+        $dayOfWeek = (int) $proLocalDateTime->format('N');
+        $localDate = $proLocalDateTime->setTime(0, 0);
+        $localTime = new \DateTimeImmutable($proLocalDateTime->format('H:i:s'));
+
+        $result = $this->connection->fetchOne(
+            'SELECT 1
+             FROM availability
+             WHERE pro_id = :pro_id
+               AND week_start_date <= :local_date
+               AND week_end_date >= :local_date
+               AND day_of_week = :day_of_week
+               AND start_time <= :local_time
+               AND end_time > :local_time
+             LIMIT 1',
+            [
+                'pro_id' => $proId,
+                'local_date' => $localDate,
+                'day_of_week' => $dayOfWeek,
+                'local_time' => $localTime,
+            ],
+            [
+                'pro_id' => Types::INTEGER,
+                'local_date' => Types::DATE_IMMUTABLE,
+                'day_of_week' => Types::SMALLINT,
+                'local_time' => Types::TIME_IMMUTABLE,
+            ]
+        );
+
+        return $result !== false;
+    }
 }
