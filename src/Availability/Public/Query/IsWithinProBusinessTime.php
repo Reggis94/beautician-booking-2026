@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Availability\Application\Public\UseCase;
+namespace App\Availability\Public\Query;
 
-use App\Availability\Application\Public\UseCase\Contract\IsWithinProBusinessTimeInterface;
 use App\Availability\Domain\Repository\AvailabilityRepositoryInterface;
 
-final class IsWithinProBusinessTime implements IsWithinProBusinessTimeInterface
+final class IsWithinProBusinessTime implements IsWithinProBusinessTimeQueryInterface
 {
     public function __construct(private readonly AvailabilityRepositoryInterface $repository)
     {
