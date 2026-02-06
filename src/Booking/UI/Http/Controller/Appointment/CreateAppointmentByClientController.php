@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/anonymous-client/booking/appointment', name: 'api_booking_create_appointment', methods: ['POST'])]
+#[Route('/api/anonymous-client/booking/appointment', name: 'api_booking_client_create_appointment', methods: ['POST'])]
 final class CreateAppointmentByClientController
 {
     public function __invoke(Request $request, CreateAppointmentByClientCommandHandler $handler): JsonResponse
