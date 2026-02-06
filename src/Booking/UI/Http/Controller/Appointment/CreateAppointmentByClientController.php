@@ -35,7 +35,7 @@ final class CreateAppointmentByClientController
             $command = new CreateAppointmentByClientCommand(
                 $dto->getProId(),
                 $dto->getServiceId(),
-                $dto->getStartDateTimeUtc(),
+                $dto->getStartDateTimeLocal(),
                 $dto->getLastName(),
                 $dto->getFirstName(),
                 $dto->getEmail()

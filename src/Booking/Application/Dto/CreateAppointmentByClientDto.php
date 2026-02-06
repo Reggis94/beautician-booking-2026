@@ -6,7 +6,7 @@ final class CreateAppointmentByClientDto
 {
     private int $proId;
     private int $serviceId;
-    private \DateTimeImmutable $startDateTimeUtc;
+    private \DateTimeImmutable $startDateTimeLocal;
     private string $lastName;
     private string $firstName;
     private string $email;
@@ -32,10 +32,7 @@ final class CreateAppointmentByClientDto
             throw new \InvalidArgumentException('start_dt is required.');
         }
 
-        $startDateTimeUtc = new \DateTimeImmutable($startDateTime);
-        if ($startDateTimeUtc->getTimezone()->getName() !== 'UTC') {
-            throw new \InvalidArgumentException('start_dt must be provided in UTC.');
-        }
+        $startDateTimeLocal = new \DateTimeImmutable($startDateTime);
 
         $lastName = $this->normalizeName($lastName, 'last_name');
         $firstName = $this->normalizeName($firstName, 'first_name');
@@ -43,7 +40,7 @@ final class CreateAppointmentByClientDto
 
         $this->proId = $proId;
         $this->serviceId = $serviceId;
-        $this->startDateTimeUtc = $startDateTimeUtc;
+        $this->startDateTimeLocal = $startDateTimeLocal;
         $this->lastName = $lastName;
         $this->firstName = $firstName;
         $this->email = $email;
@@ -59,9 +56,9 @@ final class CreateAppointmentByClientDto
         return $this->serviceId;
     }
 
-    public function getStartDateTimeUtc(): \DateTimeImmutable
+    public function getStartDateTimeLocal(): \DateTimeImmutable
     {
-        return $this->startDateTimeUtc;
+        return $this->startDateTimeLocal;
     }
 
     public function getLastName(): string
