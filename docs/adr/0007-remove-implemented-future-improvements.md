@@ -1,4 +1,4 @@
-# ADR 0006: Remove Implemented Future-Improvement Docs
+# ADR 0007: Remove Implemented Future-Improvement Docs
 
 ## Context
 Future improvements are tracked under `docs/future-improvements`. Once the work is implemented, keeping the file creates false backlog noise and can mislead future work.

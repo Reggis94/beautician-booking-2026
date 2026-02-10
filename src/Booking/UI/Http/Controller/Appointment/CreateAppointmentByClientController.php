@@ -10,7 +10,6 @@ use App\Booking\Application\Exception\OutsideProBusinessTimeException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-
 #[Route('/api/anonymous-client/booking/appointment', name: 'api_booking_client_create_appointment', methods: ['POST'])]
 final class CreateAppointmentByClientController
 {
@@ -45,7 +44,7 @@ final class CreateAppointmentByClientController
         }
 
         try {
-            $appointmentId = $handler($command);
+            $handler($command);
         } catch (OutsideProBusinessTimeException $exception) {
             return new JsonResponse(
                 ['error' => $exception->getMessage(), 'code' => 'outside_pro_schedule'],
@@ -60,6 +59,6 @@ final class CreateAppointmentByClientController
             return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        return new JsonResponse(['id' => $appointmentId], JsonResponse::HTTP_CREATED);
+        return new JsonResponse(null, JsonResponse::HTTP_CREATED);
     }
 }

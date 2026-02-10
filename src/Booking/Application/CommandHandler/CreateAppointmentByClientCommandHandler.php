@@ -18,7 +18,7 @@ final class CreateAppointmentByClientCommandHandler
     ) {
     }
 
-    public function __invoke(CreateAppointmentByClientCommand $command): int
+    public function __invoke(CreateAppointmentByClientCommand $command): void
     {
         if ($command->proId <= 0) {
             throw new \InvalidArgumentException('proId must be a positive integer.');
@@ -49,7 +49,7 @@ final class CreateAppointmentByClientCommandHandler
             throw new AppointmentOverlapException();
         }
 
-        return $this->appointmentRepository->createFromClient(
+        $this->appointmentRepository->createFromClient(
             $command->proId,
             $command->serviceId,
             $startDateTimeUtc,

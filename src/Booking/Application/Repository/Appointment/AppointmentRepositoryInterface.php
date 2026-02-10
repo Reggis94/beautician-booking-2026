@@ -11,5 +11,5 @@ interface AppointmentRepositoryInterface
         string $lastName,
         string $firstName,
         string $email
-    ): int;
+    ): void;
 }

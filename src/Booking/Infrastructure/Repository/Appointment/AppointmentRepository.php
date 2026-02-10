@@ -19,7 +19,7 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
         string $lastName,
         string $firstName,
         string $email
-    ): int {
+    ): void {
         if ($startDateTimeUtc->getTimezone()->getName() !== 'UTC') {
             throw new \InvalidArgumentException('startDateTimeUtc must be in UTC.');
         }
@@ -59,7 +59,5 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
                 'email' => Types::STRING,
             ]
         );
-
-        return (int) $this->connection->lastInsertId();
     }
 }

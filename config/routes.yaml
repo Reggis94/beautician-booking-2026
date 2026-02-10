@@ -21,3 +21,9 @@ profilepro_controllers:
         path: ../src/ProfilePro/UI/Http/Controller/
         namespace: App\ProfilePro\UI\Http\Controller
     type: attribute
+
+booking_controllers:
+    resource:
+        path: ../src/Booking/UI/Http/Controller/
+        namespace: App\Booking\UI\Http\Controller
+    type: attribute
