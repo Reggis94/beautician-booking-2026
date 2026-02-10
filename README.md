@@ -37,3 +37,5 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0004: DDD Scope (Full vs DDD-lite)
 - 0005: Trailing Newline in Non-PHP Files
 - 0006: Application Interfaces for External Concrete Classes
+- 0007: Remove Implemented Future-Improvement Docs
+- 0008: Avoid Unsolicited Data in Write Responses

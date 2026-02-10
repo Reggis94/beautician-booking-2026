@@ -20,15 +20,17 @@ services:
     App\Availability\UI\Http\Controller\:
         resource: '../src/Availability/UI/Http/Controller/'
         tags: ['controller.service_arguments']
+    App\Booking\UI\Http\Controller\:
+        resource: '../src/Booking/UI/Http/Controller/'
+        tags: ['controller.service_arguments']
 
     App\Dao\ProDaoInterface: '@App\Dao\ProDao'
     App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface: '@App\Services\Infrastructure\Dao\ServiceCategoryDao'
     App\Services\Application\Service\Dao\ServiceDaoInterface: '@App\Services\Infrastructure\Dao\ServiceDao'
     App\Booking\Application\Repository\Appointment\OverlapRepositoryInterface: '@App\Booking\Infrastructure\Repository\Appointment\OverlapRepository'
+    App\Booking\Application\Repository\Appointment\AppointmentRepositoryInterface: '@App\Booking\Infrastructure\Repository\Appointment\AppointmentRepository'
+    App\Availability\Public\Query\IsWithinProBusinessTimeQueryInterface: '@App\Availability\Public\Query\IsWithinProBusinessTime'
 
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-
-
-
