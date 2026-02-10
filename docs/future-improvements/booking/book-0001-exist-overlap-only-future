@@ -1,0 +1,1 @@
+# Booking 0001 - Overlap Check Only Future\n\nThe overlap check in OverlapRepositoryInterface::existsOverlappingAppointment() may be replaced by a function that only checks overlaps for future time ranges.\n

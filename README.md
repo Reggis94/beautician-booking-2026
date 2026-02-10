@@ -10,7 +10,7 @@ All PHP code must be PSR-12 compliant.
 
 ## Transitioning to DDD
 
-This project is transitioning from a conventional layered structure to Domain-Driven Design (DDD). The goal is to make business rules around availability and booking explicit, resilient, and easier to change as the product evolves. DDD keeps domain logic close to the language of the business and reduces coupling to framework and delivery concerns, which improves testability and maintainability.
+This project is transitioning from a conventional layered structure to Domain-Driven Design (DDD). The goal is to make business rules around availability explicit, resilient, and easier to change as the product evolves. DDD keeps domain logic close to the language of the business and reduces coupling to framework and delivery concerns, which improves testability and maintainability.
 
 ## DDD Scope (Full vs Lite)
 
@@ -22,6 +22,7 @@ Full DDD:
 DDD-lite:
 - `ProfilePro`
 - `Services`
+- `Booking`
 
 ## Partial Hexagonal Architecture (ProfilePro)
 
@@ -35,3 +36,6 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0003: PSR-12 Coding Standard
 - 0004: DDD Scope (Full vs DDD-lite)
 - 0005: Trailing Newline in Non-PHP Files
+- 0006: Application Interfaces for External Concrete Classes
+- 0007: Remove Implemented Future-Improvement Docs
+- 0008: Avoid Unsolicited Data in Write Responses

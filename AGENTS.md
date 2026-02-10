@@ -3,6 +3,7 @@
 ## Documentation Use
 
 Always consult `README.md` when making or reviewing changes, to ensure alignment with current architecture guidance and conventions.
+When a future improvement in `docs/future-improvements` is implemented, delete its file to keep the backlog accurate.
 
 ## Coding Standard
 
@@ -11,6 +12,7 @@ All PHP code must be PSR-12 compliant.
 ## ADR Usage
 
 Follow the ADRs in `docs/adr` as much as possible.
+When a new ADR is created, update the README ADR list to keep the index in sync.
 
 ## README Architecture Summary
 
