@@ -41,3 +41,5 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0007: Remove Implemented Future-Improvement Docs
 - 0008: Avoid Unsolicited Data in Write Responses
 - 0009: DTO Validation and Command Handlers for Writes
+- 0010: Monitor Comment ID Matches Monitor Doc ID
+- 0011: GET Endpoints Read Input From Query Parameters
