@@ -1,20 +1,17 @@
 security:
-    providers: 
-        app_user_provider:
-            entity:
-                class: App\Entity\User
-                property: email
-    firewalls:
-        pro:
-            login_link:
-                check_route: login_check
-                signature_properties: ['id']
-            pattern:
-                - ^/pro
-                - ^/login
-            logout:
-                path: /pro/logout
-                target: /pro
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
-    access_control:
-    - { path: ^/pro/, roles: IS_AUTHENTICATED_FULLY }
+    providers:
+        users_in_memory:
+            memory: null
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            lazy: true
+            provider: users_in_memory
+
+    access_control: []

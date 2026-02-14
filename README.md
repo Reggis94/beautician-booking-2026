@@ -23,6 +23,7 @@ DDD-lite:
 - `ProfilePro`
 - `Services`
 - `Booking`
+- `Identity`
 
 ## Partial Hexagonal Architecture (ProfilePro)
 
@@ -39,3 +40,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0006: Application Interfaces for External Concrete Classes
 - 0007: Remove Implemented Future-Improvement Docs
 - 0008: Avoid Unsolicited Data in Write Responses
+- 0009: DTO Validation and Command Handlers for Writes

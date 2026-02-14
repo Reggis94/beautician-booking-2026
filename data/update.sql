@@ -102,3 +102,13 @@ ALTER TABLE pro
 ALTER TABLE pro
   ADD COLUMN IF NOT EXISTS timezone_iana VARCHAR(64);
 
+-- ft-ID-28-create-pro-account-onboarding
+ALTER TABLE pro
+  ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
+
+ALTER TABLE pro
+  ADD COLUMN IF NOT EXISTS confirmation_token VARCHAR(64);
+
+ALTER TABLE pro
+  ADD COLUMN IF NOT EXISTS confirmation_token_sent_at TIMESTAMPTZ;
+
