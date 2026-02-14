@@ -20,9 +20,12 @@ final class GeocodeAddressTimezoneLocationController extends AbstractController
         ValidatorInterface $validator
     ): JsonResponse
     {
-        $payload = json_decode($request->getContent(), true) ?? [];
-
-        $fullAddress = $payload['full_address'] ?? $payload['fullAddress'] ?? $payload['address'] ?? '';
+        $fullAddress = (string) (
+            $request->query->get('full_address')
+            ?? $request->query->get('fullAddress')
+            ?? $request->query->get('address')
+            ?? ''
+        );
         $dto = new GeocodeAddressDto((string) $fullAddress);
         $errors = $validator->validate($dto);
         if (count($errors) > 0) {
