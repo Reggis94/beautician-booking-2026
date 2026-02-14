@@ -23,6 +23,7 @@ DDD-lite:
 - `ProfilePro`
 - `Services`
 - `Booking`
+- `Identity`
 
 ## Partial Hexagonal Architecture (ProfilePro)
 

@@ -19,7 +19,6 @@ class ProDao implements ProDaoInterface
 
         return $result !== false;
     }
-
     public function findIdByLinkSlug(string $slug): ?int
     {
         $sql = 'SELECT id FROM pro WHERE link_slug = :slug AND deleted_at IS NULL LIMIT 1';

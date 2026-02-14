@@ -8,7 +8,7 @@ Use full DDD only where invariants are heavy (entities, repositories, explicit d
 
 Current scope:
 - Full DDD: `Availability`
-- DDD-lite: `ProfilePro`, `Services`
+- DDD-lite: `ProfilePro`, `Services`, `Booking`, `Identity`
 
 ## Consequences
 - Domain modeling depth varies by domain based on complexity.

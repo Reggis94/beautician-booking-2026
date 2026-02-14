@@ -3,8 +3,6 @@
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
-parameters:
-
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -23,7 +21,6 @@ services:
     App\Booking\UI\Http\Controller\:
         resource: '../src/Booking/UI/Http/Controller/'
         tags: ['controller.service_arguments']
-
     App\Dao\ProDaoInterface: '@App\Dao\ProDao'
     App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface: '@App\Services\Infrastructure\Dao\ServiceCategoryDao'
     App\Services\Application\Service\Dao\ServiceDaoInterface: '@App\Services\Infrastructure\Dao\ServiceDao'
@@ -32,5 +29,13 @@ services:
     App\Availability\Public\Query\IsWithinProBusinessTimeQueryInterface: '@App\Availability\Public\Query\IsWithinProBusinessTime'
 
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
+    App\Identity\Application\Dao\ProConfirmationDaoInterface: '@App\Identity\Infrastructure\Dao\ProConfirmationDao'
+    App\Identity\Application\Dao\ProRegistrationDaoInterface: '@App\Identity\Infrastructure\Dao\ProRegistrationDao'
+    App\Identity\Application\Port\ProConfirmationEmailSenderInterface: '@App\Identity\Infrastructure\Email\ProConfirmationEmailSender'
+
+    App\Identity\Infrastructure\Email\ProConfirmationEmailSender:
+        arguments:
+            $fromAddress: '%env(MAILER_FROM)%'
+            $baseUrl: '%env(DEFAULT_URI)%'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
