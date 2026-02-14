@@ -18,6 +18,7 @@ final class TimezoneDao
         float $lng,
         string $timezone
     ): void {
+        // TO-MONITOR-0001: Future monitoring code will need to be provided in the future.
         $this->connection->executeStatement(
             'UPDATE pro
              SET location_full_text = :full_address,
@@ -42,3 +43,4 @@ final class TimezoneDao
         );
     }
 }
+

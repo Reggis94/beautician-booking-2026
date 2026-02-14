@@ -14,6 +14,12 @@ All PHP code must be PSR-12 compliant.
 Follow the ADRs in `docs/adr` as much as possible.
 When a new ADR is created, update the README ADR list to keep the index in sync.
 
+## QA Test Responses
+
+When returning QA test steps in a response, always include:
+- Pastable Postman request examples (method, URL, headers, body).
+- Database change queries needed for setup and verification.
+
 ## README Architecture Summary
 
 Keep `README.md` short and only include necessary architectural information. Update it when architectural choices change or new ones are introduced.
