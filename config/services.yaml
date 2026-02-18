@@ -32,5 +32,7 @@ services:
     App\Availability\Public\Query\IsWithinProBusinessTimeQueryInterface: '@App\Availability\Public\Query\IsWithinProBusinessTime'
 
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
+    App\ProfilePro\Application\Banner\Repository\ProBannerRepositoryInterface: '@App\ProfilePro\Infrastructure\Repository\ProBannerRepository'
+    App\ProfilePro\Application\Banner\File\BannerFileManagerInterface: '@App\ProfilePro\Infrastructure\File\BannerFileManager'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

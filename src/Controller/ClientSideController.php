@@ -16,6 +16,7 @@ class ClientSideController extends AbstractController
     {
         $slug = $this->proDao->findFirstLinkSlug();
         if ($slug === null) {
+            // TO-PRO-0001: Use App\ProfilePro\Public\Exception\ProNotFound once shared exception handling is aligned.
             throw $this->createNotFoundException('No professional found');
         }
         return $this->redirectToRoute('front_pro_home', ['proLinkSlug' => $slug]);

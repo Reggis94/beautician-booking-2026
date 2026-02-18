@@ -102,3 +102,37 @@ ALTER TABLE pro
 ALTER TABLE pro
   ADD COLUMN IF NOT EXISTS timezone_iana VARCHAR(64);
 
+-- ft-PROFILEPRO-30-upload-banner-create-mode --
+CREATE TABLE IF NOT EXISTS pro_banner (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id        BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  order_number  INT NOT NULL,
+  file_key      VARCHAR(255) NOT NULL,
+  commit_id     VARCHAR(64) NOT NULL,
+  deleted_at    TIMESTAMPTZ
+);
+
+ALTER TABLE pro_banner
+  ADD COLUMN IF NOT EXISTS commit_id VARCHAR(64);
+
+ALTER TABLE pro_banner
+  ADD COLUMN IF NOT EXISTS garbage_collector_status VARCHAR(16);
+
+ALTER TABLE pro_banner
+  ALTER COLUMN garbage_collector_status TYPE TEXT;
+
+ALTER TABLE pro_banner
+  DROP CONSTRAINT IF EXISTS chk_pro_banner_order_number_range;
+
+ALTER TABLE pro_banner
+  ADD CONSTRAINT chk_pro_banner_order_number_range
+  CHECK (order_number BETWEEN 1 AND 20);
+
+DROP INDEX IF EXISTS uq_pro_banner_pro_id_order_number;
+DROP INDEX IF EXISTS uq_pro_banner_pro_id_order_number_active;
+DROP INDEX IF EXISTS uq_pro_banner_pro_id_commit_id_order_number_active;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pro_banner_pro_id_commit_id_order_number_active
+  ON pro_banner (pro_id, commit_id, order_number)
+  WHERE deleted_at IS NULL;

@@ -28,6 +28,24 @@ DDD-lite:
 
 ProfilePro applies a partial hexagonal (ports and adapters) approach. For example, the application defines a `TimezoneResolverPortInterface` and provides a `TimezoneDbAdapter` for the TimezoneDb API. This keeps the core logic independent from a specific provider and makes it possible to swap to another timezone API with minimal change.
 
+## Banner Upload Model and Fault Tolerance (ProfilePro)
+
+ProfilePro includes a banner upload flow used to build a pro's presentation page (WYSIWYG-like behavior: upload, order, then publish what should be shown).
+
+For v1, this flow is intentionally synchronous (single request, no background job queue). The goal is to ship faster with simpler operations and debugging. The trade-off is that storage and database updates are not a single atomic unit, so temporary mismatches can happen.
+
+This section is a summary; the full fault-tolerance contract is documented in `docs/profilepro/banner-storage-contract.md`.
+
+Accepted mismatches and behavior:
+- Case A (write side): files can exist on disk even if DB insert fails. Result: banners are not shown because read visibility is DB-driven. Support/GC can reconcile later.
+- Case B (read side target contract): DB rows can exist for a commit whose folder is missing. Reader skips that invalid commit and falls back to the previous valid commit so the page remains functional.
+- Duplicate commit directory (write side): if the final commit directory already exists, the upload fails hard. No overwrite, no auto-merge, and no auto-repair; support handles resolution.
+
+Why this is acceptable for v1:
+- Faster delivery and simpler architecture than async pipelines/sagas.
+- Operationally safe defaults: prefer "not visible" or "fallback" over broken UI output.
+- Clear upgrade path: add stronger reconciliation and async orchestration later if scale/complexity requires it.
+
 ## Architecture Decision Records (ADRs)
 
 This project includes Architecture Decision Records under `docs/adr`:
@@ -42,3 +60,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0009: DTO Validation and Command Handlers for Writes
 - 0010: Monitor Comment ID Matches Monitor Doc ID
 - 0011: GET Endpoints Read Input From Query Parameters
+- 0014: Use Empty HTTP Responses for Bodyless Statuses
