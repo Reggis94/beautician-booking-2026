@@ -21,24 +21,6 @@ final class BannerFileManager implements BannerFileManagerInterface
     ) {
     }
 
-    public function upload(UploadedFile $file, string $key): void
-    {
-        $targetPath = $this->resolvePathFromKey($key);
-        $targetDirectory = dirname($targetPath);
-        if (!is_string($targetDirectory) || $targetDirectory === '') {
-            throw new \RuntimeException('Unable to resolve target directory for banner upload.');
-        }
-
-        $this->ensureDirectoryExists($targetDirectory);
-
-        $targetFilename = basename($targetPath);
-        try {
-            $file->move($targetDirectory, $targetFilename);
-        } catch (\Throwable $exception) {
-            throw new \RuntimeException('Unable to upload banner file.', 0, $exception);
-        }
-    }
-
     public function stageAll(array $files, int $proId, string $commitId): void
     {
         $this->stagedFiles = [];
@@ -174,7 +156,7 @@ final class BannerFileManager implements BannerFileManagerInterface
 
     private function getBaseDirectory(): string
     {
-        return $this->projectDir . '/public/pro-banners';
+        return $this->projectDir . '/../pro-upload-banner-g4s';
     }
 
     private function getStagingDirectory(int $proId, string $commitId): string

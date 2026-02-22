@@ -59,7 +59,13 @@ final class ProBannerRepository implements ProBannerRepositoryInterface
     public function countActiveForPro(int $proId): int
     {
         $count = $this->connection->fetchOne(
-            'SELECT COUNT(*) FROM pro_banner WHERE pro_id = :pro_id AND deleted_at IS NULL',
+            'SELECT COUNT(*) FROM (
+                SELECT commit_id
+                FROM pro_banner
+                WHERE pro_id = :pro_id
+                GROUP BY commit_id
+                HAVING SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) = 0
+            ) AS active_commits',
             ['pro_id' => $proId],
             ['pro_id' => Types::INTEGER]
         );

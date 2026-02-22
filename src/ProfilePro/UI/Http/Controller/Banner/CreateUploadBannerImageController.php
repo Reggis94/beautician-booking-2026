@@ -21,14 +21,22 @@ final class CreateUploadBannerImageController extends AbstractController
         ValidatorInterface $validator
     ): Response
     {
-        $proId = (int) ($request->request->get('pro_id') ?? $request->request->get('proId') ?? 0);
+        // ADR-0015: Banner request-body fields are now canonical snake_case only.
+        // We intentionally removed camelCase aliases so clients must send `pro_id`.
+        $proId = (int) ($request->request->get('pro_id') ?? 0);
         $payloadFiles = $request->files->all();
-        $payloadImages = $payloadFiles['images'] ?? $payloadFiles['files'] ?? $payloadFiles;
-        $payloadOrderNumbers = $request->request->all('order_numbers');
-        if ($payloadOrderNumbers === []) {
-            $payloadOrderNumbers = $request->request->all('orderNumbers');
+        // ADR-0015: Accept only canonical `images` multipart field for banner files.
+        $payloadImages = $payloadFiles['images'] ?? [];
+        // ADR-0002 + ADR-0013: We normalize to a single `array` input and avoid callback-heavy/mixed branching
+        // so banner input handling stays explicit, predictable, and easy to review.
+        if (!is_array($payloadImages)) {
+            $payloadImages = [$payloadImages];
         }
+        // ADR-0015: Only canonical snake_case `order_numbers` array is accepted.
+        $payloadOrderNumbers = $request->request->all('order_numbers');
 
+        // TO-PRO-0004: When Banner moves to full DDD, this mapping should call a dedicated
+        // Banner aggregate factory (single validation boundary) instead of splitting checks.
         $dto = new CreateUploadBannerImagesDto(
             $proId,
             $this->flattenPayloadFiles($payloadImages),
@@ -42,7 +50,7 @@ final class CreateUploadBannerImageController extends AbstractController
                 $errorMessages[] = $error->getMessage();
             }
 
-            // TO-MONITOR-0001: Future monitoring code will need to be provided in the future.
+            // TO-MONITOR-0002: Future monitoring code will need to be provided in the future.
             return new JsonResponse(['errors' => $errorMessages], JsonResponse::HTTP_BAD_REQUEST);
         }
 
@@ -50,19 +58,17 @@ final class CreateUploadBannerImageController extends AbstractController
         try {
             $handler($command);
         } catch (\Throwable $exception) {
-            // TO-MONITOR-0001: Future monitoring code will need to be provided in the future.
+            // TO-MONITOR-0002: Future monitoring code will need to be provided in the future.
             return new JsonResponse(['errors' => [$exception->getMessage()]], JsonResponse::HTTP_BAD_REQUEST);
         }
 
         return new Response(status: Response::HTTP_CREATED);
     }
 
-    private function flattenPayloadFiles(mixed $payloadFiles): array
+    private function flattenPayloadFiles(array $payloadFiles): array
     {
-        if (!is_array($payloadFiles)) {
-            return [$payloadFiles];
-        }
-
+        // ADR-0002 + ADR-0013: Method accepts a single type (`array`) and flattens explicitly via loops
+        // to reduce mixed inputs and callback indirection in banner parsing.
         $flatFiles = [];
         foreach ($payloadFiles as $item) {
             if (is_array($item)) {
@@ -79,16 +85,10 @@ final class CreateUploadBannerImageController extends AbstractController
         return $flatFiles;
     }
 
-    private function normalizeOrderNumbers(mixed $payloadOrderNumbers): array
+    private function normalizeOrderNumbers(array $payloadOrderNumbers): array
     {
-        if (is_string($payloadOrderNumbers)) {
-            $payloadOrderNumbers = array_map('trim', explode(',', $payloadOrderNumbers));
-        }
-
-        if (!is_array($payloadOrderNumbers)) {
-            return [];
-        }
-
+        // ADR-0002 + ADR-0013: Method accepts only `array` and uses explicit procedural normalization;
+        // removed callback-based splitting/trimming to keep banner rules clear and reviewable.
         $flatValues = [];
         foreach ($payloadOrderNumbers as $value) {
             if (is_array($value)) {
@@ -105,8 +105,11 @@ final class CreateUploadBannerImageController extends AbstractController
                 continue;
             }
 
-            if (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
-                $flatValues[] = (int) $value;
+            if (is_string($value)) {
+                $trimmedValue = trim($value);
+                if (preg_match('/^-?\d+$/', $trimmedValue) === 1) {
+                    $flatValues[] = (int) $trimmedValue;
+                }
             }
         }
 

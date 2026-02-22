@@ -48,22 +48,4 @@ final class CreateUploadBannerImagesDto
         $this->images = array_values($images);
         $this->orderNumbers = array_values($orderNumbers);
     }
-
-    #[Assert\Callback]
-    public function validateOrderNumbers(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
-    {
-        if (count($this->images) !== count($this->orderNumbers)) {
-            $context->buildViolation('order_numbers must have the same number of items as images.')
-                ->atPath('orderNumbers')
-                ->addViolation();
-
-            return;
-        }
-
-        if (count(array_unique($this->orderNumbers)) !== count($this->orderNumbers)) {
-            $context->buildViolation('order_numbers must be unique.')
-                ->atPath('orderNumbers')
-                ->addViolation();
-        }
-    }
 }

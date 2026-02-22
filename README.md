@@ -24,6 +24,14 @@ DDD-lite:
 - `Services`
 - `Booking`
 
+Planned scope evolution:
+- ProfilePro `Banner` subdomain is planned to move to full DDD (aggregate + factory validation) to centralize commit-level invariants and remove duplicated validation paths. See `docs/future-improvements/profilepro/pro-0004-banner-subdomain-switch-to-full-ddd.md`.
+
+Commit-level invariant (Banner example):
+- A commit-level invariant is a rule that must be true for the whole banner commit before it is saved (not just for one image row).
+- In banner upload, examples are: order numbers must be unique and within limits, image count must match commit constraints, and commit activity/delete state transitions must stay consistent.
+- Centralizing these rules in one aggregate boundary prevents partial-valid commits from being persisted.
+
 ## Partial Hexagonal Architecture (ProfilePro)
 
 ProfilePro applies a partial hexagonal (ports and adapters) approach. For example, the application defines a `TimezoneResolverPortInterface` and provides a `TimezoneDbAdapter` for the TimezoneDb API. This keeps the core logic independent from a specific provider and makes it possible to swap to another timezone API with minimal change.
@@ -60,4 +68,7 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0009: DTO Validation and Command Handlers for Writes
 - 0010: Monitor Comment ID Matches Monitor Doc ID
 - 0011: GET Endpoints Read Input From Query Parameters
+- 0012: Prefer Timestamp Lifecycle Fields Over Creation/Deletion Booleans
+- 0013: Avoid Callbacks When KISS Is Clearer
 - 0014: Use Empty HTTP Responses for Bodyless Statuses
+- 0015: Use Snake Case for HTTP Body Fields

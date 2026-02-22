@@ -6,8 +6,6 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 interface BannerFileManagerInterface
 {
-    public function upload(UploadedFile $file, string $key): void;
-
     /**
      * @param array<int, array{file: UploadedFile, orderNumber: int}> $files
      */

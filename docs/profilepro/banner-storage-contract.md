@@ -24,6 +24,9 @@ When resolving banners for a `proId`, the reader MUST:
 
 1. Fetch commit IDs for that pro ordered by most recent first.
 2. For each commit:
+   - Check DB rows for that commit:
+     - If at least one row has `deleted_at IS NOT NULL`, treat the commit as inactive and skip it.
+     - A commit is active only when all its rows have `deleted_at IS NULL`.
    - Check whether the corresponding commit directory exists in the permanent storage.
    - The first commit whose directory exists is considered the active one.
 3. If none exist:
@@ -100,6 +103,15 @@ Each banner DB row must contain:
 - `orderNumber`
 - `finalKey`
 - `commitId`
+
+### 5.1 Commit-Level Soft Delete Semantics
+`deleted_at` is evaluated at commit level (not independent per-row visibility for active-commit selection).
+
+Rules:
+- A commit is active only when all rows in that `commit_id` have `deleted_at IS NULL`.
+- If at least one row in that `commit_id` has `deleted_at IS NOT NULL`, the commit is considered inactive.
+- Write-side "existing banners" checks must evaluate active commits with this rule.
+- Read-side fallback must skip inactive commits by this rule, even if their folders exist.
 
 Order numbers:
 - Must be unique per commit.

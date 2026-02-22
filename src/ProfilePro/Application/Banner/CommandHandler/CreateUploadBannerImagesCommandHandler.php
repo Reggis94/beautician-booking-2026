@@ -41,6 +41,8 @@ final class CreateUploadBannerImagesCommandHandler
             $preparedImages[] = $image;
         }
 
+        // TO-PRO-0004: From this point, Banner invariant checks are duplicated with DTO-level checks.
+        // Planned full DDD migration will centralize these rules in Banner aggregate construction/factory.
         if (count($preparedImages) > 20) {
             throw new \DomainException('a pro can only have up to 20 banner images.');
         }
@@ -134,7 +136,7 @@ final class CreateUploadBannerImagesCommandHandler
                 throw new \RuntimeException('Invalid staged banner commit mapping.');
             }
         }
-        
+
         usort(
             $stagedMetadata,
             static fn (BannerImageMetadata $left, BannerImageMetadata $right): int => $left->orderNumber <=> $right->orderNumber
