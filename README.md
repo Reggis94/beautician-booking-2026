@@ -25,34 +25,27 @@ DDD-lite:
 - `Booking`
 
 Planned scope evolution:
-- ProfilePro `Banner` subdomain is planned to move to full DDD (aggregate + factory validation) to centralize commit-level invariants and remove duplicated validation paths. See `docs/future-improvements/profilepro/pro-0004-banner-subdomain-switch-to-full-ddd.md`.
+- ProfilePro `Banner` subdomain is planned to move to full DDD (aggregate + factory validation + policy) to centralize commit-level invariants for WYSIWYG banner uploads and remove duplicated validation paths. See `docs/future-improvements/profilepro/pro-0004-banner-subdomain-switch-to-full-ddd.md`.
 
 Commit-level invariant (Banner example):
-- A commit-level invariant is a rule that must be true for the whole banner commit before it is saved (not just for one image row).
-- In banner upload, examples are: order numbers must be unique and within limits, image count must match commit constraints, and commit activity/delete state transitions must stay consistent.
-- Centralizing these rules in one aggregate boundary prevents partial-valid commits from being persisted.
+- User perspective (WYSIWYG): a user adds, removes, and reorders multiple banner images in one editor action, then clicks save once.
+- System perspective: that single save is treated as one banner commit, so validation is done on the full set before anything is published.
+- A commit-level invariant is a rule that must be true for the entire saved set, not just one image row.
+- In banner upload, examples are: order numbers must be unique and within limits, image count must stay within commit constraints, and commit activity/delete state transitions must stay consistent.
+- Centralizing these rules in one aggregate boundary prevents partially valid commits from being persisted.
 
 ## Partial Hexagonal Architecture (ProfilePro)
 
 ProfilePro applies a partial hexagonal (ports and adapters) approach. For example, the application defines a `TimezoneResolverPortInterface` and provides a `TimezoneDbAdapter` for the TimezoneDb API. This keeps the core logic independent from a specific provider and makes it possible to swap to another timezone API with minimal change.
 
-## Banner Upload Model and Fault Tolerance (ProfilePro)
+## Banner Upload Fault Tolerance (ProfilePro)
 
-ProfilePro includes a banner upload flow used to build a pro's presentation page (WYSIWYG-like behavior: upload, order, then publish what should be shown).
+Banner upload is commit-based:
+- Files are staged and published to storage.
+- Database rows are committed afterward and define commit visibility.
 
-For v1, this flow is intentionally synchronous (single request, no background job queue). The goal is to ship faster with simpler operations and debugging. The trade-off is that storage and database updates are not a single atomic unit, so temporary mismatches can happen.
-
-This section is a summary; the full fault-tolerance contract is documented in `docs/profilepro/banner-storage-contract.md`.
-
-Accepted mismatches and behavior:
-- Case A (write side): files can exist on disk even if DB insert fails. Result: banners are not shown because read visibility is DB-driven. Support/GC can reconcile later.
-- Case B (read side target contract): DB rows can exist for a commit whose folder is missing. Reader skips that invalid commit and falls back to the previous valid commit so the page remains functional.
-- Duplicate commit directory (write side): if the final commit directory already exists, the upload fails hard. No overwrite, no auto-merge, and no auto-repair; support handles resolution.
-
-Why this is acceptable for v1:
-- Faster delivery and simpler architecture than async pipelines/sagas.
-- Operationally safe defaults: prefer "not visible" or "fallback" over broken UI output.
-- Clear upgrade path: add stronger reconciliation and async orchestration later if scale/complexity requires it.
+Banner reads are gated by database-active commits. See other docs: `docs/profilepro/banner-storage-contract.md` for the full consistency model and allowed mismatch states between storage and database.
+This fault-tolerance choice is intentional: we prefer deterministic DB-authoritative reads with later reconciliation over cross-system distributed transactions in the request path.
 
 ## Architecture Decision Records (ADRs)
 

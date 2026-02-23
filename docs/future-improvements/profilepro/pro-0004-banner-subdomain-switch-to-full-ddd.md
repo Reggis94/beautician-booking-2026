@@ -3,7 +3,7 @@
 `TO-PRO-0004`
 
 ## Context
-ProfilePro currently uses DDD-lite. Banner upload logic has grown around commit-level invariants:
+ProfilePro currently uses DDD-lite. Banner upload logic has grown around commit-level invariants (see at `docs/profilepro/banner-storage-contract.md` for commit-level upload definition and rationale):
 - Commit-level invariant means a rule that must hold for the full banner commit payload before persistence, not just for a single item.
 - image count and order-number consistency
 - unique and bounded order numbers

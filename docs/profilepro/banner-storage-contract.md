@@ -1,174 +1,94 @@
-# Banner Storage Contract
+# Banner Upload & Read Consistency Model
 
-## Status
-Intentional design trade-offs accepted.
+## Context
+Banner uploads write to two different systems:
+- Storage (banner files by commit folder/key)
+- Database (banner metadata, ordering, active/inactive state)
 
-This document defines the current operational contract for banner uploads, storage, publishing, and reading.
+These writes are not a distributed transaction. Temporary mismatch between storage and database is expected and accepted.
 
-The system is intentionally optimized for a happy-path-first strategy.
-Temporary inconsistencies are tolerated and resolved later by support or a future garbage collector (GC).
+The system needs a strict rule for read eligibility that stays deterministic even during failures and concurrency.
 
-## 1. Source of Truth
+## Decision
+1. The database is the source of truth for read eligibility.
+2. Files may be published before the database transaction commits.
+3. A commit is readable only when its full row set is committed in the database and all rows for that commit are active (`deleted_at IS NULL`).
+4. Storage folders alone must never determine readability.
+5. Temporary storage/database mismatches are expected and accepted.
+6. Orphaned storage commits are reconciled later by support or a dedicated reconciliation job (garbage collector).
+7. Concurrent uploads may publish multiple storage commits, but only one commit can become active in the database.
+8. Reads always select the most recent commit that is fully active in the database.
 
-### 1.1 Order Source of Truth
-The database is the source of truth for banner order.
+## Fault Tolerance Rationale
+This model prioritizes read correctness and predictable visibility over cross-system atomicity.
 
-Order is defined per commit ID.
+Rationale:
+1. Database-gated reads prevent exposure of partially failed uploads.
+2. Publishing files before DB commit keeps the write path simple and synchronous for v1 operations.
+3. Accepting temporary mismatch shifts recovery to reconciliation, which is operationally simpler than distributed transactions.
+4. A single authority (database) avoids ambiguous behavior during incidents and concurrency races.
 
-The filesystem does not define banner order.
+Trade-off:
+- The system accepts short-lived drift between storage and database and requires monitoring/support or GC reconciliation.
 
-Order numbers are stored in DB rows associated with a specific commit ID.
+## Read Model
+Read selection is database-gated.
 
-### 1.2 Active Commit Resolution Rule (Read-Side Contract)
-When resolving banners for a `proId`, the reader MUST:
+For a given `pro_id`:
+1. Resolve candidate commits from database records only, ordered by database-defined recency (newest first).
+2. A commit is eligible only if:
+- Its rows are fully persisted (no partial commit state).
+- Every row for that commit is active (`deleted_at IS NULL`).
+3. Select the first eligible commit and return banners ordered from database fields (for example, `order_number`).
+4. Never scan storage folders to choose an active commit.
 
-1. Fetch commit IDs for that pro ordered by most recent first.
-2. For each commit:
-   - Check DB rows for that commit:
-     - If at least one row has `deleted_at IS NOT NULL`, treat the commit as inactive and skip it.
-     - A commit is active only when all its rows have `deleted_at IS NULL`.
-   - Check whether the corresponding commit directory exists in the permanent storage.
-   - The first commit whose directory exists is considered the active one.
-3. If none exist:
-   - Return no banners (or defined fallback behavior).
+Storage is a file-serving dependency, not an authority for commit eligibility.
 
-This rule guarantees safe behavior even if:
-- DB references a commit whose folder does not exist.
-- A folder exists but the DB was not written.
+## Write Model
+High-level flow:
+1. Stage upload files.
+2. Publish files to final storage commit location.
+3. Execute database transaction that persists the commit rows and applies active/inactive transitions.
 
-## 2. Publish Flow
+Important rule: publish-to-storage can happen before DB commit. Therefore, storage can contain a commit that is never readable.
 
-### 2.1 High-Level Flow
-Banner upload follows this sequence:
+## Failure Scenarios
+Allowed inconsistency states:
+1. Storage published, DB transaction fails.
+- Result: orphaned storage commit.
+- Read impact: not readable because no active DB commit rows exist.
+- Resolution: reconciliation job or support cleanup.
+2. DB commit succeeds, storage becomes unavailable or is later missing/corrupted.
+- Result: DB still points to an active commit.
+- Read eligibility: still determined by DB (commit remains selected).
+- Operational impact: asset delivery may fail until repaired.
+- Resolution: reconciliation/repair workflow.
+3. Upload fails before DB transaction starts.
+- Result: possible staged or temporary files only.
+- Read impact: none; previous DB-active commit remains authoritative.
 
-1. Stage files in a staging directory.
-2. Publish staged files to a permanent commit directory.
-3. Write database records as the last step.
+Explicitly disallowed interpretation:
+- "Folder exists, so it is readable." This is invalid.
 
-Database writes are intentionally performed last.
+## Concurrency Behavior
+Concurrent requests can each publish distinct storage commits.
 
-### 2.2 Failure Tolerance Model
-We explicitly tolerate the following mismatches:
+Database commit activation remains the gate:
+1. Multiple published folders may coexist.
+2. Only commits that finish with fully active DB rows can be read.
+3. If multiple uploads race, reads return the most recent fully active DB commit.
+4. Non-winning published folders are treated as orphaned/obsolete storage and cleaned later.
 
-Case A - Files exist but DB write failed
-- The commit directory exists.
-- No DB rows reference it.
-- Result: banners are not visible.
-- Resolution: support or GC fixes DB state.
-- This is acceptable.
+## Consequences
+- Deterministic reads: commit eligibility is stable because one authority (DB) decides visibility.
+- Better failure tolerance: filesystem-first publish does not leak partially failed uploads to readers.
+- Operational burden is explicit: reconciliation is required for orphaned storage and drift.
+- Monitoring should track drift (DB-active commit with missing assets, storage commit without DB reference).
 
-Case B - DB rows exist but folder missing
-- Reader will skip that commit.
-- Reader will fallback to the previous valid commit.
-- System remains functional.
-- This is acceptable.
-
-## 3. Commit Directory Rules
-
-### 3.1 Commit ID
-Commit ID is generated per upload operation.
-
-It must be unique.
-
-It must be filesystem-safe.
-
-### 3.2 Duplicate Commit Directory
-If the final commit directory already exists:
-
-The system MUST fail hard.
-
-No overwrite.
-
-No auto-merge.
-
-No auto-repair.
-
-Support will handle resolution if this occurs.
-
-## 4. Staging Model
-Files are first copied to a staging directory.
-
-Files are moved into a temporary `publishing-{commitId}` directory.
-
-A final atomic rename promotes it to `{commitId}`.
-
-This ensures:
-- No partially published final directories.
-- Either full commit directory exists or not.
-
-## 5. Database Contract
-Each banner DB row must contain:
-
-- `proId`
-- `orderNumber`
-- `finalKey`
-- `commitId`
-
-### 5.1 Commit-Level Soft Delete Semantics
-`deleted_at` is evaluated at commit level (not independent per-row visibility for active-commit selection).
-
-Rules:
-- A commit is active only when all rows in that `commit_id` have `deleted_at IS NULL`.
-- If at least one row in that `commit_id` has `deleted_at IS NOT NULL`, the commit is considered inactive.
-- Write-side "existing banners" checks must evaluate active commits with this rule.
-- Read-side fallback must skip inactive commits by this rule, even if their folders exist.
-
-Order numbers:
-- Must be unique per commit.
-- Must be between 1 and 20.
-- Maximum 20 banners per commit.
-
-## 6. Concurrency Model
-Current assumption:
-- No async workers.
-- No long-running PHP processes.
-- Classic request-response lifecycle.
-
-Concurrency handling:
-- Commit IDs isolate uploads.
-- "Last valid commit on disk" resolution ensures deterministic read behavior.
-
-## 7. Inconsistency Policy
-We intentionally do not:
-- Roll back filesystem changes on DB failure.
-- Roll back DB on filesystem publish failure (beyond transaction scope).
-- Attempt automatic reconciliation during upload.
-
-Instead:
-- The read side is defensive.
-- Support may intervene manually.
-- A future garbage collector will harmonize:
-  - Orphan folders
-  - Orphan DB rows
-  - Obsolete commits
-
-## 8. Garbage Collector (Future Responsibility)
-The future GC is expected to:
-- Remove commit directories not referenced by DB.
-- Remove DB commits whose folders do not exist.
-- Optionally prune older commits, keeping only the latest valid one.
-- Harmonize mismatches.
-
-The upload flow does not perform cleanup.
-
-## 9. Explicit Non-Goals (For Now)
-- Strong transactional consistency between DB and filesystem.
-- Automatic self-healing during upload.
-- Multi-phase distributed commit logic.
-- Filesystem-based ordering.
-
-These may evolve later.
-
-## 10. Guiding Principle
-Trust the happy path.
-Allow temporary inconsistency.
-Let the reader be defensive.
-Let GC reconcile later.
-
-This document defines the current contract and must be respected by:
-- Developers
-- Future refactors
-- AI-assisted modifications
-- Maintenance scripts
-
-Any deviation from this contract must update this document accordingly.
+## Alternatives Considered
+1. Storage-first read resolution ("pick newest folder on disk").
+- Rejected: violates database authority and can expose uncommitted/invalid uploads.
+2. Strict two-phase commit across DB and storage.
+- Rejected for now: complexity and operational overhead are not justified for current scope.
+3. Automatic inline rollback/repair during upload request.
+- Rejected for now: increases write-path complexity and failure coupling; reconciliation job is simpler and safer.

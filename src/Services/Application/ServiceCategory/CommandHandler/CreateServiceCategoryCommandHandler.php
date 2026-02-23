@@ -25,6 +25,7 @@ final class CreateServiceCategoryCommandHandler
             throw new \InvalidArgumentException('Category name must be at most 100 characters.');
         }
         if (!$this->proDao->existsById($command->proId)) {
+            // TO-PRO-0001: Use App\ProfilePro\Public\Exception\ProNotFound once shared exception handling is aligned.
             throw new \DomainException('Unknown professional.');
         }
 
