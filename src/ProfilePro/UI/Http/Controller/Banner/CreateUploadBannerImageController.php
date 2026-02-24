@@ -6,6 +6,7 @@ use App\ProfilePro\Application\Banner\Command\CreateUploadBannerImagesCommand;
 use App\ProfilePro\Application\Banner\CommandHandler\CreateUploadBannerImagesCommandHandler;
 use App\ProfilePro\Application\Banner\Dto\CreateUploadBannerImagesDto;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,18 +32,24 @@ final class CreateUploadBannerImageController extends AbstractController
 
         $proId = (int) ($request->request->get('pro_id') ?? 0);
         $payloadFiles = $request->files->all();
-        $payloadImages = $payloadFiles['images'] ?? [];
-        if (!is_array($payloadImages)) {
-            $payloadImages = [$payloadImages];
+        $payloadInput = $request->request->all();
+
+        $imagesExtraction = $this->extractMultipartImages($payloadFiles['images'] ?? []);
+        if ($imagesExtraction['error'] !== null) {
+            return new JsonResponse(['errors' => [$imagesExtraction['error']]], JsonResponse::HTTP_BAD_REQUEST);
         }
-        $payloadOrderNumbers = $request->request->all('order_numbers');
+
+        $orderNumbersExtraction = $this->extractMultipartOrderNumbers($payloadInput['order_numbers'] ?? []);
+        if ($orderNumbersExtraction['error'] !== null) {
+            return new JsonResponse(['errors' => [$orderNumbersExtraction['error']]], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
         // TO-PRO-0004: When Banner moves to full DDD, this mapping should call a dedicated
         // Banner aggregate factory (single validation boundary) instead of splitting checks.
         $dto = new CreateUploadBannerImagesDto(
             $proId,
-            $this->flattenPayloadFiles($payloadImages),
-            $this->normalizeOrderNumbers($payloadOrderNumbers)
+            $this->flattenPayloadFiles($imagesExtraction['images']),
+            $this->normalizeOrderNumbers($orderNumbersExtraction['orderNumbers'])
         );
         $errors = $validator->validate($dto);
 
@@ -83,6 +90,54 @@ final class CreateUploadBannerImageController extends AbstractController
         }
 
         return $flatFiles;
+    }
+
+    /**
+     * @param mixed $payloadImages
+     * @return array{images: array, error: string|null}
+     */
+    private function extractMultipartImages(mixed $payloadImages): array
+    {
+        if ($payloadImages === [] || $payloadImages === null) {
+            return ['images' => [], 'error' => null];
+        }
+
+        if (is_array($payloadImages)) {
+            return ['images' => $payloadImages, 'error' => null];
+        }
+
+        if ($payloadImages instanceof UploadedFile) {
+            return ['images' => [$payloadImages], 'error' => null];
+        }
+
+        return [
+            'images' => [],
+            'error' => 'images must be provided as multipart file fields (use repeated images[] parts).',
+        ];
+    }
+
+    /**
+     * @param mixed $payloadOrderNumbers
+     * @return array{orderNumbers: array, error: string|null}
+     */
+    private function extractMultipartOrderNumbers(mixed $payloadOrderNumbers): array
+    {
+        if ($payloadOrderNumbers === [] || $payloadOrderNumbers === null) {
+            return ['orderNumbers' => [], 'error' => null];
+        }
+
+        if (is_array($payloadOrderNumbers)) {
+            return ['orderNumbers' => $payloadOrderNumbers, 'error' => null];
+        }
+
+        if (is_int($payloadOrderNumbers) || is_string($payloadOrderNumbers)) {
+            return ['orderNumbers' => [$payloadOrderNumbers], 'error' => null];
+        }
+
+        return [
+            'orderNumbers' => [],
+            'error' => 'order_numbers must be provided as multipart fields (use repeated order_numbers[] values).',
+        ];
     }
 
     private function normalizeOrderNumbers(array $payloadOrderNumbers): array

@@ -19,7 +19,6 @@ final class CreateUploadBannerImagesDto
     #[Assert\All([
         new Assert\Type(type: UploadedFile::class, message: 'each item must be an uploaded file.'),
         new Assert\Image(
-            message: 'each file must be a valid image.',
             maxSize: '5M',
             maxSizeMessage: 'each file must be at most 5 MB.'
         ),
