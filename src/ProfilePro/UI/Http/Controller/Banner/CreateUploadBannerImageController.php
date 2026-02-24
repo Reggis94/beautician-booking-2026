@@ -21,18 +21,12 @@ final class CreateUploadBannerImageController extends AbstractController
         ValidatorInterface $validator
     ): Response
     {
-        // ADR-0015: Banner request-body fields are now canonical snake_case only.
-        // We intentionally removed camelCase aliases so clients must send `pro_id`.
         $proId = (int) ($request->request->get('pro_id') ?? 0);
         $payloadFiles = $request->files->all();
-        // ADR-0015: Accept only canonical `images` multipart field for banner files.
         $payloadImages = $payloadFiles['images'] ?? [];
-        // ADR-0002 + ADR-0013: We normalize to a single `array` input and avoid callback-heavy/mixed branching
-        // so banner input handling stays explicit, predictable, and easy to review.
         if (!is_array($payloadImages)) {
             $payloadImages = [$payloadImages];
         }
-        // ADR-0015: Only canonical snake_case `order_numbers` array is accepted.
         $payloadOrderNumbers = $request->request->all('order_numbers');
 
         // TO-PRO-0004: When Banner moves to full DDD, this mapping should call a dedicated
@@ -67,8 +61,6 @@ final class CreateUploadBannerImageController extends AbstractController
 
     private function flattenPayloadFiles(array $payloadFiles): array
     {
-        // ADR-0002 + ADR-0013: Method accepts a single type (`array`) and flattens explicitly via loops
-        // to reduce mixed inputs and callback indirection in banner parsing.
         $flatFiles = [];
         foreach ($payloadFiles as $item) {
             if (is_array($item)) {
@@ -87,8 +79,6 @@ final class CreateUploadBannerImageController extends AbstractController
 
     private function normalizeOrderNumbers(array $payloadOrderNumbers): array
     {
-        // ADR-0002 + ADR-0013: Method accepts only `array` and uses explicit procedural normalization;
-        // removed callback-based splitting/trimming to keep banner rules clear and reviewable.
         $flatValues = [];
         foreach ($payloadOrderNumbers as $value) {
             if (is_array($value)) {
