@@ -102,3 +102,13 @@ ALTER TABLE pro
 ALTER TABLE pro
   ADD COLUMN IF NOT EXISTS timezone_iana VARCHAR(64);
 
+-- ft-PROFILEPRO-30-upload-banner-create-mode --
+CREATE TABLE IF NOT EXISTS pro_banner (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id        BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  order_number  INT NOT NULL,
+  file_key      VARCHAR(255) NOT NULL,
+  commit_id     VARCHAR(64) NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at    TIMESTAMPTZ
+);

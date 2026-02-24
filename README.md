@@ -24,9 +24,28 @@ DDD-lite:
 - `Services`
 - `Booking`
 
+Planned scope evolution:
+- ProfilePro `Banner` subdomain is planned to move to full DDD (aggregate + factory validation + policy) to centralize commit-level invariants for WYSIWYG banner uploads and remove duplicated validation paths. See `docs/future-improvements/profilepro/pro-0004-banner-subdomain-switch-to-full-ddd.md`.
+
+Commit-level invariant (Banner example):
+- User perspective (WYSIWYG): a user adds, removes, and reorders multiple banner images in one editor action, then clicks save once.
+- System perspective: that single save is treated as one banner commit, so validation is done on the full set before anything is published.
+- A commit-level invariant is a rule that must be true for the entire saved set, not just one image row.
+- In banner upload, examples are: order numbers must be unique and within limits, image count must stay within commit constraints, and commit activity/delete state transitions must stay consistent.
+- Centralizing these rules in one aggregate boundary prevents partially valid commits from being persisted.
+
 ## Partial Hexagonal Architecture (ProfilePro)
 
 ProfilePro applies a partial hexagonal (ports and adapters) approach. For example, the application defines a `TimezoneResolverPortInterface` and provides a `TimezoneDbAdapter` for the TimezoneDb API. This keeps the core logic independent from a specific provider and makes it possible to swap to another timezone API with minimal change.
+
+## Banner Upload Fault Tolerance (ProfilePro)
+
+Banner upload is commit-based:
+- Files are staged and published to storage.
+- Database rows are committed afterward and define commit visibility.
+
+Banner reads are gated by database-active commits. See other docs: `docs/profilepro/banner-storage-contract.md` for the full consistency model and allowed mismatch states between storage and database.
+This fault-tolerance choice is intentional: we prefer deterministic DB-authoritative reads with later reconciliation over cross-system distributed transactions in the request path.
 
 ## Architecture Decision Records (ADRs)
 
@@ -42,3 +61,8 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0009: DTO Validation and Command Handlers for Writes
 - 0010: Monitor Comment ID Matches Monitor Doc ID
 - 0011: GET Endpoints Read Input From Query Parameters
+- 0012: Prefer Timestamp Lifecycle Fields Over Creation/Deletion Booleans
+- 0013: Avoid Callbacks When KISS Is Clearer
+- 0014: Use Empty HTTP Responses for Bodyless Statuses
+- 0015: Use Snake Case for HTTP Body Fields
+- 0016: HTTP Body Media Type Policy (JSON vs Multipart)
