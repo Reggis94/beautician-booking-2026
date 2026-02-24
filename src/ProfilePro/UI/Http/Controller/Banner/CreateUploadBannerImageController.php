@@ -21,6 +21,14 @@ final class CreateUploadBannerImageController extends AbstractController
         ValidatorInterface $validator
     ): Response
     {
+        $contentType = $request->headers->get('Content-Type', '');
+        if (!str_starts_with(strtolower($contentType), 'multipart/form-data')) {
+            return new JsonResponse(
+                ['errors' => ['Content-Type must be multipart/form-data for banner upload.']],
+                Response::HTTP_UNSUPPORTED_MEDIA_TYPE
+            );
+        }
+
         $proId = (int) ($request->request->get('pro_id') ?? 0);
         $payloadFiles = $request->files->all();
         $payloadImages = $payloadFiles['images'] ?? [];

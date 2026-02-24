@@ -65,3 +65,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0013: Avoid Callbacks When KISS Is Clearer
 - 0014: Use Empty HTTP Responses for Bodyless Statuses
 - 0015: Use Snake Case for HTTP Body Fields
+- 0016: HTTP Body Media Type Policy (JSON vs Multipart)
