@@ -18,10 +18,12 @@ final class CreateServiceCategoryController extends AbstractController
         CreateServiceCategoryCommandHandler $createServiceCategoryCommandHandler,
         ValidatorInterface $validator
     ) {
+        // TO-IMPROVE-0002: Centralize JSON request content validation and payload parsing.
         $data = json_decode($request->getContent(), true) ?? [];
         $name = $data['name'] ?? '';
         $proId = isset($data['pro_id']) ? (int) ($data['pro_id']) : 0;
         $dto = new ServiceCategoryDto($name, $proId);
+        // TO-IMPROVE-0001: Centralize DTO validation and error response mapping.
         $errors = $validator->validate($dto);
         if (count($errors) > 0) {
             $errorMessages = [];

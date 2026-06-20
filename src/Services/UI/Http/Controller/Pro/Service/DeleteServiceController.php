@@ -14,6 +14,7 @@ final class DeleteServiceController extends AbstractController
 {
     public function __invoke(Request $request, DeleteServiceCommandHandler $handler): JsonResponse
     {
+        // TO-IMPROVE-0002: Centralize JSON request content validation and payload parsing.
         $data = json_decode($request->getContent(), true) ?? [];
         $serviceId = (int) ($data['service_id'] ?? 0);
         $proId = (int) ($data['pro_id'] ?? 0);

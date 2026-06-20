@@ -10,11 +10,13 @@ use App\Booking\Application\Exception\OutsideProBusinessTimeException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+
 #[Route('/api/anonymous-client/booking/appointment', name: 'api_booking_client_create_appointment', methods: ['POST'])]
 final class CreateAppointmentByClientController
 {
     public function __invoke(Request $request, CreateAppointmentByClientCommandHandler $handler): JsonResponse
     {
+        // TO-IMPROVE-0002: Centralize JSON request content validation and payload parsing.
         $data = json_decode($request->getContent(), true) ?? [];
 
         try {
