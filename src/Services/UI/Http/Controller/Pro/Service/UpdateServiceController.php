@@ -19,6 +19,7 @@ final class UpdateServiceController extends AbstractController
         UpdateServiceCommandHandler $updateServiceCommandHandler,
         ValidatorInterface $validator
     ): JsonResponse {
+        // TO-IMPROVE-0002: Centralize JSON request content validation and payload parsing.
         $data = json_decode($request->getContent(), true) ?? [];
         $serviceId = (int) ($data['service_id'] ?? 0);
         $name = $data['name'] ?? '';
@@ -47,6 +48,7 @@ final class UpdateServiceController extends AbstractController
             $durationMin,
             $priceCents
         );
+        // TO-IMPROVE-0001: Centralize DTO validation and error response mapping.
         $violations = $validator->validate($dto);
         if (count($violations) > 0) {
             foreach ($violations as $error) {

@@ -15,6 +15,7 @@ class UpsertWeekAvailabilityController
     public function __invoke(Request $request, UpsertWeekAvailabilityCommandHandler $handler): JsonResponse
     {
         // TODO: Authentication/authorization for this endpoint will be handled in a follow-up ticket.
+        // TO-IMPROVE-0002: Centralize JSON request content validation and payload parsing.
         $data = json_decode($request->getContent(), true) ?? [];
         try {
             if (!is_array($data) || $data === []) {
@@ -51,7 +52,8 @@ class UpsertWeekAvailabilityController
                 if ($weekRange === null) {
                     $weekRange = [$startTs, $endTs];
                 } elseif ($weekRange[0] !== $startTs || $weekRange[1] !== $endTs) {
-                    // Duplicated week range consistency check in UpsertWeekAvailabilityCommandHandler and AvailabilityService::resolveExistingOverlaps.
+                    // Duplicated week range consistency check in UpsertWeekAvailabilityCommandHandler
+                    // and AvailabilityService::resolveExistingOverlaps.
                     throw new \LogicException('All availabilities must share the same week range.');
                 }
 

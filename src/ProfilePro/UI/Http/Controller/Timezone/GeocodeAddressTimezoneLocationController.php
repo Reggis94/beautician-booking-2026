@@ -11,15 +11,18 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api/pro/timezone-location/geocode-address', name: 'api_pro_geocode_timezone_location_address', methods: ['GET'])]
+#[Route(
+    '/api/pro/timezone-location/geocode-address',
+    name: 'api_pro_geocode_timezone_location_address',
+    methods: ['GET']
+)]
 final class GeocodeAddressTimezoneLocationController extends AbstractController
 {
     public function __invoke(
         Request $request,
         GeocodeAddressQueryHandler $handler,
         ValidatorInterface $validator
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $fullAddress = (string) (
             $request->query->get('full_address')
             ?? $request->query->get('fullAddress')
@@ -27,6 +30,7 @@ final class GeocodeAddressTimezoneLocationController extends AbstractController
             ?? ''
         );
         $dto = new GeocodeAddressDto((string) $fullAddress);
+        // TO-IMPROVE-0001: Centralize DTO validation and error response mapping.
         $errors = $validator->validate($dto);
         if (count($errors) > 0) {
             $errorMessages = [];
@@ -56,4 +60,3 @@ final class GeocodeAddressTimezoneLocationController extends AbstractController
         );
     }
 }
-

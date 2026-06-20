@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Stripe Connected Account</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(160deg, #f2f6fb 0%, #e5edf8 100%);
+            color: #1d2733;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 520px;
+            background: #ffffff;
+            border: 1px solid #d8e2ef;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(23, 39, 61, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+        }
+
+        p {
+            margin: 0 0 18px;
+            color: #4d6074;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            width: 100%;
+            box-sizing: border-box;
+            height: 44px;
+            padding: 0 12px;
+            border-radius: 10px;
+            border: 1px solid #b9c8dc;
+            font-size: 0.95rem;
+        }
+
+        button {
+            margin-top: 14px;
+            height: 42px;
+            border: 0;
+            border-radius: 10px;
+            padding: 0 18px;
+            background: #0f5cc0;
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: wait;
+        }
+
+        .response {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 10px;
+            background: #f6f9fe;
+            border: 1px solid #d8e2ef;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.85rem;
+        }
+        fieldset {
+            margin: 14px 0;
+            border: 1px solid #d8e2ef;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        legend {
+            padding: 0 6px;
+            font-weight: 600;
+            color: #2e4358;
+        }
+
+        .label-gap {
+            margin-top: 10px;
+        }
+
+        .response-title {
+            margin: 16px 0 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #2e4358;
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <section class="card">
+        <h1>Create Stripe Connected Account</h1>
+        <p>Submit the form and review the JSON response below.</p>
+
+        <form
+            id="create-connect-account-form"
+            class="my-form"
+            action="{{ path('api_pro_finance_create_stripe_connected_account') }}"
+            method="post"
+        >
+            <label>
+                <span>Business Name</span>
+                <input class="inp-company-name" name="company_name" required>
+            </label>
+            <label class="label-gap">
+                <span>Country</span>
+                <select id="country" name="country" required>
+                    <option value="">Select a country</option>
+                </select>
+            </label>
+            <fieldset>
+                <legend>Business Address</legend>
+                <label>
+                    <span>Street Address Line 1</span>
+                    <input class="inp-company-street-address1" name="company_street_address1" required>
+                </label>
+                <label class="label-gap">
+                    <span>City</span>
+                    <input class="inp-company-city" name="company_city" required>
+                </label>
+                <label class="label-gap">
+                    <span>State</span>
+                    <input class="inp-company-state" name="company_state" required>
+                </label>
+                <label class="label-gap">
+                    <span>Postal Code</span>
+                    <input class="inp-company-zip" name="company_zip" required>
+                </label>
+            </fieldset>
+            <label>
+                <span>Representative First Name</span>
+                <input class="inp-person-first-name" name="person_first_name" required>
+            </label>
+            <label class="label-gap">
+                <span>Representative Last Name</span>
+                <input class="inp-person-last-name" name="person_last_name" required>
+            </label>
+            <label class="label-gap">
+                <span>Representative Email</span>
+                <input id="email" class="inp-person-email" name="email" type="email" required placeholder="name@example.com">
+            </label>
+            <fieldset>
+                <legend>Representative Address</legend>
+                <label>
+                    <span>Street Address Line 1</span>
+                    <input class="inp-person-street-address1" name="person_street_address1" required>
+                </label>
+                <label class="label-gap">
+                    <span>City</span>
+                    <input class="inp-person-city" name="person_city" required>
+                </label>
+                <label class="label-gap">
+                    <span>State</span>
+                    <input class="inp-person-state" name="person_state" required>
+                </label>
+                <label class="label-gap">
+                    <span>Postal Code</span>
+                    <input class="inp-person-zip" name="person_zip" required>
+                </label>
+            </fieldset>
+            <p>By clicking, you agree to <a href="#">our terms</a> and the <a href="https://stripe.com/connect-account/legal">Stripe Connected Account Agreement</a>.</p>
+            <button id="submit-button" type="submit">Submit</button>
+        </form>
+
+        <h2 class="response-title">1) Token Creation</h2>
+        <pre id="token-response-box" class="response">Token creation response will appear here.</pre>
+
+        <h2 class="response-title">2) Account Creation</h2>
+        <pre id="account-response-box" class="response">Account creation response will appear here.</pre>
+
+        <h2 class="response-title">3) Account Link Creation</h2>
+        <pre id="link-response-box" class="response">Account link creation response will appear here.</pre>
+    </section>
+</main>
+
+<script>
+    const stripePublishableKey = 'pk_test_51T5nZOE1F7FXpMZa1Bpv9LqL3IpYGEep0xhy0a3vuE5EewOM0FZwbycOewohCBaTWFQmvtRsVcsSY1nT34hX43tH00Z7NOQrwq';
+    const stripePreviewVersion = '2026-02-25.preview';
+    const myForm = document.querySelector('.my-form');
+    const submitButton = document.getElementById('submit-button');
+    const tokenResponseBox = document.getElementById('token-response-box');
+    const accountResponseBox = document.getElementById('account-response-box');
+    const linkResponseBox = document.getElementById('link-response-box');
+    const countrySelect = document.getElementById('country');
+    const countries = [
+        { code: 'AC', name: 'Ascension Island' },
+        { code: 'AD', name: 'Andorra' },
+        { code: 'AE', name: 'United Arab Emirates' },
+        { code: 'AF', name: 'Afghanistan' },
+        { code: 'AG', name: 'Antigua & Barbuda' },
+        { code: 'AI', name: 'Anguilla' },
+        { code: 'AL', name: 'Albania' },
+        { code: 'AM', name: 'Armenia' },
+        { code: 'AO', name: 'Angola' },
+        { code: 'AR', name: 'Argentina' },
+        { code: 'AS', name: 'American Samoa' },
+        { code: 'AT', name: 'Austria' },
+        { code: 'AU', name: 'Australia' },
+        { code: 'AW', name: 'Aruba' },
+        { code: 'AX', name: 'Åland Islands' },
+        { code: 'AZ', name: 'Azerbaijan' },
+        { code: 'BA', name: 'Bosnia & Herzegovina' },
+        { code: 'BB', name: 'Barbados' },
+        { code: 'BD', name: 'Bangladesh' },
+        { code: 'BE', name: 'Belgium' },
+        { code: 'BF', name: 'Burkina Faso' },
+        { code: 'BG', name: 'Bulgaria' },
+        { code: 'BH', name: 'Bahrain' },
+        { code: 'BI', name: 'Burundi' },
+        { code: 'BJ', name: 'Benin' },
+        { code: 'BL', name: 'St. Barthélemy' },
+        { code: 'BM', name: 'Bermuda' },
+        { code: 'BN', name: 'Brunei' },
+        { code: 'BO', name: 'Bolivia' },
+        { code: 'BR', name: 'Brazil' },
+        { code: 'BS', name: 'Bahamas' },
+        { code: 'BT', name: 'Bhutan' },
+        { code: 'BW', name: 'Botswana' },
+        { code: 'BY', name: 'Belarus' },
+        { code: 'BZ', name: 'Belize' },
+        { code: 'CA', name: 'Canada' },
+        { code: 'CC', name: 'Cocos (Keeling) Islands' },
+        { code: 'CD', name: 'Congo - Kinshasa' },
+        { code: 'CF', name: 'Central African Republic' },
+        { code: 'CG', name: 'Congo - Brazzaville' },
+        { code: 'CH', name: 'Switzerland' },
+        { code: 'CI', name: 'Côte d\'Ivoire' },
+        { code: 'CK', name: 'Cook Islands' },
+        { code: 'CL', name: 'Chile' },
+        { code: 'CM', name: 'Cameroon' },
+        { code: 'CN', name: 'China' },
+        { code: 'CO', name: 'Colombia' },
+        { code: 'CR', name: 'Costa Rica' },
+        { code: 'CU', name: 'Cuba' },
+        { code: 'CV', name: 'Cape Verde' },
+        { code: 'CW', name: 'Curaçao' },
+        { code: 'CX', name: 'Christmas Island' },
+        { code: 'CY', name: 'Cyprus' },
+        { code: 'CZ', name: 'Czechia' },
+        { code: 'DE', name: 'Germany' },
+        { code: 'DJ', name: 'Djibouti' },
+        { code: 'DK', name: 'Denmark' },
+        { code: 'DM', name: 'Dominica' },
+        { code: 'DO', name: 'Dominican Republic' },
+        { code: 'DZ', name: 'Algeria' },
+        { code: 'EC', name: 'Ecuador' },
+        { code: 'EE', name: 'Estonia' },
+        { code: 'EG', name: 'Egypt' },
+        { code: 'ER', name: 'Eritrea' },
+        { code: 'ES', name: 'Spain' },
+        { code: 'ET', name: 'Ethiopia' },
+        { code: 'FI', name: 'Finland' },
+        { code: 'FJ', name: 'Fiji' },
+        { code: 'FK', name: 'Falkland Islands' },
+        { code: 'FM', name: 'Micronesia' },
+        { code: 'FO', name: 'Faroe Islands' },
+        { code: 'FR', name: 'France' },
+        { code: 'GA', name: 'Gabon' },
+        { code: 'GB', name: 'United Kingdom' },
+        { code: 'GD', name: 'Grenada' },
+        { code: 'GE', name: 'Georgia' },
+        { code: 'GF', name: 'French Guiana' },
+        { code: 'GG', name: 'Guernsey' },
+        { code: 'GH', name: 'Ghana' },
+        { code: 'GI', name: 'Gibraltar' },
+        { code: 'GL', name: 'Greenland' },
+        { code: 'GM', name: 'Gambia' },
+        { code: 'GN', name: 'Guinea' },
+        { code: 'GP', name: 'Guadeloupe' },
+        { code: 'GQ', name: 'Equatorial Guinea' },
+        { code: 'GR', name: 'Greece' },
+        { code: 'GT', name: 'Guatemala' },
+        { code: 'GU', name: 'Guam' },
+        { code: 'GW', name: 'Guinea-Bissau' },
+        { code: 'GY', name: 'Guyana' },
+        { code: 'HK', name: 'Hong Kong' },
+        { code: 'HN', name: 'Honduras' },
+        { code: 'HR', name: 'Croatia' },
+        { code: 'HT', name: 'Haiti' },
+        { code: 'HU', name: 'Hungary' },
+        { code: 'ID', name: 'Indonesia' },
+        { code: 'IE', name: 'Ireland' },
+        { code: 'IL', name: 'Israel' },
+        { code: 'IM', name: 'Isle of Man' },
+        { code: 'IN', name: 'India' },
+        { code: 'IO', name: 'British Indian Ocean Territory' },
+        { code: 'IQ', name: 'Iraq' },
+        { code: 'IR', name: 'Iran' },
+        { code: 'IS', name: 'Iceland' },
+        { code: 'IT', name: 'Italy' },
+        { code: 'JE', name: 'Jersey' },
+        { code: 'JM', name: 'Jamaica' },
+        { code: 'JO', name: 'Jordan' },
+        { code: 'JP', name: 'Japan' },
+        { code: 'KE', name: 'Kenya' },
+        { code: 'KG', name: 'Kyrgyzstan' },
+        { code: 'KH', name: 'Cambodia' },
+        { code: 'KI', name: 'Kiribati' },
+        { code: 'KM', name: 'Comoros' },
+        { code: 'KN', name: 'St. Kitts & Nevis' },
+        { code: 'KP', name: 'North Korea' },
+        { code: 'KR', name: 'South Korea' },
+        { code: 'KW', name: 'Kuwait' },
+        { code: 'KY', name: 'Cayman Islands' },
+        { code: 'KZ', name: 'Kazakhstan' },
+        { code: 'LA', name: 'Laos' },
+        { code: 'LB', name: 'Lebanon' },
+        { code: 'LC', name: 'St. Lucia' },
+        { code: 'LI', name: 'Liechtenstein' },
+        { code: 'LK', name: 'Sri Lanka' },
+        { code: 'LR', name: 'Liberia' },
+        { code: 'LS', name: 'Lesotho' },
+        { code: 'LT', name: 'Lithuania' },
+        { code: 'LU', name: 'Luxembourg' },
+        { code: 'LV', name: 'Latvia' },
+        { code: 'LY', name: 'Libya' },
+        { code: 'MA', name: 'Morocco' },
+        { code: 'MC', name: 'Monaco' },
+        { code: 'MD', name: 'Moldova' },
+        { code: 'ME', name: 'Montenegro' },
+        { code: 'MF', name: 'St. Martin' },
+        { code: 'MG', name: 'Madagascar' },
+        { code: 'MH', name: 'Marshall Islands' },
+        { code: 'MK', name: 'North Macedonia' },
+        { code: 'ML', name: 'Mali' },
+        { code: 'MM', name: 'Myanmar (Burma)' },
+        { code: 'MN', name: 'Mongolia' },
+        { code: 'MO', name: 'Macao' },
+        { code: 'MP', name: 'Northern Mariana Islands' },
+        { code: 'MQ', name: 'Martinique' },
+        { code: 'MR', name: 'Mauritania' },
+        { code: 'MS', name: 'Montserrat' },
+        { code: 'MT', name: 'Malta' },
+        { code: 'MU', name: 'Mauritius' },
+        { code: 'MV', name: 'Maldives' },
+        { code: 'MW', name: 'Malawi' },
+        { code: 'MX', name: 'Mexico' },
+        { code: 'MY', name: 'Malaysia' },
+        { code: 'MZ', name: 'Mozambique' },
+        { code: 'NA', name: 'Namibia' },
+        { code: 'NC', name: 'New Caledonia' },
+        { code: 'NE', name: 'Niger' },
+        { code: 'NF', name: 'Norfolk Island' },
+        { code: 'NG', name: 'Nigeria' },
+        { code: 'NI', name: 'Nicaragua' },
+        { code: 'NL', name: 'Netherlands' },
+        { code: 'NO', name: 'Norway' },
+        { code: 'NP', name: 'Nepal' },
+        { code: 'NR', name: 'Nauru' },
+        { code: 'NU', name: 'Niue' },
+        { code: 'NZ', name: 'New Zealand' },
+        { code: 'OM', name: 'Oman' },
+        { code: 'PA', name: 'Panama' },
+        { code: 'PE', name: 'Peru' },
+        { code: 'PF', name: 'French Polynesia' },
+        { code: 'PG', name: 'Papua New Guinea' },
+        { code: 'PH', name: 'Philippines' },
+        { code: 'PK', name: 'Pakistan' },
+        { code: 'PL', name: 'Poland' },
+        { code: 'PM', name: 'St. Pierre & Miquelon' },
+        { code: 'PN', name: 'Pitcairn Islands' },
+        { code: 'PR', name: 'Puerto Rico' },
+        { code: 'PS', name: 'Palestinian Territories' },
+        { code: 'PT', name: 'Portugal' },
+        { code: 'PW', name: 'Palau' },
+        { code: 'PY', name: 'Paraguay' },
+        { code: 'QA', name: 'Qatar' },
+        { code: 'RE', name: 'Réunion' },
+        { code: 'RO', name: 'Romania' },
+        { code: 'RS', name: 'Serbia' },
+        { code: 'RU', name: 'Russia' },
+        { code: 'RW', name: 'Rwanda' },
+        { code: 'SA', name: 'Saudi Arabia' },
+        { code: 'SB', name: 'Solomon Islands' },
+        { code: 'SC', name: 'Seychelles' },
+        { code: 'SD', name: 'Sudan' },
+        { code: 'SE', name: 'Sweden' },
+        { code: 'SG', name: 'Singapore' },
+        { code: 'SH', name: 'St. Helena' },
+        { code: 'SI', name: 'Slovenia' },
+        { code: 'SJ', name: 'Svalbard & Jan Mayen' },
+        { code: 'SK', name: 'Slovakia' },
+        { code: 'SL', name: 'Sierra Leone' },
+        { code: 'SM', name: 'San Marino' },
+        { code: 'SN', name: 'Senegal' },
+        { code: 'SO', name: 'Somalia' },
+        { code: 'SR', name: 'Suriname' },
+        { code: 'SS', name: 'South Sudan' },
+        { code: 'ST', name: 'São Tomé & Príncipe' },
+        { code: 'SV', name: 'El Salvador' },
+        { code: 'SX', name: 'Sint Maarten' },
+        { code: 'SY', name: 'Syria' },
+        { code: 'SZ', name: 'Eswatini' },
+        { code: 'TC', name: 'Turks & Caicos Islands' },
+        { code: 'TD', name: 'Chad' },
+        { code: 'TG', name: 'Togo' },
+        { code: 'TH', name: 'Thailand' },
+        { code: 'TJ', name: 'Tajikistan' },
+        { code: 'TK', name: 'Tokelau' },
+        { code: 'TL', name: 'Timor-Leste' },
+        { code: 'TM', name: 'Turkmenistan' },
+        { code: 'TN', name: 'Tunisia' },
+        { code: 'TO', name: 'Tonga' },
+        { code: 'TR', name: 'Turkey' },
+        { code: 'TT', name: 'Trinidad & Tobago' },
+        { code: 'TV', name: 'Tuvalu' },
+        { code: 'TW', name: 'Taiwan' },
+        { code: 'TZ', name: 'Tanzania' },
+        { code: 'UA', name: 'Ukraine' },
+        { code: 'UG', name: 'Uganda' },
+        { code: 'US', name: 'United States' },
+        { code: 'UY', name: 'Uruguay' },
+        { code: 'UZ', name: 'Uzbekistan' },
+        { code: 'VA', name: 'Vatican City' },
+        { code: 'VC', name: 'St. Vincent & Grenadines' },
+        { code: 'VE', name: 'Venezuela' },
+        { code: 'VG', name: 'British Virgin Islands' },
+        { code: 'VI', name: 'U.S. Virgin Islands' },
+        { code: 'VN', name: 'Vietnam' },
+        { code: 'VU', name: 'Vanuatu' },
+        { code: 'WF', name: 'Wallis & Futuna' },
+        { code: 'WS', name: 'Samoa' },
+        { code: 'YE', name: 'Yemen' },
+        { code: 'YT', name: 'Mayotte' },
+        { code: 'ZA', name: 'South Africa' },
+        { code: 'ZM', name: 'Zambia' },
+        { code: 'ZW', name: 'Zimbabwe' },
+    ].sort((left, right) => left.name.localeCompare(right.name));
+
+    for (const country of countries) {
+        const option = document.createElement('option');
+        option.value = country.code;
+        option.textContent = `${country.name} (${country.code})`;
+        countrySelect.append(option);
+    }
+
+    countrySelect.value = 'US';
+
+    myForm.addEventListener('submit', handleForm);
+
+    async function handleForm(event) {
+        event.preventDefault();
+
+        submitButton.disabled = true;
+        tokenResponseBox.textContent = 'Waiting for backend token creation...';
+        accountResponseBox.textContent = 'Waiting for account creation...';
+        linkResponseBox.textContent = 'Waiting for account link creation...';
+
+        try {
+            const email = document.getElementById('email').value.trim();
+            const companyName = document.querySelector('.inp-company-name').value.trim();
+            const country = countrySelect.value;
+            const tokenResponse = await fetch('https://api.stripe.com/v2/core/account_tokens', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${stripePublishableKey}`,
+                    'Stripe-Version': stripePreviewVersion,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contact_email: email,
+                    display_name: companyName,
+                    identity: {
+                        {# attestations: {
+                            terms_of_service: {
+                                account: {
+                                    shown_and_accepted: true,
+                                },
+                            },
+                        }, #}
+                        entity_type: 'company',
+                        business_details: {
+                            registered_name: companyName,
+                        },
+                    },
+                }),
+            });
+
+            let tokenPayload;
+            try {
+                tokenPayload = await tokenResponse.json();
+            } catch (error) {
+                tokenPayload = { error: 'Response is not valid JSON.' };
+            }
+
+            tokenResponseBox.textContent = JSON.stringify({
+                step: 'token_creation',
+                status: tokenResponse.status,
+                ok: tokenResponse.ok,
+                account_token_id: tokenPayload.id ?? null,
+                raw: tokenPayload,
+            }, null, 2);
+
+            if (!tokenResponse.ok || !tokenPayload.id) {
+                throw new Error('Stripe account token creation failed.');
+            }
+
+            const response = await fetch(myForm.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    country,
+                    account_token: tokenPayload.id,
+                }),
+            });
+
+            let payload;
+            try {
+                payload = await response.json();
+            } catch (error) {
+                payload = { error: 'Response is not valid JSON.' };
+            }
+
+            accountResponseBox.textContent = JSON.stringify({
+                step: 'account_creation',
+                status: response.status,
+                ok: response.ok,
+                account_id: payload.account_id ?? null,
+                raw: payload,
+            }, null, 2);
+
+            if (!response.ok || !payload.account_id) {
+                throw new Error('Backend account creation failed.');
+            }
+
+            const accountLinkResponse = await fetch('/api/create-connect-account-link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    account_id: payload.account_id,
+                }),
+            });
+
+            let accountLinkPayload;
+            try {
+                accountLinkPayload = await accountLinkResponse.json();
+            } catch (error) {
+                accountLinkPayload = { error: 'Response is not valid JSON.' };
+            }
+
+            linkResponseBox.textContent = JSON.stringify({
+                step: 'account_link_creation',
+                status: accountLinkResponse.status,
+                ok: accountLinkResponse.ok,
+                account_link_url: accountLinkPayload.account_link_url ?? null,
+                account_link_expires_at: accountLinkPayload.account_link_expires_at ?? null,
+                raw: accountLinkPayload,
+            }, null, 2);
+        } catch (error) {
+            const errorPayload = JSON.stringify({
+                error: error.message || 'Unknown network error.',
+            }, null, 2);
+
+            tokenResponseBox.textContent = errorPayload;
+            accountResponseBox.textContent = errorPayload;
+            linkResponseBox.textContent = errorPayload;
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

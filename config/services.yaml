@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.profile_pro.finance.stripe_preview_version: '2026-02-25.preview'
+    app.platform_name: 'Glam4Style'
 
 services:
     # default configuration for services in *this* file
@@ -23,6 +25,9 @@ services:
     App\Booking\UI\Http\Controller\:
         resource: '../src/Booking/UI/Http/Controller/'
         tags: ['controller.service_arguments']
+    App\ProfilePro\UI\Http\Controller\:
+        resource: '../src/ProfilePro/UI/Http/Controller/'
+        tags: ['controller.service_arguments']
 
     App\Dao\ProDaoInterface: '@App\Dao\ProDao'
     App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface: '@App\Services\Infrastructure\Dao\ServiceCategoryDao'
@@ -32,5 +37,11 @@ services:
     App\Availability\Public\Query\IsWithinProBusinessTimeQueryInterface: '@App\Availability\Public\Query\IsWithinProBusinessTime'
 
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
+    App\ProfilePro\Application\CommandHandler\CreateStripeConnectedAccountTokenCommandHandler:
+        arguments:
+            $stripePreviewVersion: '%app.profile_pro.finance.stripe_preview_version%'
+    App\ProfilePro\Application\CommandHandler\CreateStripeConnectedAccountCommandHandler:
+        arguments:
+            $platformName: '%app.platform_name%'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

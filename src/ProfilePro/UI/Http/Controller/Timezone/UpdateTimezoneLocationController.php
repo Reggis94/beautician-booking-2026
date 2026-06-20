@@ -15,6 +15,7 @@ final class UpdateTimezoneLocationController extends AbstractController
 {
     public function __invoke(Request $request, UpdateTimezoneCommandHandler $handler): JsonResponse
     {
+        // TO-IMPROVE-0002: Centralize JSON request content validation and payload parsing.
         $payload = json_decode($request->getContent(), true) ?? [];
         try {
             $proId = $payload['pro_id'] ?? $payload['proId'] ?? '';
@@ -34,4 +35,3 @@ final class UpdateTimezoneLocationController extends AbstractController
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
 }
-
