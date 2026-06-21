@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Category\UI\Http\Controller;
+namespace App\Services\UI\Http\Controller\ProPresentation\ServiceCategory;
 
-use App\Category\Application\Query\CategoryListProPresentationQuery as CategoryListQuery;
-use App\Category\Application\QueryHandler\CategoryListProPresentationQueryHandler as CategoryListQueryHandler;
+use App\Services\Application\ServiceCategory\Query\ServiceCategoryListProPresentationQuery as ServiceCategoryListQuery;
+use App\Services\Application\ServiceCategory\QueryHandler\ServiceCategoryListProPresentationQueryHandler as ServiceCategoryListQueryHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
@@ -23,10 +23,10 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ListProPresentationPage
 {
     public function __invoke(
-        CategoryListQueryHandler $categoryListQueryHandler,
-        #[MapQueryString] CategoryListQuery $categoryListQuery
+        ServiceCategoryListQueryHandler $serviceCategoryListQueryHandler,
+        #[MapQueryString] ServiceCategoryListQuery $serviceCategoryListQuery
     ): JsonResponse {
-        $categories = $categoryListQueryHandler($categoryListQuery);
+        $categories = $serviceCategoryListQueryHandler($serviceCategoryListQuery);
 
         return new JsonResponse($categories);
     }

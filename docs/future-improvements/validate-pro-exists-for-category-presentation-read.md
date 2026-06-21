@@ -3,10 +3,12 @@
 ## Context
 `GET /api/pro-presentation/category/list` returns non-deleted categories for a given professional profile ID.
 
-The current read checks `service_category.deleted_at IS NULL`, but it does not verify that the owning `pro` row exists and is not deleted.
+The current read filters categories by `service_category.pro_id` and checks `service_category.deleted_at IS NULL`,
+but it does not verify that the owning `pro` row exists and is not deleted.
 
 ## Improvement
-Before returning categories, ensure the requested professional profile exists and has not been soft-deleted.
+Before returning categories, ensure the requested professional profile exists, has not been soft-deleted, and remains
+the professional profile that owns the returned categories.
 
 Possible implementations:
 - Join `pro` in the category repository query and require `pro.deleted_at IS NULL`.

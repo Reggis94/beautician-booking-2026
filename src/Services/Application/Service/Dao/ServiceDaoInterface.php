@@ -25,4 +25,14 @@ interface ServiceDaoInterface
         ?int $durationMin,
         ?int $priceCents
     ): void;
+
+    /**
+     * @return array<int, array{
+     *     name: string,
+     *     description: ?string,
+     *     price_cents: ?int,
+     *     duration_min: ?int
+     * }>
+     */
+    public function listProPresentationServiceForCategory(int $categoryId): array;
 }

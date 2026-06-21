@@ -9,12 +9,6 @@ availability_controllers:
         path: ../src/Availability/UI/Http/Controller/
         namespace: App\Availability\UI\Http\Controller
     type: attribute
-        
-domain_ui_controllers:
-    resource:
-        path: ../src/Services/UI/Http/Controller/
-        namespace: App\Services\UI\Http\Controller\
-    type: attribute
 
 profilepro_controllers:
     resource:
@@ -28,8 +22,8 @@ booking_controllers:
         namespace: App\Booking\UI\Http\Controller
     type: attribute
 
-category_controllers:
+service_controller:
     resource:
-        path: ../src/Category/UI/Http/Controller/
-        namespace: App\Category\UI\Http\Controller
+        path: ../src/Services/UI/Http/Controller/
+        namespace: App\Services\UI\Http\Controller
     type: attribute
