@@ -27,3 +27,9 @@ booking_controllers:
         path: ../src/Booking/UI/Http/Controller/
         namespace: App\Booking\UI\Http\Controller
     type: attribute
+
+category_controllers:
+    resource:
+        path: ../src/Category/UI/Http/Controller/
+        namespace: App\Category\UI\Http\Controller
+    type: attribute
