@@ -14,7 +14,7 @@ This project is transitioning from a conventional layered structure to Domain-Dr
 
 ## DDD Scope (Full vs Lite)
 
-Some domains have a dedicated `Domain` layer, others do not. We use full DDD only where invariants are heavy (entities + repositories + explicit domain layer). For simpler domains we use DDD-lite: domain logic stays in the `Application` layer and uses DAOs instead of repositories. This balance (along with partial hexagonal patterns) is intentional to avoid over-engineering.
+Some domains have a dedicated `Domain` layer, others do not. We use full DDD only where invariants are heavy (entities + repositories + explicit domain layer). For simpler domains we use DDD-lite: domain logic stays in the `Application` layer and uses DAOs or application-level repository contracts instead of a full domain model. This balance (along with partial hexagonal patterns) is intentional to avoid over-engineering.
 
 Full DDD:
 - `Availability`
@@ -23,6 +23,7 @@ DDD-lite:
 - `ProfilePro`
 - `Services`
 - `Booking`
+- `Category`
 
 ## Partial Hexagonal Architecture (ProfilePro)
 
