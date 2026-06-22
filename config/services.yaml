@@ -23,8 +23,9 @@ services:
     App\Booking\UI\Http\Controller\:
         resource: '../src/Booking/UI/Http/Controller/'
         tags: ['controller.service_arguments']
-    App\Category\UI\Http\Controller\:
-        resource: '../src/Category/UI/Http/Controller/'
+
+    App\Services\UI\Http\Controller\:
+        resource: '../src/Services/UI/Http/Controller/'
         tags: ['controller.service_arguments']
 
     App\Dao\ProDaoInterface: '@App\Dao\ProDao'
@@ -36,6 +37,5 @@ services:
 
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
     
-    App\Category\Contract\Repository\CategoryRepositoryInterface: '@App\Category\Infrastructure\Repository\CategoryRepository'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

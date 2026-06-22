@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+// See docs/future-improvements/verify-authenticated-user-owns-service-resources.md.
 #[Route('/api/pro/service/category/new', name: 'api_pro_create_service_category', methods: ['POST'])]
 final class CreateServiceCategoryController extends AbstractController
 {

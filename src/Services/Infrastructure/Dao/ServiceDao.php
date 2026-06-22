@@ -8,8 +8,9 @@ use Doctrine\DBAL\Types\Types;
 
 final class ServiceDao implements ServiceDaoInterface
 {
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly Connection $connection
+    ) {
     }
 
     public function create(
@@ -96,6 +97,35 @@ final class ServiceDao implements ServiceDaoInterface
                 'description' => Types::TEXT,
                 'duration_min' => Types::INTEGER,
                 'price_cents' => Types::INTEGER,
+            ]
+        );
+    }
+
+    /**
+     * @return array<int, array{
+     *     id: int,
+     *     name: string,
+     *     description: ?string,
+     *     price_cents: ?int,
+     *     duration_min: ?int
+     * }>
+     */
+    public function listProPresentationServiceForCategory(int $categoryId): array
+    {
+        return $this->connection->fetchAllAssociative(
+            'SELECT s.id, s.name, s.description, s.price_cents, s.duration_min FROM service s '
+            . 'INNER JOIN service_category sc ON sc.id = s.category_id AND sc.pro_id = s.pro_id '
+            . 'INNER JOIN pro p ON p.id = s.pro_id '
+            . 'WHERE s.category_id = :category_id '
+            . 'AND s.deleted_at IS NULL '
+            . 'AND sc.deleted_at IS NULL '
+            . 'AND p.deleted_at IS NULL '
+            . 'ORDER BY s.id ASC',
+            [
+                'category_id' => $categoryId,
+            ],
+            [
+                'category_id' => Types::INTEGER,
             ]
         );
     }

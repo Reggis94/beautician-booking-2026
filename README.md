@@ -23,7 +23,8 @@ DDD-lite:
 - `ProfilePro`
 - `Services`
 - `Booking`
-- `Category`
+
+Service categories are modeled inside the `Services` domain under `ServiceCategory`.
 
 ## Partial Hexagonal Architecture (ProfilePro)
 
@@ -43,3 +44,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0009: DTO Validation and Command Handlers for Writes
 - 0010: Monitor Comment ID Matches Monitor Doc ID
 - 0011: GET Endpoints Read Input From Query Parameters
+- 0012: ServiceCategory Owns Service Category Code
