@@ -10,6 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * GET /api/pro-presentation/service/list?id={categoryId}
+ * See docs/future-improvements/standardize-public-client-route-prefix.md.
  *
  * Returns the non-deleted services for the given service category,
  * ordered by service ID ascending.
@@ -17,7 +18,13 @@ use Symfony\Component\Routing\Attribute\Route;
  * Query parameters:
  * - id: required integer service category ID.
  *
- * Successful response: array<int, array{name: string, description: ?string, price_cents: ?int, duration_min: ?int}>
+ * Successful response: array<int, array{
+ *     id: int,
+ *     name: string,
+ *     description: ?string,
+ *     price_cents: ?int,
+ *     duration_min: ?int
+ * }>
  */
 #[Route(
     'api/pro-presentation/service/list',

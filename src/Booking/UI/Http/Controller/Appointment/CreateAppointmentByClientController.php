@@ -10,6 +10,8 @@ use App\Booking\Application\Exception\OutsideProBusinessTimeException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+
+// See docs/future-improvements/standardize-public-client-route-prefix.md.
 #[Route('/api/anonymous-client/booking/appointment', name: 'api_booking_client_create_appointment', methods: ['POST'])]
 final class CreateAppointmentByClientController
 {

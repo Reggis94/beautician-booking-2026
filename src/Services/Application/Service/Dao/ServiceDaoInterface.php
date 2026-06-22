@@ -28,6 +28,7 @@ interface ServiceDaoInterface
 
     /**
      * @return array<int, array{
+     *     id: int,
      *     name: string,
      *     description: ?string,
      *     price_cents: ?int,

@@ -103,6 +103,7 @@ final class ServiceDao implements ServiceDaoInterface
 
     /**
      * @return array<int, array{
+     *     id: int,
      *     name: string,
      *     description: ?string,
      *     price_cents: ?int,
@@ -112,7 +113,7 @@ final class ServiceDao implements ServiceDaoInterface
     public function listProPresentationServiceForCategory(int $categoryId): array
     {
         return $this->connection->fetchAllAssociative(
-            'SELECT s.name, s.description, s.price_cents, s.duration_min FROM service s '
+            'SELECT s.id, s.name, s.description, s.price_cents, s.duration_min FROM service s '
             . 'INNER JOIN service_category sc ON sc.id = s.category_id AND sc.pro_id = s.pro_id '
             . 'INNER JOIN pro p ON p.id = s.pro_id '
             . 'WHERE s.category_id = :category_id '

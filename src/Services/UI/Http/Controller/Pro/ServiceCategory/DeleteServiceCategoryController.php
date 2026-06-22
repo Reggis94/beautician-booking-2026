@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 
+// See docs/future-improvements/verify-authenticated-user-owns-service-resources.md.
 #[Route('/api/pro/service/category/delete', name: 'api_pro_delete_service_category', methods: ['DELETE'])]
 final class DeleteServiceCategoryController extends AbstractController
 {
