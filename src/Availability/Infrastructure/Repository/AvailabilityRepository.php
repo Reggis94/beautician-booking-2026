@@ -129,6 +129,8 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         int $serviceId,
         \DateTimeImmutable $monthStart
     ): array {
+        // Future improvement: for today, compare free ranges against the pro's current local timestamp.
+        // See docs/future-improvements/availability/filter-past-bookable-ranges-for-today.md.
         $rows = $this->connection->fetchAllAssociative(
             "WITH requested_service AS (
                 SELECT id, pro_id, COALESCE(duration_min, 1) AS duration_min
