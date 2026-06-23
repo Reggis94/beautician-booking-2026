@@ -29,5 +29,13 @@ interface AvailabilityRepositoryInterface
         \DateTimeImmutable $weekEndDate
     ): void;
 
+    /**
+     * @return array<int, string>
+     */
+    public function getBookableDaysForService(
+        int $serviceId,
+        \DateTimeImmutable $monthStart
+    ): array;
+
     public function isWithinProBusinessTime(int $proId, \DateTimeImmutable $proLocalDateTime): bool;
 }
