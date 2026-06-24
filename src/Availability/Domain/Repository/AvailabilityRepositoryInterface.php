@@ -37,5 +37,15 @@ interface AvailabilityRepositoryInterface
         \DateTimeImmutable $monthStart
     ): array;
 
+    /**
+     * Returns local bookable start ranges where end_time is the latest valid start time.
+     *
+     * @return array<int, array{date: string, start_time: string, end_time: string, duration_min: int}>
+     */
+    public function getBookableFreeRangesForServiceAndDay(
+        int $serviceId,
+        \DateTimeImmutable $localDate
+    ): array;
+
     public function isWithinProBusinessTime(int $proId, \DateTimeImmutable $proLocalDateTime): bool;
 }
