@@ -34,6 +34,8 @@ final class CreateAppointmentByClientCommandHandler
             throw new \DomainException('Service does not belong to the pro.');
         }
 
+        // Future improvement: validate that the full appointment duration fits inside pro availability.
+        // See docs/future-improvements/booking/validate-created-appointment-fits-availability.md.
         if (! $this->isWithinProBusinessTime->isWithinProBusinessTime(
             $command->proId,
             $command->startDateTimeUtc
