@@ -476,30 +476,42 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         );
     }
 
-    public function isWithinProBusinessTime(int $proId, \DateTimeImmutable $proLocalDateTime): bool
-    {
-        $dayOfWeek = (int) $proLocalDateTime->format('N');
-        $localDate = $proLocalDateTime->setTime(0, 0);
-        $localTime = new \DateTimeImmutable($proLocalDateTime->format('H:i:s'));
+    public function isServiceWithinProBusinessTime(
+        int $proId,
+        int $serviceId,
+        string $proLocalDateTime
+    ): bool {
+        $localDateTime = new \DateTimeImmutable($proLocalDateTime);
+
+        $dayOfWeek = (int) $localDateTime->format('N');
+        $localDate = $localDateTime->setTime(0, 0);
+        $localTime = new \DateTimeImmutable($localDateTime->format('H:i:s'));
 
         $result = $this->connection->fetchOne(
             'SELECT 1
-             FROM availability
-             WHERE pro_id = :pro_id
-               AND week_start_date <= :local_date
-               AND week_end_date >= :local_date
-               AND day_of_week = :day_of_week
-               AND start_time <= :local_time
-               AND end_time > :local_time
+             FROM availability av
+             INNER JOIN service s ON s.id = :service_id
+               AND s.pro_id = av.pro_id
+               AND s.deleted_at IS NULL
+             WHERE av.pro_id = :pro_id
+               AND av.week_start_date <= :local_date
+               AND av.week_end_date >= :local_date
+               AND av.day_of_week = :day_of_week
+               AND av.start_time <= :local_time
+               AND (CAST(:local_date AS date) + CAST(:local_time AS time)
+                    + make_interval(mins => GREATEST(COALESCE(s.duration_min, 1), 1)))
+                   <= (CAST(:local_date AS date) + av.end_time)
              LIMIT 1',
             [
                 'pro_id' => $proId,
+                'service_id' => $serviceId,
                 'local_date' => $localDate,
                 'day_of_week' => $dayOfWeek,
                 'local_time' => $localTime,
             ],
             [
                 'pro_id' => Types::INTEGER,
+                'service_id' => Types::INTEGER,
                 'local_date' => Types::DATE_IMMUTABLE,
                 'day_of_week' => Types::SMALLINT,
                 'local_time' => Types::TIME_IMMUTABLE,
