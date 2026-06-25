@@ -4,61 +4,76 @@ namespace App\Booking\UI\Http\Controller\Appointment;
 
 use App\Booking\Application\Command\CreateAppointmentByClientCommand;
 use App\Booking\Application\CommandHandler\CreateAppointmentByClientCommandHandler;
-use App\Booking\Application\Dto\CreateAppointmentByClientDto;
 use App\Booking\Application\Exception\AppointmentOverlapException;
+use App\Booking\Application\Exception\AppointmentStartDateTimeInPastException;
 use App\Booking\Application\Exception\OutsideProBusinessTimeException;
+use App\Booking\Application\Exception\ServiceDoesNotBelongToProException;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 
-// See docs/future-improvements/standardize-public-client-route-prefix.md.
-#[Route('/api/anonymous-client/booking/appointment', name: 'api_booking_client_create_appointment', methods: ['POST'])]
+/**
+ * POST /api/pro-presentation/booking/appointment/create
+ *
+ * Creates an appointment from the public professional presentation booking flow.
+ *
+ * Date and timezone contract:
+ * - startDateTimeLocal must be the requested service start datetime in the professional's local timezone.
+ * - Send startDateTimeLocal as a local datetime string, without a timezone name or UTC offset.
+ * - The API resolves the professional's timezone from proId, interprets startDateTimeLocal in that timezone,
+ *   and stores the appointment start datetime in UTC.
+ * - Client/browser timezone must not be used to shift the submitted datetime.
+ * - Datetimes in the past are rejected after conversion to UTC.
+ *
+ * JSON request body:
+ * - proId: required positive integer professional ID.
+ *   Future: derive this from serviceId instead of requiring client input.
+ *   See docs/future-improvements/booking/book-0002-derive-pro-id-from-service-for-client-appointment.md.
+ * - serviceId: required positive integer service ID.
+ * - startDateTimeLocal: required pro-local service start datetime string without timezone or UTC offset.
+ * - lastName: required client last name.
+ * - firstName: required client first name.
+ * - email: required client email.
+ * - extraPhone: required client phone.
+ *
+ * Successful response:
+ * - HTTP 201 with an empty body.
+ *
+ * Conflict responses:
+ * - HTTP 409 when the requested datetime is in the past.
+ * - HTTP 409 when the service would be outside the professional's business hours.
+ * - HTTP 409 when another appointment overlaps the requested service time.
+ * - HTTP 400 when the service does not belong to the professional.
+ */
+#[Route('/api/pro-presentation/booking/appointment/create', name: 'api_booking_client_create_appointment', methods: ['POST'])]
 final class CreateAppointmentByClientController
 {
-    public function __invoke(Request $request, CreateAppointmentByClientCommandHandler $handler): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true) ?? [];
-
-        try {
-            if (!is_array($data) || $data === []) {
-                throw new \InvalidArgumentException('Payload must be a non-empty object.');
-            }
-
-            $dto = new CreateAppointmentByClientDto(
-                (int) ($data['pro_id'] ?? 0),
-                (int) ($data['service_id'] ?? 0),
-                (string) ($data['start_dt'] ?? ''),
-                (string) ($data['last_name'] ?? ''),
-                (string) ($data['first_name'] ?? ''),
-                (string) ($data['email'] ?? '')
-            );
-
-            $command = new CreateAppointmentByClientCommand(
-                $dto->getProId(),
-                $dto->getServiceId(),
-                $dto->getStartDateTimeLocal(),
-                $dto->getLastName(),
-                $dto->getFirstName(),
-                $dto->getEmail()
-            );
-        } catch (\Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
-        }
-
+    public function __invoke(
+        CreateAppointmentByClientCommandHandler $handler,
+        #[MapRequestPayload] CreateAppointmentByClientCommand $command
+    ): JsonResponse {
         try {
             $handler($command);
+        } catch (AppointmentStartDateTimeInPastException $exception) {
+            return new JsonResponse(
+                ['error' => $exception->getMessage()],
+                JsonResponse::HTTP_CONFLICT
+            );
         } catch (OutsideProBusinessTimeException $exception) {
             return new JsonResponse(
-                ['error' => $exception->getMessage(), 'code' => 'outside_pro_schedule'],
+                ['error' => $exception->getMessage()],
                 JsonResponse::HTTP_CONFLICT
             );
         } catch (AppointmentOverlapException $exception) {
             return new JsonResponse(
-                ['error' => $exception->getMessage(), 'code' => 'appointment_overlap'],
+                ['error' => $exception->getMessage()],
                 JsonResponse::HTTP_CONFLICT
             );
-        } catch (\Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
+        } catch (ServiceDoesNotBelongToProException $exception) {
+            return new JsonResponse(
+                ['error' => $exception->getMessage()],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
         }
 
         return new JsonResponse(null, JsonResponse::HTTP_CREATED);

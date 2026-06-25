@@ -10,7 +10,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * GET /api/pro-presentation/bookable-days-for-service?serviceId={serviceId}&yearMonth={YYYY-MM}
- * See docs/future-improvements/standardize-public-client-route-prefix.md.
  *
  * Returns the bookable local dates for the given service and month,
  * ordered by date ascending.

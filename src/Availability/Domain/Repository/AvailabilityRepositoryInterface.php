@@ -47,5 +47,9 @@ interface AvailabilityRepositoryInterface
         \DateTimeImmutable $localDate
     ): array;
 
-    public function isWithinProBusinessTime(int $proId, \DateTimeImmutable $proLocalDateTime): bool;
+    public function isServiceWithinProBusinessTime(
+        int $proId,
+        int $serviceId,
+        string $proLocalDateTime
+    ): bool;
 }

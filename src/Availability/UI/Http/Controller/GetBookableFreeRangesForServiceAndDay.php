@@ -10,7 +10,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * GET /api/pro-presentation/bookable-free-ranges-for-service-and-day?serviceId={serviceId}&localDate={YYYY-MM-DD}
- * See docs/future-improvements/standardize-public-client-route-prefix.md.
  *
  * Returns bookable local free ranges for the given service and local date,
  * ordered by start time ascending. The response end_time is the latest

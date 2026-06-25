@@ -10,7 +10,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * GET /api/pro-presentation/category/list?id={proId}
- * See docs/future-improvements/standardize-public-client-route-prefix.md.
  *
  * Returns the non-deleted service categories for the given professional profile,
  * ordered by category ID ascending.

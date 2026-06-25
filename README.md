@@ -33,7 +33,6 @@ ProfilePro applies a partial hexagonal (ports and adapters) approach. For exampl
 ## Architecture Decision Records (ADRs)
 
 This project includes Architecture Decision Records under `docs/adr`:
-- 0001: Consistent Validation Error Format
 - 0002: Prefer Single-Type Parameters and Properties
 - 0003: PSR-12 Coding Standard
 - 0004: DDD Scope (Full vs DDD-lite)
@@ -41,7 +40,7 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0006: Application Interfaces for External Concrete Classes
 - 0007: Remove Implemented Future-Improvement Docs
 - 0008: Avoid Unsolicited Data in Write Responses
-- 0009: DTO Validation and Command Handlers for Writes
+- 0009: Automatic Request Mapping to Commands and Queries
 - 0010: Monitor Comment ID Matches Monitor Doc ID
 - 0011: GET Endpoints Read Input From Query Parameters
 - 0012: ServiceCategory Owns Service Category Code
