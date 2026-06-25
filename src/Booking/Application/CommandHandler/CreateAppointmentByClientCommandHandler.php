@@ -7,6 +7,7 @@ use App\Booking\Application\Command\CreateAppointmentByClientCommand;
 use App\Booking\Application\Exception\AppointmentOverlapException;
 use App\Booking\Application\Exception\AppointmentStartDateTimeInPastException;
 use App\Booking\Application\Exception\OutsideProBusinessTimeException;
+use App\Booking\Application\Exception\ServiceDoesNotBelongToProException;
 use App\Booking\Application\Repository\Appointment\AppointmentRepositoryInterface;
 use App\Booking\Application\Repository\Appointment\OverlapRepositoryInterface;
 use App\ProfilePro\Public\Query\ProTimezoneQueryInterface;
@@ -25,7 +26,7 @@ final class CreateAppointmentByClientCommandHandler
     {
         // See docs/future-improvements/booking/book-0002-derive-pro-id-from-service-for-client-appointment.md.
         if (! $this->overlapRepository->doesServiceBelongsToPro($command->serviceId, $command->proId)) {
-            throw new \DomainException('Service does not belong to the pro.');
+            throw new ServiceDoesNotBelongToProException();
         }
 
         $proDateTimeWithLocalTz = new \DateTimeImmutable(
