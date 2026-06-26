@@ -12,7 +12,7 @@ final class ServiceCategoryListProPresentationQueryHandler
     }
 
     /**
-     * @return array<int, array{id: int, name: string}>
+     * @return array<int, array{id: int, name: string, services_count: int}>
      */
     public function __invoke(
         ServiceCategoryListProPresentationQuery $serviceCategoryListProPresentationQuery,

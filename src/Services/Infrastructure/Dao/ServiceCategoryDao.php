@@ -56,20 +56,35 @@ final class ServiceCategoryDao implements ServiceCategoryDaoInterface
     }
 
     /**
-     * @return array<int, array{id: int, name: string}>
+     * @return array<int, array{id: int, name: string, services_count: int}>
      */
     public function getListForProPresentation(int $proId): array
     {
-        return $this->connection->fetchAllAssociative(
-            'SELECT id, name FROM service_category '
-            . 'WHERE pro_id = :pro_id AND deleted_at IS NULL '
-            . 'ORDER BY id ASC',
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT sc.id, sc.name, COUNT(s.id) AS services_count '
+            . 'FROM service_category sc '
+            . 'LEFT JOIN service s ON s.category_id = sc.id '
+            . 'AND s.pro_id = sc.pro_id '
+            . 'AND s.deleted_at IS NULL '
+            . 'WHERE sc.pro_id = :pro_id '
+            . 'AND sc.deleted_at IS NULL '
+            . 'GROUP BY sc.id, sc.name '
+            . 'ORDER BY sc.id ASC',
             [
                 'pro_id' => $proId,
             ],
             [
                 'pro_id' => Types::INTEGER,
             ]
+        );
+
+        return array_map(
+            static fn (array $row): array => [
+                'id' => (int) $row['id'],
+                'name' => (string) $row['name'],
+                'services_count' => (int) $row['services_count'],
+            ],
+            $rows
         );
     }
 }

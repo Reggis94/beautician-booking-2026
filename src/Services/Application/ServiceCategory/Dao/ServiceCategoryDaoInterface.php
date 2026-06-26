@@ -9,7 +9,7 @@ interface ServiceCategoryDaoInterface
     public function doesBelongToPro(int $id, int $proId): bool;
 
     /**
-     * @return array<int, array{id: int, name: string}>
+     * @return array<int, array{id: int, name: string, services_count: int}>
      */
     public function getListForProPresentation(int $proId): array;
 }

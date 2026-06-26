@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * Query parameters:
  * - id: required integer professional profile ID.
  *
- * Successful response: array<int, array{id: int, name: string}>
+ * Successful response: array<int, array{id: int, name: string, services_count: int}>
  */
 #[Route('api/pro-presentation/category/list', name: 'category_pro_presentation', methods: ['GET'])]
 final class ListProPresentationPage
