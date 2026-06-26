@@ -53,14 +53,14 @@ final class OverlapRepository implements OverlapRepositoryInterface
                 WHERE a.pro_id = :pro_id
                   AND a.deleted_at IS NULL
                   AND requested_service.pro_id = :pro_id
-                  AND tstzrange(
+                  AND tsrange(
                         a.start_dt,
                         COALESCE(a.end_dt, a.start_dt),
                         \'[)\'
                       ) &&
-                      tstzrange(
-                        :start_dt::timestamptz,
-                        :start_dt::timestamptz + make_interval(mins => COALESCE(requested_service.duration_min, 1)),
+                      tsrange(
+                        :start_dt::timestamp,
+                        :start_dt::timestamp + make_interval(mins => COALESCE(requested_service.duration_min, 1)),
                         \'[)\'
                       )
                 LIMIT 1';
@@ -70,12 +70,12 @@ final class OverlapRepository implements OverlapRepositoryInterface
             [
                 'pro_id' => $proId,
                 'service_id' => $serviceId,
-                'start_dt' => $datetimeStart,
+                'start_dt' => $datetimeStart->format('Y-m-d H:i:s'),
             ],
             [
                 'pro_id' => Types::INTEGER,
                 'service_id' => Types::INTEGER,
-                'start_dt' => Types::DATETIME_IMMUTABLE,
+                'start_dt' => Types::STRING,
             ]
         );
     }
