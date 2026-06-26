@@ -152,8 +152,10 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
                 SELECT pc.pro_id,
                        pc.timezone_iana,
                        concrete_day::date AS local_date,
-                       ((concrete_day::date + av.start_time) AT TIME ZONE pc.timezone_iana) AS window_start,
-                       ((concrete_day::date + av.end_time) AT TIME ZONE pc.timezone_iana) AS window_end,
+                       (((concrete_day::date + av.start_time) AT TIME ZONE pc.timezone_iana)
+                           AT TIME ZONE 'UTC') AS window_start,
+                       (((concrete_day::date + av.end_time) AT TIME ZONE pc.timezone_iana)
+                           AT TIME ZONE 'UTC') AS window_end,
                        pc.duration_min
                 FROM availability av
                 CROSS JOIN pro_context pc
@@ -185,7 +187,7 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
                 INNER JOIN appointment a ON a.pro_id = aw.pro_id
                   AND a.deleted_at IS NULL
                 LEFT JOIN service booked_service ON booked_service.id = a.service_id
-                WHERE tstzrange(
+                WHERE tsrange(
                     a.start_dt,
                     COALESCE(
                         a.end_dt,
@@ -194,7 +196,7 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
                         )
                     ),
                     '[)'
-                ) && tstzrange(aw.window_start, aw.window_end, '[)')
+                ) && tsrange(aw.window_start, aw.window_end, '[)')
             ),
             clipped_appointments AS (
                 SELECT local_date, window_start, window_end, duration_min, busy_start, busy_end
@@ -320,8 +322,10 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
                 SELECT pc.pro_id,
                        pc.timezone_iana,
                        rd.local_date,
-                       ((rd.local_date + av.start_time) AT TIME ZONE pc.timezone_iana) AS window_start,
-                       ((rd.local_date + av.end_time) AT TIME ZONE pc.timezone_iana) AS window_end,
+                       (((rd.local_date + av.start_time) AT TIME ZONE pc.timezone_iana)
+                           AT TIME ZONE 'UTC') AS window_start,
+                       (((rd.local_date + av.end_time) AT TIME ZONE pc.timezone_iana)
+                           AT TIME ZONE 'UTC') AS window_end,
                        pc.duration_min
                 FROM availability av
                 CROSS JOIN pro_context pc
@@ -350,7 +354,7 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
                 INNER JOIN appointment a ON a.pro_id = aw.pro_id
                   AND a.deleted_at IS NULL
                 LEFT JOIN service booked_service ON booked_service.id = a.service_id
-                WHERE tstzrange(
+                WHERE tsrange(
                     a.start_dt,
                     COALESCE(
                         a.end_dt,
@@ -359,7 +363,7 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
                         )
                     ),
                     '[)'
-                ) && tstzrange(aw.window_start, aw.window_end, '[)')
+                ) && tsrange(aw.window_start, aw.window_end, '[)')
             ),
             clipped_appointments AS (
                 SELECT local_date,
@@ -444,9 +448,10 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
                 CROSS JOIN pro_context pc
             )
             SELECT local_date::text AS date,
-                   to_char(free_start AT TIME ZONE timezone_iana, 'HH24:MI') AS start_time,
+                   to_char((free_start AT TIME ZONE 'UTC') AT TIME ZONE timezone_iana, 'HH24:MI') AS start_time,
                    to_char(
-                       (free_end - make_interval(mins => duration_min)) AT TIME ZONE timezone_iana,
+                       ((free_end - make_interval(mins => duration_min)) AT TIME ZONE 'UTC')
+                           AT TIME ZONE timezone_iana,
                        'HH24:MI'
                    ) AS end_time,
                    FLOOR(EXTRACT(EPOCH FROM (free_end - free_start)) / 60)::int AS duration_min

@@ -26,6 +26,16 @@
                 <div class="service-categories__list" data-category-list></div>
             </section>
         {% endif %}
+
+        <div class="booking-modal" data-booking-modal hidden>
+            <div class="booking-modal__backdrop" data-booking-modal-close></div>
+            <div class="booking-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
+                <div class="booking-modal__loader" data-booking-modal-loader hidden></div>
+                <h2 class="booking-modal__title" id="booking-modal-title" data-booking-modal-title></h2>
+                <p class="booking-modal__message" data-booking-modal-message></p>
+                <button class="booking-modal__button" type="button" data-booking-modal-close>Close</button>
+            </div>
+        </div>
     </div>
 
     <style>
@@ -223,11 +233,73 @@
         .service-card__booking-status { color: #6c757d; margin: 0; }
         .service-card__booking-status.is-error { color: #dc3545; }
         .service-card__booking-status.is-success { color: #198754; }
+        .booking-modal {
+            align-items: center;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            left: 0;
+            padding: 1rem;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 1050;
+        }
+        .booking-modal[hidden] { display: none; }
+        .booking-modal__backdrop {
+            background: rgba(33, 37, 41, 0.55);
+            bottom: 0;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+        .booking-modal__dialog {
+            background: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
+            max-width: 28rem;
+            padding: 1.25rem;
+            position: relative;
+            width: 100%;
+        }
+        .booking-modal__loader {
+            animation: booking-modal-spin 0.8s linear infinite;
+            border: 0.25rem solid #dee2e6;
+            border-top-color: #0d6efd;
+            border-radius: 50%;
+            height: 2.25rem;
+            margin: 0 auto 1rem;
+            width: 2.25rem;
+        }
+        .booking-modal__title {
+            font-size: 1.25rem;
+            margin: 0 0 0.5rem;
+        }
+        .booking-modal__message {
+            color: #495057;
+            margin: 0;
+        }
+        .booking-modal__button {
+            background: #0d6efd;
+            border: 0;
+            border-radius: 0.375rem;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 1rem;
+            padding: 0.625rem 0.875rem;
+        }
+        .booking-modal__button[hidden] { display: none; }
+        @keyframes booking-modal-spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 
     <script>
         (() => {
             const section = document.querySelector('[data-category-list-url]');
+            const bookingModal = document.querySelector('[data-booking-modal]');
 
             if (!section) {
                 return;
@@ -235,6 +307,10 @@
 
             const list = section.querySelector('[data-category-list]');
             const status = section.querySelector('[data-category-status]');
+            const modalLoader = bookingModal.querySelector('[data-booking-modal-loader]');
+            const modalTitle = bookingModal.querySelector('[data-booking-modal-title]');
+            const modalMessage = bookingModal.querySelector('[data-booking-modal-message]');
+            const modalCloseButtons = bookingModal.querySelectorAll('[data-booking-modal-close]');
             const categoryListUrl = section.dataset.categoryListUrl;
             const serviceListUrl = section.dataset.serviceListUrl;
             const bookableDaysUrl = section.dataset.bookableDaysUrl;
@@ -247,6 +323,59 @@
                     status.textContent = message;
                 }
             };
+            const openBookingModal = (title, message, isLoading = false) => {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                modalLoader.hidden = !isLoading;
+                bookingModal.dataset.loading = isLoading ? 'true' : 'false';
+                bookingModal.hidden = false;
+
+                modalCloseButtons.forEach((button) => {
+                    button.hidden = isLoading && button.tagName === 'BUTTON';
+                });
+            };
+            const closeBookingModal = () => {
+                if (bookingModal.dataset.loading === 'true') {
+                    return;
+                }
+
+                bookingModal.hidden = true;
+            };
+            const showBookingLoader = () => {
+                openBookingModal('Booking appointment', 'Please wait while we confirm this slot.', true);
+            };
+            const showBookingSuccess = () => {
+                openBookingModal(
+                    'Appointment booked',
+                    'The appointment has been booked successfully and an email has been sent to the customer.'
+                );
+            };
+            const showSlotUnavailable = () => {
+                openBookingModal(
+                    'Slot no longer available',
+                    'This slot is no more available. Please choose another time.'
+                );
+            };
+            const showBookingRetry = () => {
+                openBookingModal(
+                    'Booking failed',
+                    'We could not book the appointment. Please retry.'
+                );
+            };
+            const isSlotUnavailableResponse = (response, data) => {
+                const error = String(data.error || '').toLowerCase();
+
+                return response.status === 409
+                    && (
+                        error.includes('overlap')
+                        || error.includes('outside')
+                        || error.includes('opening hours')
+                    );
+            };
+
+            modalCloseButtons.forEach((button) => {
+                button.addEventListener('click', closeBookingModal);
+            });
 
             const pluralizeServices = (count) => count > 1 ? 'services' : 'service';
             const formatDuration = (durationMin) => {
@@ -346,7 +475,7 @@
                 return `${bookableRangesUrl}?${params.toString()}`;
             };
             const buildLocalStartDateTime = (localDate, startTime) => {
-                return `${localDate}T${startTime}:00`;
+                return `${localDate} ${startTime}:00`;
             };
             const parseTimeToMinutes = (time) => {
                 const [hours, minutes] = String(time).split(':').map(Number);
@@ -423,9 +552,9 @@
                 });
 
                 bookingForm.hidden = false;
-                bookingForm.elements.pro_id.value = String(proId);
-                bookingForm.elements.service_id.value = String(service.id);
-                bookingForm.elements.start_dt.value = buildLocalStartDateTime(localDate, startTime);
+                bookingForm.elements.proId.value = String(proId);
+                bookingForm.elements.serviceId.value = String(service.id);
+                bookingForm.elements.startDateTimeLocal.value = buildLocalStartDateTime(localDate, startTime);
                 bookingTitle.textContent = `Book ${formatSelectedAppointment(localDate, startTime)}`;
                 bookingStatus.textContent = '';
                 bookingStatus.classList.remove('is-error', 'is-success');
@@ -435,18 +564,23 @@
 
                 const bookingForm = event.currentTarget;
                 const submitButton = bookingForm.querySelector('[data-booking-submit]');
-                const bookingStatus = bookingForm.querySelector('[data-booking-status]');
+
+                if (bookingForm.dataset.submitting === 'true') {
+                    return;
+                }
+
                 const payload = {
                     email: bookingForm.elements.email.value.trim(),
-                    first_name: bookingForm.elements.first_name.value.trim(),
-                    last_name: bookingForm.elements.last_name.value.trim(),
-                    pro_id: Number(bookingForm.elements.pro_id.value),
-                    service_id: Number(bookingForm.elements.service_id.value),
-                    start_dt: bookingForm.elements.start_dt.value,
+                    extraPhone: bookingForm.elements.extraPhone.value.trim(),
+                    firstName: bookingForm.elements.firstName.value.trim(),
+                    lastName: bookingForm.elements.lastName.value.trim(),
+                    proId: Number(bookingForm.elements.proId.value),
+                    serviceId: Number(bookingForm.elements.serviceId.value),
+                    startDateTimeLocal: bookingForm.elements.startDateTimeLocal.value,
                 };
 
-                bookingStatus.textContent = 'Booking appointment...';
-                bookingStatus.classList.remove('is-error', 'is-success');
+                showBookingLoader();
+                bookingForm.dataset.submitting = 'true';
                 submitButton.disabled = true;
 
                 fetch(createAppointmentUrl, {
@@ -459,25 +593,28 @@
                 })
                     .then((response) => {
                         if (response.status === 201) {
-                            return null;
+                            showBookingSuccess();
+                            return;
                         }
 
                         return response.json()
                             .catch(() => ({}))
                             .then((data) => {
-                                throw new Error(data.error || 'Appointment booking failed.');
+                                if (isSlotUnavailableResponse(response, data)) {
+                                    showSlotUnavailable();
+                                    return;
+                                }
+
+                                showBookingRetry();
                             });
                     })
-                    .then(() => {
-                        bookingStatus.textContent = 'Appointment booked.';
-                        bookingStatus.classList.add('is-success');
-                    })
-                    .catch((error) => {
-                        bookingStatus.textContent = error.message;
-                        bookingStatus.classList.add('is-error');
+                    .catch(() => {
+                        showBookingRetry();
                     })
                     .finally(() => {
+                        delete bookingForm.dataset.submitting;
                         submitButton.disabled = false;
+                        loadCategories();
                     });
             };
             const loadBookableSlots = (service, availabilityPanel, dayButton) => {
@@ -735,15 +872,15 @@
                 bookingTitle.dataset.bookingFormTitle = '';
 
                 const proIdInput = document.createElement('input');
-                proIdInput.name = 'pro_id';
+                proIdInput.name = 'proId';
                 proIdInput.type = 'hidden';
 
                 const serviceIdInput = document.createElement('input');
-                serviceIdInput.name = 'service_id';
+                serviceIdInput.name = 'serviceId';
                 serviceIdInput.type = 'hidden';
 
                 const startDateTimeInput = document.createElement('input');
-                startDateTimeInput.name = 'start_dt';
+                startDateTimeInput.name = 'startDateTimeLocal';
                 startDateTimeInput.type = 'hidden';
 
                 const bookingFields = document.createElement('div');
@@ -758,7 +895,7 @@
                 const lastNameInput = document.createElement('input');
                 lastNameInput.autocomplete = 'family-name';
                 lastNameInput.maxLength = 50;
-                lastNameInput.name = 'last_name';
+                lastNameInput.name = 'lastName';
                 lastNameInput.required = true;
                 lastNameInput.type = 'text';
 
@@ -773,7 +910,7 @@
                 const firstNameInput = document.createElement('input');
                 firstNameInput.autocomplete = 'given-name';
                 firstNameInput.maxLength = 50;
-                firstNameInput.name = 'first_name';
+                firstNameInput.name = 'firstName';
                 firstNameInput.required = true;
                 firstNameInput.type = 'text';
 
@@ -792,7 +929,23 @@
                 emailInput.type = 'email';
 
                 emailField.append(emailLabel, emailInput);
-                bookingFields.append(lastNameField, firstNameField, emailField);
+
+                const phoneField = document.createElement('div');
+                phoneField.className = 'service-card__booking-field';
+
+                const phoneLabel = document.createElement('label');
+                phoneLabel.textContent = 'Phone number';
+
+                const phoneInput = document.createElement('input');
+                phoneInput.autocomplete = 'tel';
+                phoneInput.maxLength = 30;
+                phoneInput.minLength = 7;
+                phoneInput.name = 'extraPhone';
+                phoneInput.required = true;
+                phoneInput.type = 'tel';
+
+                phoneField.append(phoneLabel, phoneInput);
+                bookingFields.append(lastNameField, firstNameField, emailField, phoneField);
 
                 const bookingSubmit = document.createElement('button');
                 bookingSubmit.className = 'service-card__booking-submit';
@@ -876,6 +1029,17 @@
                         servicesPanel.textContent = 'Cannot load services.';
                     });
             };
+            const closeCategoryItem = (categoryItem) => {
+                const categoryToggle = categoryItem.querySelector('.service-category__toggle');
+                const categoryArrow = categoryItem.querySelector('.service-category__arrow');
+                const categoryServicesPanel = categoryItem.querySelector('.service-category__services');
+
+                categoryToggle.setAttribute('aria-expanded', 'false');
+                categoryArrow.textContent = '>';
+                categoryServicesPanel.hidden = true;
+                categoryServicesPanel.replaceChildren();
+                delete categoryServicesPanel.dataset.loaded;
+            };
             const createCategoryItem = (category) => {
                 const item = document.createElement('article');
                 item.className = 'service-category';
@@ -913,11 +1077,15 @@
                     const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
 
                     if (isExpanded) {
-                        toggle.setAttribute('aria-expanded', 'false');
-                        arrow.textContent = '>';
-                        servicesPanel.hidden = true;
+                        closeCategoryItem(item);
                         return;
                     }
+
+                    list.querySelectorAll('.service-category').forEach((categoryItem) => {
+                        if (categoryItem !== item) {
+                            closeCategoryItem(categoryItem);
+                        }
+                    });
 
                     toggle.setAttribute('aria-expanded', 'true');
                     arrow.textContent = 'v';
@@ -933,33 +1101,45 @@
                 return item;
             };
 
-            fetch(categoryListUrl, {
-                headers: {
-                    'Accept': 'application/json',
-                },
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error('Category list request failed.');
-                    }
+            const loadCategories = () => {
+                if (!status || !status.isConnected) {
+                    list.textContent = 'Loading categories...';
+                } else {
+                    list.replaceChildren();
+                }
 
-                    return response.json();
+                return fetch(categoryListUrl, {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
                 })
-                .then((categories) => {
-                    if (!Array.isArray(categories) || categories.length === 0) {
-                        setStatus('No category list available');
-                        return;
-                    }
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error('Category list request failed.');
+                        }
 
-                    if (status) {
-                        status.remove();
-                    }
+                        return response.json();
+                    })
+                    .then((categories) => {
+                        if (!Array.isArray(categories) || categories.length === 0) {
+                            list.textContent = 'No category list available';
+                            setStatus('No category list available');
+                            return;
+                        }
 
-                    list.replaceChildren(...categories.map(createCategoryItem));
-                })
-                .catch(() => {
-                    setStatus('Cannot load categories');
-                });
+                        if (status) {
+                            status.remove();
+                        }
+
+                        list.replaceChildren(...categories.map(createCategoryItem));
+                    })
+                    .catch(() => {
+                        list.textContent = 'Cannot load categories';
+                        setStatus('Cannot load categories');
+                    });
+            };
+
+            loadCategories();
         })();
     </script>
 {% endblock %}
