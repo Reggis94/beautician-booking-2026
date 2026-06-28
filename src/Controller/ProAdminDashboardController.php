@@ -10,26 +10,67 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProAdminDashboardController extends AbstractController
 {
+    /**
+     * ProAdmin landing page.
+     *
+     * Temporary fake-data route for previewing the professional dashboard shell.
+     * Defaults to the upcoming appointments view until real ProAdmin navigation
+     * and read models are connected.
+     */
     #[Route('/pro/dashboard', name: 'pro_admin_dashboard', methods: ['GET'])]
+    public function dashboard(): Response
+    {
+        return $this->renderDashboard('upcoming');
+    }
+
+    /**
+     * ProAdmin upcoming appointments page.
+     *
+     * Temporary fake-data route for previewing future appointments managed by
+     * the professional.
+     */
     #[Route(
         '/pro/dashboard/upcoming',
         name: 'pro_admin_appointments_upcoming',
-        defaults: ['activeTab' => 'upcoming'],
         methods: ['GET']
     )]
+    public function upcomingAppointments(): Response
+    {
+        return $this->renderDashboard('upcoming');
+    }
+
+    /**
+     * ProAdmin past appointments page.
+     *
+     * Temporary fake-data route for previewing appointment history managed by
+     * the professional.
+     */
     #[Route(
         '/pro/dashboard/past',
         name: 'pro_admin_appointments_past',
-        defaults: ['activeTab' => 'past'],
         methods: ['GET']
     )]
+    public function pastAppointments(): Response
+    {
+        return $this->renderDashboard('past');
+    }
+
+    /**
+     * ProAdmin services page.
+     *
+     * Temporary fake-data route for previewing service management.
+     */
     #[Route(
         '/pro/dashboard/services',
         name: 'pro_admin_services_index',
-        defaults: ['activeTab' => 'services'],
         methods: ['GET']
     )]
-    public function index(string $activeTab = 'upcoming'): Response
+    public function services(): Response
+    {
+        return $this->renderDashboard('services');
+    }
+
+    private function renderDashboard(string $activeTab): Response
     {
         return $this->render('pro_admin/dashboard.html.twig', [
             'activeTab' => $activeTab,

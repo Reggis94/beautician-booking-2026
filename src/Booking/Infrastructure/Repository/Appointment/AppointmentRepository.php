@@ -36,6 +36,34 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
         );
     }
 
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminUpcomingAppointments(int $proId): array
+    {
+        return $this->listProAdminAppointments($proId, true);
+    }
+
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminPastAppointments(int $proId): array
+    {
+        return $this->listProAdminAppointments($proId, false);
+    }
+
     public function createFromClient(
         int $proId,
         int $serviceId,
@@ -86,5 +114,67 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
                 'phone' => Types::STRING,
             ]
         );
+    }
+
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    private function listProAdminAppointments(int $proId, bool $upcoming): array
+    {
+        $dateComparison = $upcoming ? 'a.start_dt >= NOW()' : 'a.start_dt < NOW()';
+        $orderDirection = $upcoming ? 'ASC' : 'DESC';
+
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT a.id,
+                    TRIM(CONCAT(COALESCE(a.first_name, \'\'), \' \', COALESCE(a.last_name, \'\'))) AS client_name,
+                    s.name AS service_name,
+                    a.start_dt AS start_at,
+                    CASE
+                        WHEN a.end_dt IS NULL THEN s.duration_min
+                        ELSE CAST(EXTRACT(EPOCH FROM (a.end_dt - a.start_dt)) / 60 AS INTEGER)
+                    END AS duration_minutes
+             FROM appointment a
+             LEFT JOIN service s ON s.id = a.service_id AND s.pro_id = a.pro_id
+             WHERE a.pro_id = :pro_id
+               AND a.deleted_at IS NULL
+               AND ' . $dateComparison . '
+             ORDER BY a.start_dt ' . $orderDirection . ', a.id ' . $orderDirection,
+            [
+                'pro_id' => $proId,
+            ],
+            [
+                'pro_id' => Types::INTEGER,
+            ]
+        );
+
+        return array_map(
+            static fn (array $row): array => [
+                'client_name' => $row['client_name'] !== '' ? $row['client_name'] : 'Unknown client',
+                'duration_minutes' => $row['duration_minutes'] !== null ? (int) $row['duration_minutes'] : null,
+                'id' => (int) $row['id'],
+                'service_name' => $row['service_name'],
+                'start_at' => self::formatDateTime($row['start_at']),
+            ],
+            $rows
+        );
+    }
+
+    private static function formatDateTime(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format(\DateTimeInterface::ATOM);
+        }
+
+        return (new \DateTimeImmutable((string) $value))->format(\DateTimeInterface::ATOM);
     }
 }

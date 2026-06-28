@@ -12,6 +12,28 @@ interface AppointmentRepositoryInterface
 
     public function lockProAppointments(int $proId): void;
 
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminUpcomingAppointments(int $proId): array;
+
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminPastAppointments(int $proId): array;
+
     public function createFromClient(
         int $proId,
         int $serviceId,

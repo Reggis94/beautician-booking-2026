@@ -27,6 +27,17 @@ interface ServiceDaoInterface
     ): void;
 
     /**
+     * @return list<array{
+     *     id: int,
+     *     name: string,
+     *     duration_minutes: ?int,
+     *     price_cents: ?int,
+     *     currency: string
+     * }>
+     */
+    public function listProAdminServices(int $proId): array;
+
+    /**
      * @return array<int, array{
      *     id: int,
      *     name: string,
