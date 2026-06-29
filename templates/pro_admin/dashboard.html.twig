@@ -4,7 +4,7 @@
     - upcomingAppointments: Appointment[]  (date >= today, ordered ASC)
     - pastAppointments:     Appointment[]  (date < today,  ordered DESC)
     - services:             Service[]
-    - activeTab:            string  ('upcoming'|'past'|'services')  default 'upcoming'
+    - activeTab:            string  ('upcoming'|'past'|'services'|'opening_hours')  default 'upcoming'
   Each Appointment has:
     - id, clientName, clientPhone, serviceName, date (DateTime), durationMinutes
   Each Service has:
@@ -596,6 +596,14 @@
       </svg>
       Services
     </a>
+    <a href="{{ path('pro_admin_opening_hours') }}"
+       class="{{ activeTab == 'opening_hours' ? 'active' : '' }}"
+       aria-current="{{ activeTab == 'opening_hours' ? 'page' : 'false' }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="6.5"/><path d="M8 3v5h4"/>
+      </svg>
+      Opening hours
+    </a>
   </nav>
 
   <div class="sidebar-footer">
@@ -638,7 +646,7 @@
         {% endif %}
 
         <div class="appt-row" id="appt-{{ appt.id }}">
-          <span class="appt-time">{{ appt.date|date('H:i') }}</span>
+          <span class="appt-time">{{ appt.date|date('g:i A') }}</span>
 
           <div class="appt-info">
             <p class="appt-client">{{ appt.clientName }}</p>
@@ -700,7 +708,7 @@
         {% endif %}
 
         <div class="appt-row past">
-          <span class="appt-time">{{ appt.date|date('H:i') }}</span>
+          <span class="appt-time">{{ appt.date|date('g:i A') }}</span>
           <div class="appt-info">
             <p class="appt-client">{{ appt.clientName }}</p>
             <p class="appt-meta">

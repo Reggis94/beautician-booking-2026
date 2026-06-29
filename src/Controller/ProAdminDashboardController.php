@@ -5,6 +5,7 @@ namespace App\Controller;
 use DateTimeImmutable;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -70,6 +71,36 @@ final class ProAdminDashboardController extends AbstractController
         return $this->renderDashboard('services');
     }
 
+    /**
+     * ProAdmin opening hours page.
+     *
+     * Temporary fake-data route for previewing opening hours management until
+     * the page is connected to the Availability domain read/write models.
+     */
+    #[Route(
+        '/pro/dashboard/opening-hours',
+        name: 'pro_admin_opening_hours',
+        methods: ['GET']
+    )]
+    public function openingHours(Request $request): Response
+    {
+        $currentMonth = $this->resolveCurrentMonth($request->query->get('month'));
+        $prevMonth = $currentMonth->modify('-1 month');
+        $nextMonth = $currentMonth->modify('+1 month');
+
+        return $this->render('pro_admin/opening_hours.html.twig', [
+            'currentMonth' => $currentMonth,
+            'daysInMonth' => (int) $currentMonth->format('t'),
+            'firstWeekdayOffset' => ((int) $currentMonth->format('N')) - 1,
+            'nextMonth' => $nextMonth,
+            'openingHours' => $this->fakeOpeningHours($currentMonth),
+            'openingHoursPath' => $this->generateUrl('pro_admin_opening_hours'),
+            'prevMonth' => $prevMonth,
+            'saveOpeningHoursUrlTemplate' => '/pro/dashboard/opening-hours/__date__',
+            'today' => (new DateTimeImmutable())->format('Y-m-d'),
+        ]);
+    }
+
     private function renderDashboard(string $activeTab): Response
     {
         return $this->render('pro_admin/dashboard.html.twig', [
@@ -84,6 +115,50 @@ final class ProAdminDashboardController extends AbstractController
     public function logout(): void
     {
         throw new LogicException('This route is intercepted by the security firewall logout handler.');
+    }
+
+    private function resolveCurrentMonth(?string $month): DateTimeImmutable
+    {
+        if ($month === null || $month === '') {
+            return new DateTimeImmutable('first day of this month');
+        }
+
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $month . '-01');
+
+        if (!$date instanceof DateTimeImmutable) {
+            return new DateTimeImmutable('first day of this month');
+        }
+
+        return $date;
+    }
+
+    /**
+     * @return array<string, array{isOpen: bool, openTime: string, closeTime: string}>
+     */
+    private function fakeOpeningHours(DateTimeImmutable $currentMonth): array
+    {
+        $openingHours = [];
+        $daysInMonth = (int) $currentMonth->format('t');
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = $currentMonth->setDate(
+                (int) $currentMonth->format('Y'),
+                (int) $currentMonth->format('m'),
+                $day
+            );
+            $weekday = (int) $date->format('N');
+            $isOpen = $weekday <= 6;
+            $openTime = $weekday === 6 ? '10:00' : '09:00';
+            $closeTime = $weekday === 6 ? '15:00' : '18:00';
+
+            $openingHours[$date->format('Y-m-d')] = [
+                'closeTime' => $closeTime,
+                'isOpen' => $isOpen,
+                'openTime' => $openTime,
+            ];
+        }
+
+        return $openingHours;
     }
 
     /**

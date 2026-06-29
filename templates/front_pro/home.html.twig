@@ -326,8 +326,16 @@
                     weekday: 'short',
                 }).format(date);
             };
+            const formatTimeWithMeridiem = (time) => {
+                const [hours, minutes] = String(time).split(':').map(Number);
+                const period = hours >= 12 ? 'PM' : 'AM';
+                const displayHours = hours % 12 || 12;
+                const displayMinutes = String(minutes).padStart(2, '0');
+
+                return `${displayHours}:${displayMinutes} ${period}`;
+            };
             const formatSelectedAppointment = (localDate, startTime) => {
-                return `${formatBookableDay(localDate)} at ${startTime}`;
+                return `${formatBookableDay(localDate)} at ${formatTimeWithMeridiem(startTime)}`;
             };
             const buildBookableDaysUrl = (serviceId, yearMonth) => {
                 const params = new URLSearchParams({
@@ -526,7 +534,7 @@
                             const slotButton = document.createElement('button');
                             slotButton.className = 'service-card__availability-slot';
                             slotButton.type = 'button';
-                            slotButton.textContent = slot;
+                            slotButton.textContent = formatTimeWithMeridiem(slot);
                             slotButton.dataset.localDate = localDate;
                             slotButton.dataset.startTime = slot;
                             slotButton.addEventListener('click', () => {
