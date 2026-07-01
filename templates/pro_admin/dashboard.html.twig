@@ -8,7 +8,7 @@
   Each Appointment has:
     - id, clientName, clientPhone, serviceName, date (DateTime), durationMinutes
   Each Service has:
-    - id, name, durationMinutes, price
+    - id, name, description, durationMinutes, price
 #}
 <!DOCTYPE html>
 <html lang="en">
@@ -304,6 +304,12 @@
       color: var(--mid);
       display: flex;
       gap: 14px;
+    }
+    .service-description {
+      color: var(--warm-grey);
+      font-size: 13px;
+      line-height: 1.55;
+      margin-top: 10px;
     }
     .service-price {
       font-family: var(--serif);
@@ -746,6 +752,7 @@
           <p class="service-meta">
             <span>{{ service.durationMinutes }} min</span>
           </p>
+          <p class="service-description">{{ service.description }}</p>
           <p class="service-price">${{ service.price }}</p>
         </div>
         {% endfor %}

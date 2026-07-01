@@ -236,30 +236,34 @@ final class ProAdminDashboardController extends AbstractController
     }
 
     /**
-     * @return list<array{id: int, name: string, durationMinutes: int, price: string}>
+     * @return list<array{id: int, name: string, description: string, durationMinutes: int, price: string}>
      */
     private function fakeServices(): array
     {
         return [
             [
+                'description' => 'A tailored skin refresh with gentle cleansing, exfoliation, and finishing care for a soft glow.',
                 'durationMinutes' => 60,
                 'id' => 301,
                 'name' => 'Signature facial',
                 'price' => '95',
             ],
             [
+                'description' => 'Precise shaping and detailing to define the brows while keeping a natural, polished look.',
                 'durationMinutes' => 45,
                 'id' => 302,
                 'name' => 'Brow shaping',
                 'price' => '42',
             ],
             [
+                'description' => 'Gloss treatment and styling designed to smooth the hair, boost shine, and finish the look.',
                 'durationMinutes' => 90,
                 'id' => 303,
                 'name' => 'Hair gloss and styling',
                 'price' => '135',
             ],
             [
+                'description' => 'Personalized makeup application for an elegant finish suited to the client and occasion.',
                 'durationMinutes' => 75,
                 'id' => 304,
                 'name' => 'Makeup session',
