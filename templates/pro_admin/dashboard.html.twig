@@ -574,11 +574,11 @@
         <path d="M4 7h16M4 12h16M4 17h16"/>
       </svg>
     </button>
-    <a href="{{ path('pro_admin_dashboard') }}" class="sidebar-logo">Glam<span>4Style</span></a>
+    <a href="{{ path('demo_pro_admin_dashboard') }}" class="sidebar-logo">Glam<span>4Style</span></a>
   </div>
 
   <nav class="sidebar-nav" id="dashboardNav">
-    <a href="{{ path('pro_admin_appointments_upcoming') }}"
+    <a href="{{ path('demo_pro_admin_appointments_upcoming') }}"
        class="{{ activeTab == 'upcoming' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'upcoming' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -586,7 +586,7 @@
       </svg>
       Upcoming
     </a>
-    <a href="{{ path('pro_admin_appointments_past') }}"
+    <a href="{{ path('demo_pro_admin_appointments_past') }}"
        class="{{ activeTab == 'past' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'past' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -594,7 +594,7 @@
       </svg>
       Past
     </a>
-    <a href="{{ path('pro_admin_services_index') }}"
+    <a href="{{ path('demo_pro_admin_services_index') }}"
        class="{{ activeTab == 'services' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'services' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -602,7 +602,7 @@
       </svg>
       Services
     </a>
-    <a href="{{ path('pro_admin_opening_hours') }}"
+    <a href="{{ path('demo_pro_admin_opening_hours') }}"
        class="{{ activeTab == 'opening_hours' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'opening_hours' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -610,10 +610,16 @@
       </svg>
       Opening hours
     </a>
+    <a href="{{ path('demo_front_pro_home') }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M2 8.5L8 3l6 5.5"/><path d="M4 7.5V14h8V7.5"/>
+      </svg>
+      Front end
+    </a>
   </nav>
 
   <div class="sidebar-footer">
-    <a href="{{ path('app_logout') }}" class="logout-btn">
+    <a href="#" class="logout-btn" data-demo-logout>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
       </svg>
@@ -647,7 +653,7 @@
         {% if apptDay != currentDay %}
           {% if currentDay is not null %}</div>{% endif %}
           <div class="day-group">
-          <p class="day-label">{{ appt.date|date('l, d MMMM') }}</p>
+          <p class="day-label">{{ appt.date|date('l, d F Y') }}</p>
           {% set currentDay = apptDay %}
         {% endif %}
 
@@ -709,7 +715,7 @@
         {% if apptDay != currentDay %}
           {% if currentDay is not null %}</div>{% endif %}
           <div class="day-group">
-          <p class="day-label">{{ appt.date|date('l, d MMMM') }}</p>
+          <p class="day-label">{{ appt.date|date('l, d F Y') }}</p>
           {% set currentDay = apptDay %}
         {% endif %}
 
@@ -827,6 +833,7 @@
 <script>
   const sidebar = document.querySelector('.sidebar');
   const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
+  const demoLogout = document.querySelector('[data-demo-logout]');
 
   if (sidebar && mobileMenuToggle) {
     mobileMenuToggle.addEventListener('click', () => {
@@ -834,6 +841,12 @@
 
       mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
       mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+    });
+  }
+
+  if (demoLogout) {
+    demoLogout.addEventListener('click', e => {
+      e.preventDefault();
     });
   }
 
@@ -848,8 +861,7 @@
     editTitle.textContent = 'Update ' + clientName + '\'s appointment';
     editDateEl.value      = datetime;
     editDurEl.value       = duration;
-    // Route generated server-side; build dynamically from a data attribute or template
-    editForm.action = '/appointments/' + id + '/edit'; // adjust to match your Symfony route
+    editForm.action = window.location.pathname + '#demo-edit-' + id;
     editModal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -868,7 +880,7 @@
     deleteWarning.textContent =
       'This will permanently remove ' + clientName + '\'s appointment. '
       + 'Your client will not be notified automatically — reach out to them directly if needed.';
-    deleteForm.action = '/appointments/' + id; // adjust to match your Symfony DELETE route
+    deleteForm.action = window.location.pathname + '#demo-delete-' + id;
     deleteModal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -894,6 +906,16 @@
       closeEditModal();
       closeDeleteModal();
     }
+  });
+
+  editForm.addEventListener('submit', e => {
+    e.preventDefault();
+    closeEditModal();
+  });
+
+  deleteForm.addEventListener('submit', e => {
+    e.preventDefault();
+    closeDeleteModal();
   });
 </script>
 </body>

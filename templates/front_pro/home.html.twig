@@ -354,7 +354,7 @@
                 return `${bookableRangesUrl}?${params.toString()}`;
             };
             const buildLocalStartDateTime = (localDate, startTime) => {
-                return `${localDate}T${startTime}:00`;
+                return `${localDate} ${startTime}:00`;
             };
             const parseTimeToMinutes = (time) => {
                 const [hours, minutes] = String(time).split(':').map(Number);
@@ -431,9 +431,9 @@
                 });
 
                 bookingForm.hidden = false;
-                bookingForm.elements.pro_id.value = String(proId);
-                bookingForm.elements.service_id.value = String(service.id);
-                bookingForm.elements.start_dt.value = buildLocalStartDateTime(localDate, startTime);
+                bookingForm.elements.proId.value = String(proId);
+                bookingForm.elements.serviceId.value = String(service.id);
+                bookingForm.elements.startDateTimeLocal.value = buildLocalStartDateTime(localDate, startTime);
                 bookingTitle.textContent = `Book ${formatSelectedAppointment(localDate, startTime)}`;
                 bookingStatus.textContent = '';
                 bookingStatus.classList.remove('is-error', 'is-success');
@@ -446,11 +446,12 @@
                 const bookingStatus = bookingForm.querySelector('[data-booking-status]');
                 const payload = {
                     email: bookingForm.elements.email.value.trim(),
-                    first_name: bookingForm.elements.first_name.value.trim(),
-                    last_name: bookingForm.elements.last_name.value.trim(),
-                    pro_id: Number(bookingForm.elements.pro_id.value),
-                    service_id: Number(bookingForm.elements.service_id.value),
-                    start_dt: bookingForm.elements.start_dt.value,
+                    extraPhone: bookingForm.elements.extraPhone.value.trim(),
+                    firstName: bookingForm.elements.firstName.value.trim(),
+                    lastName: bookingForm.elements.lastName.value.trim(),
+                    proId: Number(bookingForm.elements.proId.value),
+                    serviceId: Number(bookingForm.elements.serviceId.value),
+                    startDateTimeLocal: bookingForm.elements.startDateTimeLocal.value,
                 };
 
                 bookingStatus.textContent = 'Booking appointment...';
@@ -743,15 +744,15 @@
                 bookingTitle.dataset.bookingFormTitle = '';
 
                 const proIdInput = document.createElement('input');
-                proIdInput.name = 'pro_id';
+                proIdInput.name = 'proId';
                 proIdInput.type = 'hidden';
 
                 const serviceIdInput = document.createElement('input');
-                serviceIdInput.name = 'service_id';
+                serviceIdInput.name = 'serviceId';
                 serviceIdInput.type = 'hidden';
 
                 const startDateTimeInput = document.createElement('input');
-                startDateTimeInput.name = 'start_dt';
+                startDateTimeInput.name = 'startDateTimeLocal';
                 startDateTimeInput.type = 'hidden';
 
                 const bookingFields = document.createElement('div');
@@ -766,7 +767,7 @@
                 const lastNameInput = document.createElement('input');
                 lastNameInput.autocomplete = 'family-name';
                 lastNameInput.maxLength = 50;
-                lastNameInput.name = 'last_name';
+                lastNameInput.name = 'lastName';
                 lastNameInput.required = true;
                 lastNameInput.type = 'text';
 
@@ -781,7 +782,7 @@
                 const firstNameInput = document.createElement('input');
                 firstNameInput.autocomplete = 'given-name';
                 firstNameInput.maxLength = 50;
-                firstNameInput.name = 'first_name';
+                firstNameInput.name = 'firstName';
                 firstNameInput.required = true;
                 firstNameInput.type = 'text';
 
@@ -800,7 +801,23 @@
                 emailInput.type = 'email';
 
                 emailField.append(emailLabel, emailInput);
-                bookingFields.append(lastNameField, firstNameField, emailField);
+
+                const phoneField = document.createElement('div');
+                phoneField.className = 'service-card__booking-field';
+
+                const phoneLabel = document.createElement('label');
+                phoneLabel.textContent = 'Phone';
+
+                const phoneInput = document.createElement('input');
+                phoneInput.autocomplete = 'tel';
+                phoneInput.maxLength = 30;
+                phoneInput.minLength = 7;
+                phoneInput.name = 'extraPhone';
+                phoneInput.required = true;
+                phoneInput.type = 'tel';
+
+                phoneField.append(phoneLabel, phoneInput);
+                bookingFields.append(lastNameField, firstNameField, emailField, phoneField);
 
                 const bookingSubmit = document.createElement('button');
                 bookingSubmit.className = 'service-card__booking-submit';

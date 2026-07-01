@@ -14,9 +14,9 @@
     - today: string 'Y-m-d'
 
   Optional frontend URL placeholders:
-    - openingHoursPath: string default '/pro/dashboard/opening-hours'
+    - openingHoursPath: string default '/demo/pro/dashboard/opening-hours'
     - saveOpeningHoursUrlTemplate: string containing '__date__'
-      default '/pro/dashboard/opening-hours/__date__'
+      default '/demo/pro/dashboard/opening-hours/__date__'
 #}
 <!DOCTYPE html>
 <html lang="en">
@@ -610,8 +610,8 @@
 {% set firstWeekdayOffset = firstWeekdayOffset|default((currentMonth|date('N')) - 1) %}
 {% set daysInMonth = daysInMonth|default(currentMonth|date('t')) %}
 {% set today = today|default('now'|date('Y-m-d')) %}
-{% set openingHoursPath = openingHoursPath|default('/pro/dashboard/opening-hours') %}
-{% set saveOpeningHoursUrlTemplate = saveOpeningHoursUrlTemplate|default('/pro/dashboard/opening-hours/__date__') %}
+{% set openingHoursPath = openingHoursPath|default('/demo/pro/dashboard/opening-hours') %}
+{% set saveOpeningHoursUrlTemplate = saveOpeningHoursUrlTemplate|default('/demo/pro/dashboard/opening-hours/__date__') %}
 
 <aside class="sidebar" role="navigation" aria-label="Main navigation">
   <div class="sidebar-header">
@@ -627,38 +627,44 @@
         <path d="M4 7h16M4 12h16M4 17h16"/>
       </svg>
     </button>
-    <a href="{{ path('pro_admin_dashboard') }}" class="sidebar-logo">Glam<span>4Style</span></a>
+    <a href="{{ path('demo_pro_admin_dashboard') }}" class="sidebar-logo">Glam<span>4Style</span></a>
   </div>
 
   <nav class="sidebar-nav" id="dashboardNav">
-    <a href="{{ path('pro_admin_appointments_upcoming') }}">
+    <a href="{{ path('demo_pro_admin_appointments_upcoming') }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <rect x="1" y="3" width="14" height="12" rx="1"/><path d="M5 1v4M11 1v4M1 7h14"/>
       </svg>
       Upcoming
     </a>
-    <a href="{{ path('pro_admin_appointments_past') }}">
+    <a href="{{ path('demo_pro_admin_appointments_past') }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <circle cx="8" cy="8" r="6.5"/><path d="M8 5v3.5l2.5 1.5"/>
       </svg>
       Past
     </a>
-    <a href="{{ path('pro_admin_services_index') }}">
+    <a href="{{ path('demo_pro_admin_services_index') }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <path d="M2 4h12M2 8h8M2 12h10"/>
       </svg>
       Services
     </a>
-    <a href="{{ openingHoursPath|default('/pro/dashboard/opening-hours') }}" class="active" aria-current="page">
+    <a href="{{ openingHoursPath|default('/demo/pro/dashboard/opening-hours') }}" class="active" aria-current="page">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <circle cx="8" cy="8" r="6.5"/><path d="M8 3v5h4"/>
       </svg>
       Opening hours
     </a>
+    <a href="{{ path('demo_front_pro_home') }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M2 8.5L8 3l6 5.5"/><path d="M4 7.5V14h8V7.5"/>
+      </svg>
+      Front end
+    </a>
   </nav>
 
   <div class="sidebar-footer">
-    <a href="{{ path('app_logout') }}" class="logout-btn">
+    <a href="#" class="logout-btn" data-demo-logout>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
       </svg>
@@ -807,6 +813,7 @@
   (() => {
     const sidebar = document.querySelector('.sidebar');
     const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
+    const demoLogout = document.querySelector('[data-demo-logout]');
 
     if (sidebar && mobileMenuToggle) {
       mobileMenuToggle.addEventListener('click', () => {
@@ -814,6 +821,12 @@
 
         mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
         mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+      });
+    }
+
+    if (demoLogout) {
+      demoLogout.addEventListener('click', (event) => {
+        event.preventDefault();
       });
     }
 
@@ -878,6 +891,11 @@
         isClosed.checked = false;
         hoursFields.classList.remove('dimmed');
       });
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      closeModal();
     });
 
     overlay.addEventListener('click', (event) => {

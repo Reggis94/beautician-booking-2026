@@ -6,16 +6,20 @@ which are public customer-facing pages used to show services and book
 appointments.
 
 These page routes currently render fake data only while the ProAdmin frontend is
-still being shaped.
+still being shaped. Fake-data ProAdmin screens belong to the isolated customer
+demo environment described in `docs/pro-admin-demo-environment.md`, and their
+paths must use the `/demo` prefix.
 
 ## Page routes
 
 | Route name | Method | Path | Purpose |
 | --- | --- | --- | --- |
-| `pro_admin_dashboard` | `GET` | `/pro/dashboard` | ProAdmin landing page, currently showing upcoming appointments. |
-| `pro_admin_appointments_upcoming` | `GET` | `/pro/dashboard/upcoming` | Upcoming appointments managed by the professional. |
-| `pro_admin_appointments_past` | `GET` | `/pro/dashboard/past` | Past appointment history for the professional. |
-| `pro_admin_services_index` | `GET` | `/pro/dashboard/services` | Services managed by the professional. |
+| `demo_pro_admin_dashboard` | `GET` | `/demo/pro/dashboard` | Demo ProAdmin landing page, currently showing upcoming appointments. |
+| `demo_pro_admin_appointments_upcoming` | `GET` | `/demo/pro/dashboard/upcoming` | Demo upcoming appointments managed by the professional. |
+| `demo_pro_admin_appointments_past` | `GET` | `/demo/pro/dashboard/past` | Demo past appointment history for the professional. |
+| `demo_pro_admin_services_index` | `GET` | `/demo/pro/dashboard/services` | Demo services managed by the professional. |
+| `demo_pro_admin_opening_hours` | `GET` | `/demo/pro/dashboard/opening-hours` | Demo opening hours managed by the professional. |
+| `demo_front_pro_home` | `GET` | `/demo/pro` | Demo public frontend page with fake presentation data and a return link to ProAdmin. |
 
 ## API routes
 
@@ -50,5 +54,6 @@ Service API response fields:
 - `price_cents`: price in cents.
 - `currency`: ISO currency code, currently `USD`.
 
-The page routes can move from fake controller data to these API routes when the
-dashboard JavaScript is ready.
+Real, non-demo ProAdmin routes and templates can be introduced against these API
+routes when the dashboard JavaScript is ready. The customer demo routes should
+remain under `/demo` and stay aligned with the real templates.

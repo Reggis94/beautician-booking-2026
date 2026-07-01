@@ -1,0 +1,535 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="page-content">
+        {% if banner_urls|default([]) is not empty %}
+            {% for bannerUrl in banner_urls %}
+                <img src="{{ bannerUrl }}" alt="" loading="lazy" decoding="async" class="banner-image">
+            {% endfor %}
+        {% endif %}
+
+        <div class="demo-front-toolbar">
+            <a href="{{ demo_admin_url }}" class="demo-front-toolbar__admin-link">Back to admin</a>
+        </div>
+
+        <section class="service-categories">
+            <div class="service-categories__header">
+                <h2>Services</h2>
+                <p>Pick a treatment and request a demo appointment.</p>
+            </div>
+
+            <div class="service-categories__list">
+                {% for category in demo_service_categories %}
+                    <article class="service-category">
+                        <button class="service-category__toggle" type="button" aria-expanded="true">
+                            <span class="service-category__main">
+                                <span class="service-category__arrow">v</span>
+                                <span class="service-category__name">{{ category.name }}</span>
+                            </span>
+                            <span class="service-category__count">
+                                {{ category.services|length }} {{ category.services|length > 1 ? 'services' : 'service' }}
+                            </span>
+                        </button>
+
+                        <div class="service-category__services">
+                            {% for service in category.services %}
+                                <article class="service-card">
+                                    <div class="service-card__header">
+                                        <h3 class="service-card__name">{{ service.name }}</h3>
+                                        <span>${{ service.price }}</span>
+                                    </div>
+                                    <p class="service-card__description">{{ service.description }}</p>
+                                    <div class="service-card__meta">
+                                        <span>{{ service.durationMinutes }} min</span>
+                                        <span>Demo availability</span>
+                                    </div>
+                                    <button
+                                        class="service-card__book"
+                                        type="button"
+                                        data-demo-booking
+                                        data-service-id="{{ service.id }}"
+                                        data-service-name="{{ service.name }}"
+                                    >
+                                        Book this service
+                                    </button>
+                                    <div class="service-card__availability" hidden data-availability-panel>
+                                        <p class="service-card__availability-title" data-availability-title></p>
+
+                                        <div class="service-card__availability-nav" data-availability-nav>
+                                            <button
+                                                class="service-card__availability-nav-button"
+                                                type="button"
+                                                data-availability-previous
+                                            ></button>
+                                            <button
+                                                class="service-card__availability-nav-button"
+                                                type="button"
+                                                data-availability-next
+                                            ></button>
+                                        </div>
+
+                                        <div class="service-card__availability-days" data-availability-days></div>
+
+                                        <div class="service-card__availability-slots" hidden data-availability-slots>
+                                            <p class="service-card__availability-slots-title" data-availability-slots-title></p>
+                                            <div class="service-card__availability-slot-list" data-availability-slot-list></div>
+                                        </div>
+
+                                        <form class="service-card__booking-form" hidden data-booking-form>
+                                            <p class="service-card__booking-form-title" data-booking-form-title></p>
+                                            <input type="hidden" name="proId" value="1">
+                                            <input type="hidden" name="serviceId" value="{{ service.id }}">
+                                            <input type="hidden" name="startDateTimeLocal">
+
+                                            <div class="service-card__booking-fields">
+                                                <div class="service-card__booking-field">
+                                                    <label>Last name</label>
+                                                    <input name="lastName" type="text" autocomplete="family-name" maxlength="50" required>
+                                                </div>
+                                                <div class="service-card__booking-field">
+                                                    <label>First name</label>
+                                                    <input name="firstName" type="text" autocomplete="given-name" maxlength="50" required>
+                                                </div>
+                                                <div class="service-card__booking-field">
+                                                    <label>Email</label>
+                                                    <input name="email" type="email" autocomplete="email" required>
+                                                </div>
+                                                <div class="service-card__booking-field">
+                                                    <label>Phone</label>
+                                                    <input name="extraPhone" type="tel" autocomplete="tel" minlength="7" maxlength="30" required>
+                                                </div>
+                                            </div>
+
+                                            <button class="service-card__booking-submit" type="submit">
+                                                Book appointment
+                                            </button>
+                                            <p class="service-card__booking-status" data-demo-booking-status></p>
+                                        </form>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <style>
+        .page-content { max-width: 1025px; margin: 0 auto; }
+        .banner-image { display: block; height: auto; margin: 0; width: 100%; }
+        .demo-front-toolbar {
+            align-items: center;
+            display: flex;
+            justify-content: flex-end;
+            padding: 1rem;
+        }
+        .demo-front-toolbar__admin-link {
+            background: #212529;
+            border-radius: 0.375rem;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.65rem 0.9rem;
+            text-decoration: none;
+        }
+        .demo-front-toolbar__admin-link:hover { background: #495057; color: #fff; }
+        .service-categories { padding: 2rem 1rem; }
+        .service-categories__header { margin-bottom: 1rem; }
+        .service-categories__header h2 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+        .service-categories__header p { color: #6c757d; margin: 0; }
+        .service-categories__list { display: grid; gap: 0.75rem; }
+        .service-category {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .service-category__toggle {
+            align-items: center;
+            background: #fff;
+            border: 0;
+            cursor: default;
+            display: flex;
+            justify-content: space-between;
+            min-height: 3.5rem;
+            padding: 1rem;
+            text-align: left;
+            width: 100%;
+        }
+        .service-category__main { align-items: center; display: flex; gap: 0.75rem; }
+        .service-category__arrow { color: #6c757d; font-size: 1.1rem; line-height: 1; width: 1rem; }
+        .service-category__name { font-weight: 600; }
+        .service-category__count { color: #6c757d; font-size: 0.95rem; }
+        .service-category__services {
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: grid;
+            gap: 0.75rem;
+            padding: 1rem 1rem 1rem 2.75rem;
+        }
+        .service-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        .service-card__header {
+            align-items: flex-start;
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+        }
+        .service-card__name { font-weight: 600; margin: 0; }
+        .service-card__description { color: #6c757d; margin: 0.5rem 0 0; }
+        .service-card__meta {
+            color: #495057;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        .service-card__book {
+            background: #0d6efd;
+            border: 0;
+            border-radius: 0.375rem;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 1rem;
+            padding: 0.625rem 0.875rem;
+        }
+        .service-card__availability {
+            border-top: 1px solid #e9ecef;
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+        .service-card__availability-title {
+            color: #495057;
+            font-weight: 600;
+            margin: 0 0 0.75rem;
+        }
+        .service-card__availability-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .service-card__availability-nav-button {
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            color: #212529;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0.45rem 0.65rem;
+        }
+        .service-card__availability-days,
+        .service-card__availability-slot-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .service-card__availability-day,
+        .service-card__availability-slot {
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0.4rem 0.6rem;
+        }
+        .service-card__availability-day {
+            background: #e7f1ff;
+            border: 1px solid #b6d4fe;
+            color: #084298;
+        }
+        .service-card__availability-day.is-selected {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+        }
+        .service-card__availability-slots {
+            border-top: 1px solid #e9ecef;
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+        .service-card__availability-slots-title {
+            color: #495057;
+            font-weight: 600;
+            margin: 0 0 0.75rem;
+        }
+        .service-card__availability-slot {
+            background: #f8f9fa;
+            border: 1px solid #ced4da;
+            color: #212529;
+        }
+        .service-card__availability-slot.is-selected {
+            background: #198754;
+            border-color: #198754;
+            color: #fff;
+        }
+        .service-card__booking-form {
+            border-top: 1px solid #e9ecef;
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+        .service-card__booking-form-title {
+            color: #495057;
+            font-weight: 600;
+            margin: 0;
+        }
+        .service-card__booking-fields {
+            display: grid;
+            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        }
+        .service-card__booking-field {
+            display: grid;
+            gap: 0.3rem;
+        }
+        .service-card__booking-field label {
+            color: #495057;
+            font-weight: 600;
+        }
+        .service-card__booking-field input {
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            padding: 0.55rem 0.65rem;
+        }
+        .service-card__booking-submit {
+            background: #198754;
+            border: 0;
+            border-radius: 0.375rem;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            justify-self: start;
+            padding: 0.625rem 0.875rem;
+        }
+        .service-card__booking-status { color: #6c757d; margin: 0.75rem 0 0; }
+        .service-card__booking-status.is-success { color: #198754; }
+    </style>
+
+    <script>
+        (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const getCurrentYearMonth = () => {
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+
+                return `${today.getFullYear()}-${month}`;
+            };
+            const addMonths = (yearMonth, monthsToAdd) => {
+                const [year, month] = yearMonth.split('-').map(Number);
+                const date = new Date(year, month - 1 + monthsToAdd, 1);
+                const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+
+                return `${date.getFullYear()}-${nextMonth}`;
+            };
+            const formatMonthLabel = (yearMonth) => {
+                const [year, month] = yearMonth.split('-').map(Number);
+                const date = new Date(year, month - 1, 1);
+
+                return new Intl.DateTimeFormat('en-US', {
+                    month: 'long',
+                    year: 'numeric',
+                }).format(date);
+            };
+            const formatBookableDay = (dateString) => {
+                const [year, month, day] = dateString.split('-').map(Number);
+                const date = new Date(year, month - 1, day);
+
+                return new Intl.DateTimeFormat('en-US', {
+                    day: 'numeric',
+                    weekday: 'short',
+                }).format(date);
+            };
+            const formatTimeWithMeridiem = (time) => {
+                const [hours, minutes] = time.split(':').map(Number);
+                const period = hours >= 12 ? 'PM' : 'AM';
+                const displayHours = hours % 12 || 12;
+                const displayMinutes = String(minutes).padStart(2, '0');
+
+                return `${displayHours}:${displayMinutes} ${period}`;
+            };
+            const formatSelectedAppointment = (localDate, startTime) => {
+                return `${formatBookableDay(localDate)} at ${formatTimeWithMeridiem(startTime)}`;
+            };
+            const buildLocalDate = (date) => {
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+
+                return `${date.getFullYear()}-${month}-${day}`;
+            };
+            const resolveBookableDays = (yearMonth) => {
+                const [year, month] = yearMonth.split('-').map(Number);
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const todayDay = today.getFullYear() === year && today.getMonth() === month - 1
+                    ? today.getDate()
+                    : 0;
+                const firstDemoDay = Math.min(Math.max(todayDay + 1, 10), Math.max(daysInMonth - 1, 1));
+                const secondDemoDay = Math.min(firstDemoDay + 7, daysInMonth);
+                const days = [firstDemoDay, secondDemoDay]
+                    .filter((day, index, values) => values.indexOf(day) === index)
+                    .map((day) => buildLocalDate(new Date(year, month - 1, day)));
+
+                if (days.length === 1 && firstDemoDay > 1) {
+                    days.unshift(buildLocalDate(new Date(year, month - 1, firstDemoDay - 1)));
+                }
+
+                return days.slice(0, 2);
+            };
+            const resolveSlots = (serviceId, dayIndex) => {
+                const baseSlots = {
+                    301: [['09:30', '11:00'], ['14:00', '15:30']],
+                    302: [['10:00', '12:10'], ['13:40', '16:20']],
+                    303: [['09:00', '13:00'], ['15:00', '16:30']],
+                    304: [['11:30', '14:30'], ['16:00', '17:30']],
+                };
+                const slots = baseSlots[serviceId] || [['10:00', '14:00'], ['11:00', '15:00']];
+
+                return slots[dayIndex] || slots[0];
+            };
+            const resetBookingForm = (panel) => {
+                const form = panel.querySelector('[data-booking-form]');
+                const status = panel.querySelector('[data-demo-booking-status]');
+
+                panel.querySelectorAll('[data-start-time]').forEach((slotButton) => {
+                    slotButton.classList.remove('is-selected');
+                });
+                form.hidden = true;
+                form.reset();
+                status.textContent = '';
+                status.classList.remove('is-success');
+            };
+            const showBookingForm = (panel, button, serviceName) => {
+                const form = panel.querySelector('[data-booking-form]');
+                const title = panel.querySelector('[data-booking-form-title]');
+                const localDate = button.dataset.localDate;
+                const startTime = button.dataset.startTime;
+
+                resetBookingForm(panel);
+                button.classList.add('is-selected');
+                form.hidden = false;
+                form.elements.startDateTimeLocal.value = `${localDate} ${startTime}:00`;
+                title.textContent = `Book ${serviceName} on ${formatSelectedAppointment(localDate, startTime)}`;
+            };
+            const renderSlots = (panel, dayButton, serviceId, serviceName) => {
+                const slotsPanel = panel.querySelector('[data-availability-slots]');
+                const slotsTitle = panel.querySelector('[data-availability-slots-title]');
+                const slotList = panel.querySelector('[data-availability-slot-list]');
+                const localDate = dayButton.dataset.localDate;
+                const dayIndex = Number(dayButton.dataset.dayIndex);
+                const slotButtons = resolveSlots(serviceId, dayIndex).map((slot) => {
+                    const slotButton = document.createElement('button');
+                    slotButton.className = 'service-card__availability-slot';
+                    slotButton.type = 'button';
+                    slotButton.textContent = formatTimeWithMeridiem(slot);
+                    slotButton.dataset.localDate = localDate;
+                    slotButton.dataset.startTime = slot;
+                    slotButton.addEventListener('click', () => showBookingForm(panel, slotButton, serviceName));
+
+                    return slotButton;
+                });
+
+                panel.querySelectorAll('[data-local-date]').forEach((button) => {
+                    button.classList.toggle('is-selected', button === dayButton);
+                });
+                resetBookingForm(panel);
+                slotsTitle.textContent = `Available slots for ${formatBookableDay(localDate)}`;
+                slotList.replaceChildren(...slotButtons);
+                slotsPanel.hidden = false;
+            };
+            const renderBookableDays = (panel, serviceId, serviceName, yearMonth) => {
+                const title = panel.querySelector('[data-availability-title]');
+                const previousButton = panel.querySelector('[data-availability-previous]');
+                const nextButton = panel.querySelector('[data-availability-next]');
+                const daysList = panel.querySelector('[data-availability-days]');
+                const previousYearMonth = addMonths(yearMonth, -1);
+                const nextYearMonth = addMonths(yearMonth, 1);
+                const days = resolveBookableDays(yearMonth);
+
+                panel.hidden = false;
+                panel.dataset.visibleMonth = yearMonth;
+                title.textContent = `Bookable days in ${formatMonthLabel(yearMonth)}`;
+                previousButton.hidden = previousYearMonth < getCurrentYearMonth();
+                previousButton.textContent = `Previous month ${formatMonthLabel(previousYearMonth)}`;
+                nextButton.textContent = `Next month ${formatMonthLabel(nextYearMonth)}`;
+                panel.querySelector('[data-availability-slots]').hidden = true;
+                resetBookingForm(panel);
+
+                daysList.replaceChildren(...days.map((localDate, index) => {
+                    const dayButton = document.createElement('button');
+                    dayButton.className = 'service-card__availability-day';
+                    dayButton.type = 'button';
+                    dayButton.textContent = formatBookableDay(localDate);
+                    dayButton.dataset.dayIndex = String(index);
+                    dayButton.dataset.localDate = localDate;
+                    dayButton.addEventListener('click', () => renderSlots(panel, dayButton, serviceId, serviceName));
+
+                    return dayButton;
+                }));
+            };
+
+            document.querySelectorAll('[data-demo-booking]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const card = button.closest('.service-card');
+                    const panel = card ? card.querySelector('[data-availability-panel]') : null;
+
+                    if (!panel) {
+                        return;
+                    }
+
+                    renderBookableDays(
+                        panel,
+                        Number(button.dataset.serviceId),
+                        button.dataset.serviceName,
+                        panel.dataset.visibleMonth || getCurrentYearMonth()
+                    );
+                });
+            });
+
+            document.querySelectorAll('[data-availability-panel]').forEach((panel) => {
+                const card = panel.closest('.service-card');
+                const bookButton = card ? card.querySelector('[data-demo-booking]') : null;
+                const previousButton = panel.querySelector('[data-availability-previous]');
+                const nextButton = panel.querySelector('[data-availability-next]');
+                const form = panel.querySelector('[data-booking-form]');
+                const status = panel.querySelector('[data-demo-booking-status]');
+
+                if (!bookButton || !form) {
+                    return;
+                }
+
+                previousButton.addEventListener('click', () => {
+                    const previousYearMonth = addMonths(panel.dataset.visibleMonth, -1);
+
+                    if (previousYearMonth >= getCurrentYearMonth()) {
+                        renderBookableDays(
+                            panel,
+                            Number(bookButton.dataset.serviceId),
+                            bookButton.dataset.serviceName,
+                            previousYearMonth
+                        );
+                    }
+                });
+
+                nextButton.addEventListener('click', () => {
+                    renderBookableDays(
+                        panel,
+                        Number(bookButton.dataset.serviceId),
+                        bookButton.dataset.serviceName,
+                        addMonths(panel.dataset.visibleMonth, 1)
+                    );
+                });
+
+                form.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    status.textContent = 'Demo appointment booked. No real data was saved.';
+                    status.classList.add('is-success');
+                });
+            });
+        })();
+    </script>
+{% endblock %}

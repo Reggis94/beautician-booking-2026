@@ -12,27 +12,27 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ProAdminDashboardController extends AbstractController
 {
     /**
-     * ProAdmin landing page.
+     * ProAdmin customer demo landing page.
      *
-     * Temporary fake-data route for previewing the professional dashboard shell.
+     * Temporary fake-data route for customer preview of the professional dashboard shell.
      * Defaults to the upcoming appointments view until real ProAdmin navigation
      * and read models are connected.
      */
-    #[Route('/pro/dashboard', name: 'pro_admin_dashboard', methods: ['GET'])]
+    #[Route('/demo/pro/dashboard', name: 'demo_pro_admin_dashboard', methods: ['GET'])]
     public function dashboard(): Response
     {
         return $this->renderDashboard('upcoming');
     }
 
     /**
-     * ProAdmin upcoming appointments page.
+     * ProAdmin customer demo upcoming appointments page.
      *
-     * Temporary fake-data route for previewing future appointments managed by
-     * the professional.
+     * Temporary fake-data route for customer preview of future appointments
+     * managed by the professional.
      */
     #[Route(
-        '/pro/dashboard/upcoming',
-        name: 'pro_admin_appointments_upcoming',
+        '/demo/pro/dashboard/upcoming',
+        name: 'demo_pro_admin_appointments_upcoming',
         methods: ['GET']
     )]
     public function upcomingAppointments(): Response
@@ -41,14 +41,14 @@ final class ProAdminDashboardController extends AbstractController
     }
 
     /**
-     * ProAdmin past appointments page.
+     * ProAdmin customer demo past appointments page.
      *
-     * Temporary fake-data route for previewing appointment history managed by
-     * the professional.
+     * Temporary fake-data route for customer preview of appointment history
+     * managed by the professional.
      */
     #[Route(
-        '/pro/dashboard/past',
-        name: 'pro_admin_appointments_past',
+        '/demo/pro/dashboard/past',
+        name: 'demo_pro_admin_appointments_past',
         methods: ['GET']
     )]
     public function pastAppointments(): Response
@@ -57,13 +57,13 @@ final class ProAdminDashboardController extends AbstractController
     }
 
     /**
-     * ProAdmin services page.
+     * ProAdmin customer demo services page.
      *
-     * Temporary fake-data route for previewing service management.
+     * Temporary fake-data route for customer preview of service management.
      */
     #[Route(
-        '/pro/dashboard/services',
-        name: 'pro_admin_services_index',
+        '/demo/pro/dashboard/services',
+        name: 'demo_pro_admin_services_index',
         methods: ['GET']
     )]
     public function services(): Response
@@ -72,14 +72,13 @@ final class ProAdminDashboardController extends AbstractController
     }
 
     /**
-     * ProAdmin opening hours page.
+     * ProAdmin customer demo opening hours page.
      *
-     * Temporary fake-data route for previewing opening hours management until
-     * the page is connected to the Availability domain read/write models.
+     * Temporary fake-data route for customer preview of opening hours management.
      */
     #[Route(
-        '/pro/dashboard/opening-hours',
-        name: 'pro_admin_opening_hours',
+        '/demo/pro/dashboard/opening-hours',
+        name: 'demo_pro_admin_opening_hours',
         methods: ['GET']
     )]
     public function openingHours(Request $request): Response
@@ -94,9 +93,9 @@ final class ProAdminDashboardController extends AbstractController
             'firstWeekdayOffset' => ((int) $currentMonth->format('N')) - 1,
             'nextMonth' => $nextMonth,
             'openingHours' => $this->fakeOpeningHours($currentMonth),
-            'openingHoursPath' => $this->generateUrl('pro_admin_opening_hours'),
+            'openingHoursPath' => $this->generateUrl('demo_pro_admin_opening_hours'),
             'prevMonth' => $prevMonth,
-            'saveOpeningHoursUrlTemplate' => '/pro/dashboard/opening-hours/__date__',
+            'saveOpeningHoursUrlTemplate' => '/demo/pro/dashboard/opening-hours/__date__',
             'today' => (new DateTimeImmutable())->format('Y-m-d'),
         ]);
     }

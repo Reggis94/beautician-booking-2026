@@ -30,6 +30,10 @@ Service categories are modeled inside the `Services` domain under `ServiceCatego
 
 ProfilePro applies a partial hexagonal (ports and adapters) approach. For example, the application defines a `TimezoneResolverPortInterface` and provides a `TimezoneDbAdapter` for the TimezoneDb API. This keeps the core logic independent from a specific provider and makes it possible to swap to another timezone API with minimal change.
 
+## ProAdmin Demo Environment
+
+ProAdmin and public frontend templates that use fake data are an isolated customer demo environment. Demo routes must use a `/demo` path prefix and remain usable without routing users into missing pages or backend errors. Equivalent backend-connected templates should be built for the real app later, and demo templates must stay aligned with those real templates. For real templates, backend API contracts take precedence over frontend assumptions from the demo. See `docs/pro-admin-demo-environment.md`.
+
 ## Architecture Decision Records (ADRs)
 
 This project includes Architecture Decision Records under `docs/adr`:
