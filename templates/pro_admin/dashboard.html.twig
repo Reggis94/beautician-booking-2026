@@ -10,6 +10,16 @@
   Each Service has:
     - id, name, description, durationMinutes, price
 #}
+{% set dashboardUrl = dashboardUrl|default(path('demo_pro_admin_dashboard')) %}
+{% set frontUrl = frontUrl|default(path('demo_front_pro_home')) %}
+{% set isDemoDashboard = isDemoDashboard|default(true) %}
+{% set logoutUrl = logoutUrl|default(path('app_logout')) %}
+{% set openingHoursUrl = openingHoursUrl|default(path('demo_pro_admin_opening_hours')) %}
+{% set pastUrl = pastUrl|default(path('demo_pro_admin_appointments_past')) %}
+{% set servicesUrl = servicesUrl|default(path('demo_pro_admin_services_index')) %}
+{% set upcomingAppointmentsApiUrl = upcomingAppointmentsApiUrl|default(null) %}
+{% set upcomingAppointmentsLoadError = upcomingAppointmentsLoadError|default(null) %}
+{% set upcomingUrl = upcomingUrl|default(path('demo_pro_admin_appointments_upcoming')) %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -574,11 +584,11 @@
         <path d="M4 7h16M4 12h16M4 17h16"/>
       </svg>
     </button>
-    <a href="{{ path('demo_pro_admin_dashboard') }}" class="sidebar-logo">Glam<span>4Style</span></a>
+    <a href="{{ dashboardUrl }}" class="sidebar-logo">Glam<span>4Style</span></a>
   </div>
 
   <nav class="sidebar-nav" id="dashboardNav">
-    <a href="{{ path('demo_pro_admin_appointments_upcoming') }}"
+    <a href="{{ upcomingUrl }}"
        class="{{ activeTab == 'upcoming' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'upcoming' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -586,7 +596,7 @@
       </svg>
       Upcoming
     </a>
-    <a href="{{ path('demo_pro_admin_appointments_past') }}"
+    <a href="{{ pastUrl }}"
        class="{{ activeTab == 'past' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'past' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -594,7 +604,7 @@
       </svg>
       Past
     </a>
-    <a href="{{ path('demo_pro_admin_services_index') }}"
+    <a href="{{ servicesUrl }}"
        class="{{ activeTab == 'services' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'services' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -602,7 +612,7 @@
       </svg>
       Services
     </a>
-    <a href="{{ path('demo_pro_admin_opening_hours') }}"
+    <a href="{{ openingHoursUrl }}"
        class="{{ activeTab == 'opening_hours' ? 'active' : '' }}"
        aria-current="{{ activeTab == 'opening_hours' ? 'page' : 'false' }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -610,7 +620,7 @@
       </svg>
       Opening hours
     </a>
-    <a href="{{ path('demo_front_pro_home') }}">
+    <a href="{{ frontUrl }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <path d="M2 8.5L8 3l6 5.5"/><path d="M4 7.5V14h8V7.5"/>
       </svg>
@@ -619,7 +629,7 @@
   </nav>
 
   <div class="sidebar-footer">
-    <a href="#" class="logout-btn" data-demo-logout>
+    <a href="{{ isDemoDashboard ? '#' : logoutUrl }}" class="logout-btn"{% if isDemoDashboard %} data-demo-logout{% endif %}>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
       </svg>
@@ -639,11 +649,17 @@
     <h1 class="page-title">Upcoming <em>appointments</em></h1>
   </header>
 
-  <div class="main-content">
+  <div
+    class="main-content"
+    data-upcoming-appointments-root
+    {% if upcomingAppointmentsApiUrl %}data-upcoming-appointments-api-url="{{ upcomingAppointmentsApiUrl }}"{% endif %}
+  >
     {% if upcomingAppointments is empty %}
       <div class="empty">
         <span class="empty-mark">✦</span>
-        <p>No appointments scheduled yet.</p>
+        <p data-upcoming-appointments-empty-message>
+          {{ upcomingAppointmentsLoadError ?? (upcomingAppointmentsApiUrl ? 'Loading appointments...' : 'No appointments scheduled yet.') }}
+        </p>
       </div>
     {% else %}
       {# Group by date — in a real app, group in the controller or with a macro #}
@@ -850,6 +866,187 @@
     });
   }
 
+  const upcomingAppointmentsRoot = document.querySelector('[data-upcoming-appointments-root]');
+  const upcomingAppointmentsApiUrl = upcomingAppointmentsRoot
+    ? upcomingAppointmentsRoot.dataset.upcomingAppointmentsApiUrl
+    : null;
+
+  const formatAppointmentDate = (date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      day: '2-digit',
+      month: 'long',
+      weekday: 'long',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  const formatAppointmentTime = (date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date);
+  };
+
+  const formatDatetimeLocal = (date) => {
+    const pad = (value) => String(value).padStart(2, '0');
+
+    return date.getFullYear()
+      + '-' + pad(date.getMonth() + 1)
+      + '-' + pad(date.getDate())
+      + 'T' + pad(date.getHours())
+      + ':' + pad(date.getMinutes());
+  };
+
+  const renderUpcomingAppointmentsEmpty = (message) => {
+    if (!upcomingAppointmentsRoot) {
+      return;
+    }
+
+    upcomingAppointmentsRoot.textContent = '';
+
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+
+    const mark = document.createElement('span');
+    mark.className = 'empty-mark';
+    mark.textContent = '✦';
+
+    const text = document.createElement('p');
+    text.textContent = message;
+
+    empty.append(mark, text);
+    upcomingAppointmentsRoot.append(empty);
+  };
+
+  const buildAppointmentActionButton = (className, label, path, onClick) => {
+    const button = document.createElement('button');
+    button.className = className;
+    button.type = 'button';
+    button.setAttribute('aria-label', label);
+    button.innerHTML = path;
+    button.addEventListener('click', onClick);
+
+    return button;
+  };
+
+  const renderUpcomingAppointments = (appointments) => {
+    if (!upcomingAppointmentsRoot) {
+      return;
+    }
+
+    upcomingAppointmentsRoot.textContent = '';
+
+    if (!appointments.length) {
+      renderUpcomingAppointmentsEmpty('No appointments scheduled yet.');
+
+      return;
+    }
+
+    let currentDay = null;
+    let currentGroup = null;
+    let renderedCount = 0;
+
+    appointments.forEach((appointment) => {
+      const startAt = appointment.start_at ? new Date(appointment.start_at) : null;
+
+      if (!startAt || Number.isNaN(startAt.getTime())) {
+        return;
+      }
+
+      const dayKey = formatDatetimeLocal(startAt).slice(0, 10);
+      const clientName = appointment.client_name || 'Unknown client';
+      const duration = appointment.duration_minutes;
+
+      if (dayKey !== currentDay) {
+        currentDay = dayKey;
+        currentGroup = document.createElement('div');
+        currentGroup.className = 'day-group';
+
+        const dayLabel = document.createElement('p');
+        dayLabel.className = 'day-label';
+        dayLabel.textContent = formatAppointmentDate(startAt);
+
+        currentGroup.append(dayLabel);
+        upcomingAppointmentsRoot.append(currentGroup);
+      }
+
+      const row = document.createElement('div');
+      row.className = 'appt-row';
+      row.id = 'appt-' + appointment.id;
+
+      const time = document.createElement('span');
+      time.className = 'appt-time';
+      time.textContent = formatAppointmentTime(startAt);
+
+      const info = document.createElement('div');
+      info.className = 'appt-info';
+
+      const client = document.createElement('p');
+      client.className = 'appt-client';
+      client.textContent = clientName;
+
+      const meta = document.createElement('p');
+      meta.className = 'appt-meta';
+
+      const dot = document.createElement('span');
+      dot.className = 'appt-dot';
+
+      meta.append(dot, document.createTextNode(appointment.service_name || 'Service not listed'));
+      info.append(client, meta);
+
+      const durationPill = document.createElement('span');
+      durationPill.className = 'appt-duration-pill';
+      durationPill.textContent = duration ? duration + ' min' : 'Duration unavailable';
+
+      const actions = document.createElement('div');
+      actions.className = 'appt-actions';
+      actions.append(
+        buildAppointmentActionButton(
+          'icon-btn',
+          'Edit appointment for ' + clientName,
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3L5 14H2v-3L11 2z"/></svg>',
+          () => openEditModal(appointment.id, formatDatetimeLocal(startAt), duration || '', clientName)
+        ),
+        buildAppointmentActionButton(
+          'icon-btn danger',
+          'Delete appointment for ' + clientName,
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M6 4V2h4v2M5 4l1 10h4l1-10"/></svg>',
+          () => openDeleteModal(appointment.id, clientName)
+        )
+      );
+
+      row.append(time, info, durationPill, actions);
+      currentGroup.append(row);
+      renderedCount++;
+    });
+
+    if (renderedCount === 0) {
+      renderUpcomingAppointmentsEmpty('No valid appointments were returned.');
+    }
+  };
+
+  if (upcomingAppointmentsApiUrl) {
+    fetch(upcomingAppointmentsApiUrl, {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Appointments could not be loaded.');
+        }
+
+        return response.json();
+      })
+      .then((appointments) => {
+        renderUpcomingAppointments(Array.isArray(appointments) ? appointments : []);
+      })
+      .catch((error) => {
+        renderUpcomingAppointmentsEmpty(error.message || 'Appointments could not be loaded.');
+      });
+  }
+
   /* ── EDIT MODAL ── */
   const editModal   = document.getElementById('editModal');
   const editForm    = document.getElementById('editForm');
@@ -918,5 +1115,9 @@
     closeDeleteModal();
   });
 </script>
+{% include 'demo/_g4s_account_prompt.html.twig' with {
+  demo_side: 'admin',
+  front_url: frontUrl
+} %}
 </body>
 </html>

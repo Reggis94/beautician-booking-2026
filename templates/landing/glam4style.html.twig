@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glam4Style - Booking made for beauty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --cream:#FAF6F1;--blush:#F2E0D6;--rose:#D4998A;--rose-deep:#B8765F;
+  --charcoal:#1C1916;--warm-grey:#6B5F58;--mid:#A89890;
+  --soft-border:rgba(180,150,135,0.22);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+body{background:var(--cream);color:var(--charcoal);font-family:var(--sans);font-weight:300;line-height:1.6;overflow-x:hidden}
+
+.page{max-width:680px;margin:0 auto}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--soft-border);background:rgba(250,246,241,.92);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--charcoal);letter-spacing:.04em;text-decoration:none}
+.logo span{color:var(--rose-deep)}
+.nav-cta{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cream);background:var(--rose-deep);border:none;padding:10px 20px;cursor:pointer;text-decoration:none;transition:background .18s;white-space:nowrap}
+.nav-cta:hover{background:#A86550}
+
+/* HERO */
+.hero{padding:52px 28px 44px;text-align:center;position:relative;overflow:hidden}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--blush);border:1px solid var(--soft-border);padding:7px 16px;margin-bottom:24px;font-size:12px;color:var(--warm-grey);letter-spacing:.04em}
+.hero-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--rose-deep);flex-shrink:0}
+.hero h1{font-family:var(--serif);font-size:clamp(34px,7vw,56px);font-weight:300;line-height:1.1;margin-bottom:16px}
+.hero h1 em{font-style:italic;color:var(--rose-deep)}
+.hero-sub{font-size:15px;color:var(--warm-grey);max-width:460px;margin:0 auto 32px;line-height:1.7}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.btn-primary{font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cream);background:var(--charcoal);border:none;padding:14px 28px;cursor:pointer;text-decoration:none;transition:background .18s,transform .12s}
+.btn-primary:hover{background:var(--rose-deep);transform:translateY(-1px)}
+.btn-demo{background:var(--rose-deep)}
+.btn-demo:hover{background:#A86550}
+.btn-ghost{font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--warm-grey);background:none;border:1px solid var(--soft-border);padding:13px 24px;cursor:pointer;text-decoration:none;transition:border-color .18s,color .18s}
+.btn-ghost:hover,.btn-ghost:focus,.btn-ghost:active,.btn-ghost:visited{text-decoration:none}
+.btn-ghost:hover{border-color:var(--rose);color:var(--rose-deep)}
+.btn-account{color:var(--cream);background:#B8765F;border-color:#B8765F}
+.btn-account:hover{color:var(--cream);background:#A86550;border-color:#A86550}
+.hero-note{font-size:11px;color:var(--mid);letter-spacing:.04em}
+
+/* HERO PRICE COMPARE STRIP */
+.hero-price-compare{display:flex;align-items:stretch;justify-content:center;gap:0;max-width:420px;margin:0 auto 28px;border:1px solid var(--soft-border);background:var(--cream);position:relative}
+.hpc-col{flex:1;padding:16px 14px;text-align:center}
+.hpc-col.them{color:var(--mid)}
+.hpc-col.us{background:var(--blush);position:relative}
+.hpc-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.hpc-col.them .hpc-label{color:var(--mid)}
+.hpc-col.us .hpc-label{color:var(--rose-deep)}
+.hpc-price{font-family:var(--serif);font-size:26px;font-weight:300;line-height:1}
+.hpc-col.them .hpc-price{color:#b8b0aa;text-decoration:line-through;text-decoration-color:#c9beb6}
+.hpc-col.us .hpc-price{color:var(--rose-deep)}
+.hpc-period{font-size:10px;color:var(--mid);margin-top:4px}
+.hpc-vs{display:flex;align-items:center;justify-content:center;width:28px;flex-shrink:0;font-family:var(--serif);font-style:italic;font-size:12px;color:var(--mid);background:var(--cream);border-left:1px solid var(--soft-border);border-right:1px solid var(--soft-border)}
+.hpc-tag{position:absolute;top:-1px;right:-1px;font-size:8px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:var(--rose-deep);color:var(--cream)}
+.hero-price-note{font-size:12px;color:var(--warm-grey);max-width:400px;margin:0 auto 30px;line-height:1.6}
+.hero-price-note strong{color:var(--rose-deep);font-weight:500}
+
+/* THANK YOU BANNER */
+.thankyou{background:var(--charcoal);padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.thankyou::before{content:'✦';font-family:var(--serif);font-size:260px;color:rgba(212,153,138,0.05);position:absolute;top:-40px;left:50%;transform:translateX(-50%);line-height:1;pointer-events:none;user-select:none}
+.ty-eyebrow{font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);margin-bottom:10px}
+.ty-msg{font-family:var(--serif);font-size:clamp(28px,7vw,48px);font-weight:300;color:var(--cream);line-height:1.15;margin-bottom:14px;position:relative}
+.ty-msg em{font-style:italic;color:var(--rose)}
+.ty-sub{font-size:14px;color:rgba(255,255,255,.4);line-height:1.7;max-width:480px;margin:0 auto;position:relative}
+
+.section-eyebrow{font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--rose-deep);margin-bottom:14px}
+.section-h2{font-family:var(--serif);font-size:clamp(26px,4vw,38px);font-weight:300;line-height:1.2;margin-bottom:8px}
+.section-h2 em{font-style:italic;color:var(--rose-deep)}
+.section-sub{font-size:14px;color:var(--warm-grey);margin-bottom:36px;line-height:1.6;max-width:420px;margin-left:auto;margin-right:auto}
+
+.savings-strip{max-width:420px;margin:0 auto 22px;background:var(--charcoal);color:var(--cream);padding:14px 20px;text-align:center;font-size:13px;letter-spacing:.02em}
+.savings-strip strong{color:var(--rose);font-weight:500}
+
+/* SLIDER */
+.slider-section{padding:44px 0;background:var(--blush)}
+.slider-inner{padding:0 28px}
+.slider-eyebrow{font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--rose-deep);margin-bottom:14px;text-align:center}
+.slider-h2{font-family:var(--serif);font-size:clamp(24px,4vw,36px);font-weight:300;text-align:center;margin-bottom:6px}
+.slider-h2 em{font-style:italic;color:var(--rose-deep)}
+.slider-sub{font-size:13px;color:var(--warm-grey);text-align:center;margin-bottom:28px}
+
+.slider-viewport{overflow:hidden;position:relative;border:1px solid var(--soft-border);background:var(--cream)}
+.slider-track{display:flex;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.slide{flex-shrink:0;width:100%;padding:0}
+
+/* Fake screen mockups inside slider */
+.mockup-shell{background:var(--charcoal);padding:10px 10px 0}
+.mockup-bar{display:flex;align-items:center;gap:5px;padding:0 0 8px}
+.mockup-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15)}
+.mockup-content{background:var(--cream);padding:20px 16px}
+
+/* slide 1 — dashboard */
+.slide1-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.slide1-title{font-family:var(--serif);font-size:22px;font-weight:300}
+.slide1-title em{font-style:italic;color:var(--rose-deep)}
+.slide1-rows{display:flex;flex-direction:column;gap:0}
+.slide1-row{display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--soft-border)}
+.slide1-time{font-family:var(--serif);font-size:18px;color:var(--charcoal)}
+.slide1-client{font-size:13px;font-weight:400;color:var(--charcoal)}
+.slide1-service{font-size:11px;color:var(--mid)}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--rose);display:inline-block;margin-right:4px}
+.slide1-pill{font-size:10px;color:var(--warm-grey);background:var(--blush);border:1px solid var(--soft-border);padding:3px 8px;white-space:nowrap}
+
+/* slide 2 — services */
+.slide2-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slide2-card{background:var(--cream);border:1px solid var(--soft-border);padding:14px}
+.slide2-name{font-family:var(--serif);font-size:17px;font-weight:400;margin-bottom:4px}
+.slide2-meta{font-size:11px;color:var(--mid)}
+.slide2-price{font-family:var(--serif);font-size:22px;font-weight:300;margin-top:10px;color:var(--charcoal)}
+
+/* slide 3 — calendar */
+.slide3-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px}
+.slide3-label{font-size:9px;color:var(--mid);text-align:center;text-transform:uppercase;letter-spacing:.1em;padding-bottom:4px}
+.slide3-cell{border:1px solid var(--soft-border);min-height:44px;display:flex;flex-direction:column;overflow:hidden}
+.slide3-cell.empty{border-color:transparent}
+.slide3-head{padding:3px 6px;font-size:10px;font-weight:500}
+.slide3-cell.open .slide3-head{background:#EAF3DE;color:#3B6D11}
+.slide3-cell.closed .slide3-head{background:#EBEBEB;color:#999}
+.slide3-day{font-size:12px;font-weight:400;line-height:1}
+.slide3-hrs{font-size:9px;color:var(--mid);padding:3px 6px}
+
+/* slide 4 — login */
+.slide4-wrap{display:grid;grid-template-columns:80px 1fr;height:200px}
+.slide4-left{background:var(--charcoal);padding:14px 10px;display:flex;flex-direction:column;justify-content:flex-end}
+.slide4-logo{font-family:var(--serif);font-size:13px;color:var(--cream);font-weight:400}
+.slide4-logo span{color:var(--rose)}
+.slide4-tagline{font-family:var(--serif);font-size:18px;color:var(--cream);font-weight:300;line-height:1.1;margin-top:8px}
+.slide4-tagline em{font-style:italic;color:var(--rose)}
+.slide4-right{padding:16px}
+.slide4-title{font-family:var(--serif);font-size:20px;font-weight:300;margin-bottom:4px}
+.slide4-title em{font-style:italic;color:var(--rose-deep)}
+.slide4-desc{font-size:11px;color:var(--warm-grey);margin-bottom:14px;line-height:1.5}
+.slide4-input{width:100%;border:1px solid var(--soft-border);background:var(--blush);padding:9px 12px;font-family:var(--sans);font-size:12px;color:var(--mid);margin-bottom:10px}
+.slide4-btn{font-family:var(--sans);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cream);background:var(--charcoal);border:none;padding:10px 16px;width:100%}
+
+.slider-caption{padding:14px 16px 0;display:flex;align-items:center;justify-content:space-between}
+.slide-label{font-size:11px;color:var(--warm-grey);letter-spacing:.06em}
+.slide-label strong{color:var(--charcoal);font-weight:500}
+
+/* slider dots + arrows */
+.slider-controls{display:flex;align-items:center;gap:10px;margin-top:20px;justify-content:center}
+.slider-arrow{background:none;border:1px solid var(--soft-border);width:34px;height:34px;cursor:pointer;color:var(--mid);display:flex;align-items:center;justify-content:center;font-size:16px;transition:border-color .18s,color .18s}
+.slider-arrow:hover{border-color:var(--rose);color:var(--rose-deep)}
+.slider-dots{display:flex;gap:8px;align-items:center}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--soft-border);cursor:pointer;transition:background .2s,transform .2s;border:none;padding:0}
+.sdot.active{background:var(--rose-deep);transform:scale(1.3)}
+
+/* WHAT WE DO */
+.what-section{padding:44px 28px;background:var(--charcoal)}
+.what-section .section-eyebrow{color:var(--rose)}
+.what-section .section-h2{color:var(--cream)}
+.what-section .section-h2 em{color:var(--rose)}
+.what-section .section-sub{color:rgba(255,255,255,.45)}
+.what-cards{display:grid;grid-template-columns:1fr;gap:1px;background:rgba(255,255,255,.08);margin-top:32px}
+.what-card{background:var(--charcoal);padding:24px 20px;display:flex;gap:16px;align-items:flex-start;position:relative}
+.what-card::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--rose);transition:width .5s ease}
+.what-card:hover::after{width:100%}
+.what-num{font-family:var(--serif);font-size:11px;font-style:italic;color:var(--rose);flex-shrink:0;margin-top:2px}
+.what-title{font-family:var(--serif);font-size:18px;font-weight:400;color:var(--cream);margin-bottom:6px}
+.what-body{font-size:13px;color:rgba(255,255,255,.45);line-height:1.65}
+.free-badge{display:inline-block;font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:var(--rose);color:var(--cream);padding:3px 8px;margin-left:8px;vertical-align:middle}
+
+/* FINAL CTA */
+.final{padding:52px 28px;text-align:center;position:relative;overflow:hidden}
+.final::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:400px;height:400px;border-radius:50%;background:rgba(212,153,138,0.07);pointer-events:none}
+.final .section-eyebrow{color:var(--rose-deep)}
+.final-h2{font-family:var(--serif);font-size:clamp(30px,6vw,50px);font-weight:300;line-height:1.1;margin-bottom:14px;position:relative}
+.final-h2 em{font-style:italic;color:var(--rose-deep)}
+.final-sub{font-size:14px;color:var(--warm-grey);margin-bottom:28px;position:relative;line-height:1.6;max-width:360px;margin-left:auto;margin-right:auto}
+.final-price{font-family:var(--serif);font-size:13px;color:var(--mid);margin-top:14px;position:relative}
+.final-price strong{color:var(--rose-deep);font-size:15px;font-weight:500}
+
+footer{padding:22px 24px;border-top:1px solid var(--soft-border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mid);text-align:center}
+
+@media (max-width: 480px) {
+  .page{max-width:none}
+  nav{padding:16px 20px}
+  .logo{font-size:18px}
+  .nav-cta{font-size:10px;padding:9px 14px}
+  .hero,.final{padding-left:24px;padding-right:24px}
+  .hero-actions{align-items:stretch;flex-direction:column}
+  .btn-primary,.btn-ghost{display:block;text-align:center;width:100%}
+  .slider-inner{padding:0 24px}
+  .slide1-row{grid-template-columns:74px 1fr;align-items:start}
+  .slide1-pill{grid-column:2;justify-self:start}
+  .slide2-grid{grid-template-columns:1fr}
+  .slide3-grid{grid-template-columns:repeat(4,1fr)}
+  .slide3-label:nth-child(n+5):nth-child(-n+7){display:none}
+  .slide3-cell:nth-child(7n+5),.slide3-cell:nth-child(7n+6),.slide3-cell:nth-child(7n){display:none}
+  .slide4-wrap{grid-template-columns:70px 1fr;height:auto;min-height:180px}
+  .slide4-tagline{font-size:13px}
+  .slider-caption{align-items:flex-start;flex-direction:column;gap:4px}
+  .what-section{padding-left:24px;padding-right:24px}
+  .what-card{padding:24px 0}
+  .free-badge{display:inline-block;margin-left:0;margin-top:6px}
+  footer{align-items:center;flex-direction:column;gap:6px}
+  .hero-price-compare{max-width:100%}
+}
+
+@media (min-width: 481px) and (max-width: 640px) {
+  .slide3-grid{grid-template-columns:repeat(5,1fr)}
+  .slide3-label:nth-child(6),.slide3-label:nth-child(7){display:none}
+  footer{align-items:center;flex-direction:column;gap:6px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav>
+  <div class="logo">Glam<span>4Style</span></div>
+  <a class="nav-cta" href="{{ demo_dashboard_url }}">Try the demo</a>
+</nav>
+
+<!-- HERO / THANK YOU -->
+<div class="thankyou">
+  <div class="ty-eyebrow">A note from Glam4Style</div>
+  <div class="ty-msg">Congrats on your purchase<br>from <em>your template vendor</em></div>
+  <div class="ty-sub">Your new template looks beautiful. Now let's make sure clients can actually book you — without paying $20 a month for it.</div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span class="hero-badge-dot"></span>Built exclusively for beauty professionals</div>
+  <h1>Booking your clients<br>shouldn't cost you <em>a fortune</em></h1>
+  <p class="hero-sub">Getting a platform for your clients to book you should never be expensive. See the difference for yourself.</p>
+
+  <div class="hero-price-compare">
+    <div class="hpc-col them">
+      <div class="hpc-label">Acuity Scheduling</div>
+      <div class="hpc-price">$20</div>
+      <div class="hpc-period">/ month &middot; $240 / year</div>
+    </div>
+    <div class="hpc-vs">vs</div>
+    <div class="hpc-col us">
+      <div class="hpc-tag">G4S</div>
+      <div class="hpc-label">Glam4Style</div>
+      <div class="hpc-price">$3.39</div>
+      <div class="hpc-period">/ month &middot; $40.68 / year</div>
+    </div>
+  </div>
+
+  <div class="savings-strip">
+    You keep <strong>$200 every year</strong> — Same booking power, a fraction of the price. Your Glam4Style account for just <strong>$3.39/month</strong> — that's <strong>$40.68/year</strong> versus $240/year elsewhere.
+  </div>
+
+  <div class="hero-actions">
+    <a class="btn-primary btn-demo" id="demo" href="{{ demo_dashboard_url }}">Try the demo</a>
+    <a class="btn-ghost btn-account" href="{{ checkout_url }}">Create your G4S account</a>
+  </div>
+</div>
+
+<!-- DEMO SLIDER -->
+<div class="slider-section" id="demo-anchor">
+  <div class="slider-inner">
+    <div class="slider-eyebrow">See it in action</div>
+    <h2 class="slider-h2">Your dashboard, <em>beautifully</em> simple</h2>
+    <p class="slider-sub">Every screen you actually need. Nothing you don't.</p>
+  </div>
+
+  <div style="padding:0 28px">
+    <div class="slider-viewport">
+      <div class="slider-track" id="track">
+
+        <!-- SLIDE 1: Upcoming appointments -->
+        <div class="slide">
+          <div class="mockup-shell">
+            <div class="mockup-bar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span></div>
+          </div>
+          <div class="mockup-content">
+            <div class="slide1-header">
+              <div>
+                <div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose-deep);margin-bottom:4px">What's ahead</div>
+                <div style="font-family:var(--serif);font-size:20px;font-weight:300">Upcoming <em style="font-style:italic;color:var(--rose-deep)">appointments</em></div>
+              </div>
+            </div>
+            <div class="slide1-rows">
+              <div class="slide1-row">
+                <div class="slide1-time">9:00 AM</div>
+                <div><div class="slide1-client">Olivia Parker</div><div class="slide1-service"><span class="dot"></span>Balayage</div></div>
+                <div class="slide1-pill">90 min</div>
+              </div>
+              <div class="slide1-row">
+                <div class="slide1-time">11:30 AM</div>
+                <div><div class="slide1-client">Emma Collins</div><div class="slide1-service"><span class="dot"></span>Cut &amp; blow dry</div></div>
+                <div class="slide1-pill">60 min</div>
+              </div>
+              <div class="slide1-row">
+                <div class="slide1-time">2:00 PM</div>
+                <div><div class="slide1-client">Ava Bennett</div><div class="slide1-service"><span class="dot"></span>Color refresh</div></div>
+                <div class="slide1-pill">75 min</div>
+              </div>
+            </div>
+          </div>
+          <div class="slider-caption">
+            <div class="slide-label"><strong>Upcoming appointments</strong> — your day at a glance</div>
+            <div style="font-size:11px;color:var(--mid)">1 / 4</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 2: Services -->
+        <div class="slide">
+          <div class="mockup-shell">
+            <div class="mockup-bar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span></div>
+          </div>
+          <div class="mockup-content">
+            <div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose-deep);margin-bottom:4px">What you offer</div>
+            <div style="font-family:var(--serif);font-size:20px;font-weight:300;margin-bottom:16px">Your <em style="font-style:italic;color:var(--rose-deep)">services</em></div>
+            <div class="slide2-grid">
+              <div class="slide2-card"><div class="slide2-name">Balayage</div><div class="slide2-meta">90 min</div><div class="slide2-price">$95</div></div>
+              <div class="slide2-card"><div class="slide2-name">Cut &amp; blow</div><div class="slide2-meta">60 min</div><div class="slide2-price">$55</div></div>
+              <div class="slide2-card"><div class="slide2-name">Color</div><div class="slide2-meta">75 min</div><div class="slide2-price">$75</div></div>
+              <div class="slide2-card"><div class="slide2-name">Trim</div><div class="slide2-meta">30 min</div><div class="slide2-price">$35</div></div>
+            </div>
+          </div>
+          <div class="slider-caption">
+            <div class="slide-label"><strong>Services</strong> — manage your menu</div>
+            <div style="font-size:11px;color:var(--mid)">2 / 4</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 3: Opening hours -->
+        <div class="slide">
+          <div class="mockup-shell">
+            <div class="mockup-bar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span></div>
+          </div>
+          <div class="mockup-content">
+            <div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose-deep);margin-bottom:4px">Availability</div>
+            <div style="font-family:var(--serif);font-size:20px;font-weight:300;margin-bottom:14px">Opening <em style="font-style:italic;color:var(--rose-deep)">hours</em></div>
+            <div class="slide3-grid">
+              <div class="slide3-label">Mon</div><div class="slide3-label">Tue</div><div class="slide3-label">Wed</div><div class="slide3-label">Thu</div><div class="slide3-label">Fri</div><div class="slide3-label">Sat</div><div class="slide3-label">Sun</div>
+              <div class="slide3-cell empty"></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">1</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">2</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">3</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">4</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">5</div></div><div class="slide3-hrs">10 AM - 4 PM</div></div>
+              <div class="slide3-cell closed"><div class="slide3-head"><div class="slide3-day">6</div></div><div class="slide3-hrs" style="color:#bbb;font-style:italic">Closed</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">7</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">8</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">9</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">10</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">11</div></div><div class="slide3-hrs">9 AM - 6 PM</div></div>
+              <div class="slide3-cell open"><div class="slide3-head"><div class="slide3-day">12</div></div><div class="slide3-hrs">10 AM - 4 PM</div></div>
+              <div class="slide3-cell closed"><div class="slide3-head"><div class="slide3-day">13</div></div><div class="slide3-hrs" style="color:#bbb;font-style:italic">Closed</div></div>
+            </div>
+          </div>
+          <div class="slider-caption">
+            <div class="slide-label"><strong>Opening hours</strong> — full calendar control</div>
+            <div style="font-size:11px;color:var(--mid)">3 / 4</div>
+          </div>
+        </div>
+
+        <!-- SLIDE 4: Login -->
+        <div class="slide">
+          <div class="mockup-shell">
+            <div class="mockup-bar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span></div>
+          </div>
+          <div class="mockup-content" style="padding:0">
+            <div class="slide4-wrap">
+              <div class="slide4-left">
+                <div>
+                  <div class="slide4-logo">Glam<span>4</span>Style</div>
+                  <div class="slide4-tagline">Your clients,<br><em>beautifully</em><br>organised.</div>
+                </div>
+              </div>
+              <div class="slide4-right">
+                <div class="slide4-title">Sign <em>in</em></div>
+                <div class="slide4-desc">Enter your email — we'll send a magic link. No password needed.</div>
+                <div class="slide4-input">you@salon.com</div>
+                <div class="slide4-btn">Send sign-in link</div>
+              </div>
+            </div>
+          </div>
+          <div class="slider-caption">
+            <div class="slide-label"><strong>Sign in</strong> — magic link, no password</div>
+            <div style="font-size:11px;color:var(--mid)">4 / 4</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="slider-controls">
+      <button class="slider-arrow" onclick="slide(-1)" aria-label="Previous">&#8592;</button>
+      <div class="slider-dots" id="dots"></div>
+      <button class="slider-arrow" onclick="slide(1)" aria-label="Next">&#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- WHAT WE DO -->
+<div class="what-section">
+  <div style="padding:0 28px">
+    <div class="section-eyebrow">What we do for you</div>
+    <h2 class="section-h2" style="color:var(--cream)">We handle <em>everything</em> — you handle your clients</h2>
+    <p class="section-sub">Three things we do that no one else does at this price.</p>
+  </div>
+  <div class="what-cards" style="margin:32px 0 0">
+    <div class="what-card">
+      <div class="what-num">i.</div>
+      <div>
+        <div class="what-title">We build your account for you <span class="free-badge">Free</span></div>
+        <div class="what-body">Send us your services, hours, and preferences. We configure your entire Glam4Style account so it's ready on day one. You don't touch a single setting if you don't want to.</div>
+      </div>
+    </div>
+    <div class="what-card">
+      <div class="what-num">ii.</div>
+      <div>
+        <div class="what-title">We connect your Etsy template <span class="free-badge">Free</span></div>
+        <div class="what-body">Already bought a gorgeous template from Etsy, Creative Market, or another vendor? We integrate Glam4Style's booking flow directly into it — colours, fonts, feel, all matched. Your brand stays yours.</div>
+      </div>
+    </div>
+    <div class="what-card">
+      <div class="what-num">iii.</div>
+      <div>
+        <div class="what-title">One link. Clients book instantly.</div>
+        <div class="what-body">No app download. No account creation for your clients. They click a link, pick a time, and confirm. That's it. You get notified. They get a reminder. Everyone's happy.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL CTA -->
+<div class="final">
+  <div class="section-eyebrow">Ready to switch?</div>
+  <h2 class="final-h2">Your template deserves<br>a booking tool as <em>beautiful</em></h2>
+  <p class="final-sub">Start free. We'll set everything up. Your clients will be booking within the week.</p>
+  <a class="btn-primary" href="{{ checkout_url }}" style="margin:0 auto;display:inline-block">Get started</a>
+  <p class="final-price">Then just <strong>$3.39 / month</strong></p>
+</div>
+
+<footer>
+  <div class="logo" style="font-size:16px">Glam<span>4Style</span></div>
+  <span>Built for beauty professionals.</span>
+  <span>contact@glam4style.com</span>
+</footer>
+
+</div>
+
+<script>
+let cur=0;
+const total=4;
+const track=document.getElementById('track');
+const dotsEl=document.getElementById('dots');
+for(let i=0;i<total;i++){
+  const d=document.createElement('button');
+  d.className='sdot'+(i===0?' active':'');
+  d.setAttribute('aria-label','Go to slide '+(i+1));
+  d.onclick=()=>goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(n){
+  cur=(n+total)%total;
+  track.style.transform='translateX(-'+(cur*100)+'%)';
+  document.querySelectorAll('.sdot').forEach((d,i)=>d.classList.toggle('active',i===cur));
+}
+function slide(dir){goTo(cur+dir)}
+let startX=0;
+track.addEventListener('touchstart',e=>{startX=e.touches[0].clientX},{passive:true});
+track.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-startX;
+  if(Math.abs(dx)>40)slide(dx<0?1:-1);
+});
+setInterval(()=>slide(1),4000);
+</script>
+</body>
+</html>

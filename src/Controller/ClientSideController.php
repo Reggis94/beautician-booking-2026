@@ -39,6 +39,23 @@ class ClientSideController extends AbstractController
         ]);
     }
 
+    #[Route('/checkout', name: 'g4s_checkout', methods: ['GET'], priority: 20)]
+    public function checkout(): Response
+    {
+        return $this->render('landing/checkout_pending.html.twig', [
+            'landing_url' => $this->generateUrl('glam4style_landing_page'),
+        ]);
+    }
+
+    #[Route('/glam4style', name: 'glam4style_landing_page', methods: ['GET'], priority: 20)]
+    public function glam4StyleLandingPage(): Response
+    {
+        return $this->render('landing/glam4style.html.twig', [
+            'checkout_url' => $this->generateUrl('g4s_checkout'),
+            'demo_dashboard_url' => $this->generateUrl('demo_pro_admin_dashboard'),
+        ]);
+    }
+
     #[Route(
         '/demo/pro-banners/{bannerFile}',
         name: 'demo_front_pro_banner',

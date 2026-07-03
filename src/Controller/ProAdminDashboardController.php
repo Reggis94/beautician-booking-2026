@@ -41,6 +41,43 @@ final class ProAdminDashboardController extends AbstractController
     }
 
     /**
+     * Backend-connected upcoming appointments page.
+     *
+     * This real ProAdmin page keeps the demo layout but loads appointment data
+     * through the ProAdmin appointments API.
+     */
+    #[Route(
+        '/pro/dashboard/upcoming',
+        name: 'pro_admin_appointments_upcoming',
+        methods: ['GET']
+    )]
+    public function connectedUpcomingAppointments(Request $request): Response
+    {
+        $proId = (int) $request->query->get('proId', 0);
+        $upcomingUrlParameters = $proId > 0 ? ['proId' => $proId] : [];
+
+        return $this->render('pro_admin/dashboard.html.twig', [
+            'activeTab' => 'upcoming',
+            'dashboardUrl' => $this->generateUrl('pro_admin_appointments_upcoming', $upcomingUrlParameters),
+            'frontUrl' => $this->generateUrl('demo_front_pro_home'),
+            'isDemoDashboard' => false,
+            'openingHoursUrl' => $this->generateUrl('demo_pro_admin_opening_hours'),
+            'pastAppointments' => [],
+            'pastUrl' => $this->generateUrl('demo_pro_admin_appointments_past'),
+            'services' => [],
+            'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index'),
+            'upcomingAppointments' => [],
+            'upcomingAppointmentsApiUrl' => $proId > 0
+                ? $this->generateUrl('api_pro_admin_appointments_upcoming', ['proId' => $proId])
+                : null,
+            'upcomingAppointmentsLoadError' => $proId <= 0
+                ? 'Add a positive proId query parameter to load appointments.'
+                : null,
+            'upcomingUrl' => $this->generateUrl('pro_admin_appointments_upcoming', $upcomingUrlParameters),
+        ]);
+    }
+
+    /**
      * ProAdmin customer demo past appointments page.
      *
      * Temporary fake-data route for customer preview of appointment history

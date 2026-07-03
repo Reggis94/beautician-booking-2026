@@ -532,4 +532,8 @@
             });
         })();
     </script>
+    {% include 'demo/_g4s_account_prompt.html.twig' with {
+        admin_url: demo_admin_url,
+        demo_side: 'front'
+    } %}
 {% endblock %}
