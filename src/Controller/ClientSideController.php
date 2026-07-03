@@ -43,6 +43,7 @@ class ClientSideController extends AbstractController
     public function checkout(): Response
     {
         return $this->render('landing/checkout_pending.html.twig', [
+            'etsy_url' => null,
             'landing_url' => $this->generateUrl('glam4style_landing_page'),
         ]);
     }
