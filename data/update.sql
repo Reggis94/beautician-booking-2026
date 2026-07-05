@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS appointment (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at   TIMESTAMPTZ
 );
-
 -- Create client lead (minimal info for callback)
 CREATE TABLE IF NOT EXISTS lead (
   id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -101,4 +100,35 @@ ALTER TABLE pro
 
 ALTER TABLE pro
   ADD COLUMN IF NOT EXISTS timezone_iana VARCHAR(64);
+
+-- Store appointment datetimes as UTC timestamps without timezone.
+-- This alters existing production databases without requiring table recreation.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'appointment'
+      AND column_name = 'start_dt'
+      AND data_type = 'timestamp with time zone'
+  ) THEN
+    ALTER TABLE appointment
+      ALTER COLUMN start_dt TYPE TIMESTAMP(0) WITHOUT TIME ZONE
+      USING start_dt AT TIME ZONE 'UTC';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'appointment'
+      AND column_name = 'end_dt'
+      AND data_type = 'timestamp with time zone'
+  ) THEN
+    ALTER TABLE appointment
+      ALTER COLUMN end_dt TYPE TIMESTAMP(0) WITHOUT TIME ZONE
+      USING end_dt AT TIME ZONE 'UTC';
+  END IF;
+END $$;
 

@@ -96,8 +96,8 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
             [
                 'pro_id' => $proId,
                 'service_id' => $serviceId,
-                'start_dt' => $startDateTimeUtc,
-                'end_dt' => $endDateTimeUtc,
+                'start_dt' => $startDateTimeUtc->format('Y-m-d H:i:s'),
+                'end_dt' => $endDateTimeUtc->format('Y-m-d H:i:s'),
                 'last_name' => $lastName,
                 'first_name' => $firstName,
                 'email' => $email,
@@ -106,8 +106,8 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
             [
                 'pro_id' => Types::INTEGER,
                 'service_id' => Types::INTEGER,
-                'start_dt' => Types::DATETIME_IMMUTABLE,
-                'end_dt' => Types::DATETIME_IMMUTABLE,
+                'start_dt' => Types::STRING,
+                'end_dt' => Types::STRING,
                 'last_name' => Types::STRING,
                 'first_name' => Types::STRING,
                 'email' => Types::STRING,
