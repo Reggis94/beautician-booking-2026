@@ -18,16 +18,17 @@ class ClientSideController extends AbstractController
     ) {
     }
 
-    #[Route('/', name: 'front_home', methods: ['GET'])]
-    public function index(): Response
-    {
-        $slug = $this->proDao->findFirstLinkSlug();
-        if ($slug === null) {
-            throw $this->createNotFoundException('No professional found');
-        }
+    //Route deactivated because the route which is going to be used as home page is /glam4style
+    // #[Route('/', name: 'front_home', methods: ['GET'])]
+    // public function index(): Response
+    // {
+    //     $slug = $this->proDao->findFirstLinkSlug();
+    //     if ($slug === null) {
+    //         throw $this->createNotFoundException('No professional found');
+    //     }
 
-        return $this->redirectToRoute('front_pro_home', ['proLinkSlug' => $slug]);
-    }
+    //     return $this->redirectToRoute('front_pro_home', ['proLinkSlug' => $slug]);
+    // }
 
     #[Route('/demo/pro', name: 'demo_front_pro_home', methods: ['GET'], priority: 20)]
     public function demoHome(): Response
@@ -48,12 +49,13 @@ class ClientSideController extends AbstractController
         ]);
     }
 
-    #[Route('/glam4style', name: 'glam4style_landing_page', methods: ['GET'], priority: 20)]
+    #[Route('/', name: 'glam4style_home', methods: ['GET'])]
+    #[Route('/glam4style', name: 'glam4style_landing_page', methods: ['GET'])]
     public function glam4StyleLandingPage(): Response
     {
         return $this->render('landing/glam4style.html.twig', [
             'checkout_url' => $this->generateUrl('g4s_checkout'),
-            'demo_dashboard_url' => $this->generateUrl('demo_pro_admin_dashboard'),
+            'demo_dashboard_url' => $this->generateUrl('demo_front_pro_home'),
         ]);
     }
 

@@ -145,7 +145,7 @@
       return;
     }
 
-    const stateCookieName = 'g4s_demo_prompt_state';
+    const stateCookieName = 'g4s_demo_prompt_state_v2';
     const accountIntervalMs = 20000;
     const switchIntervalMs = 30000;
     const stateLifetimeMs = 60 * 5 * 1000;
@@ -231,18 +231,6 @@
         nextState.expiresAt = Date.now() + stateLifetimeMs;
       }
 
-      if (nextState.switchFlow === 'needs_front' && demoSide === 'front') {
-        nextState.switchFlow = 'needs_admin';
-        nextState.nextKind = 'switch';
-        nextState.nextAt = Date.now() + switchIntervalMs;
-      }
-
-      if (nextState.switchFlow === 'needs_admin' && demoSide === 'admin') {
-        nextState.switchFlow = 'complete';
-        nextState.nextKind = 'account';
-        nextState.nextAt = Date.now() + accountIntervalMs;
-      }
-
       return nextState;
     };
 
@@ -255,10 +243,6 @@
         return 'account';
       }
 
-      if (state.nextKind === 'account') {
-        return 'account';
-      }
-
       if (state.switchFlow === 'needs_front' && demoSide === 'admin') {
         return 'switch_to_front';
       }
@@ -267,7 +251,7 @@
         return 'switch_to_admin';
       }
 
-      return 'account';
+      return null;
     };
 
     const renderPromptCopy = (kind) => {
@@ -281,19 +265,19 @@
           url: checkoutUrl,
         },
         switch_to_admin: {
-          body: 'You have seen the booking page your clients use. Go back to the admin demo to manage appointments, services, and hours.',
-          eyebrow: 'Back to the dashboard',
-          primary: 'Go back to admin',
+          body: 'You have seen the booking page your clients use. Go to the admin demo to manage appointments, services, and hours.',
+          eyebrow: 'See the dashboard',
+          primary: 'Go to admin',
           secondary: 'Stay on client view',
-          title: 'Want to return to the admin side?',
+          title: 'Want to see the admin side?',
           url: adminUrl,
         },
         switch_to_front: {
-          body: 'Preview the booking experience from your client side, then come back to the admin demo when you are ready.',
+          body: 'Now that you have seen the admin tools, go back to the website view your clients use.',
           eyebrow: 'See what clients see',
           primary: 'View client side',
           secondary: 'Stay in admin',
-          title: 'Want to see the front end?',
+          title: 'Want to see the website view with a template from Canva?',
           url: frontUrl,
         },
       }[kind];
@@ -308,16 +292,14 @@
 
     const scheduleAfterPrompt = (state, promptKind, shownAt) => {
       if (promptKind === 'account') {
-        state.nextKind = state.switchFlow === 'needs_admin' && demoSide === 'front'
-          ? 'switch'
-          : 'account';
+        state.nextKind = 'account';
         state.nextAt = shownAt + accountIntervalMs;
 
         return state;
       }
 
-      state.nextKind = 'account';
-      state.nextAt = shownAt + accountIntervalMs;
+      state.nextKind = 'switch';
+      state.nextAt = shownAt + switchIntervalMs;
 
       return state;
     };
@@ -361,13 +343,13 @@
       event.preventDefault();
 
       if (activePromptKind === 'switch_to_front') {
-        state.switchFlow = 'needs_admin';
-        state.nextKind = 'switch';
-        state.nextAt = Date.now() + switchIntervalMs;
-      } else if (activePromptKind === 'switch_to_admin') {
         state.switchFlow = 'complete';
         state.nextKind = 'account';
         state.nextAt = Date.now() + accountIntervalMs;
+      } else if (activePromptKind === 'switch_to_admin') {
+        state.switchFlow = 'needs_front';
+        state.nextKind = 'switch';
+        state.nextAt = Date.now() + switchIntervalMs;
       } else {
         scheduleAfterPrompt(state, 'account', Date.now());
       }
