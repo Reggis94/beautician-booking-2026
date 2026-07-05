@@ -13,7 +13,7 @@ use Symfony\Component\Security\Http\LoginLink\LoginLinkHandlerInterface;
 class AuthController extends AbstractController
 {
     // Keep empty because login link authenticator will intercept requests.
-    #[Route('/pro/login-check', name: 'login_check')]
+    #[Route('/pro/login-check', name: 'login_check', env: 'dev')]
     public function loginCheck(): Response
     {
         return new Response('200');

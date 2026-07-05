@@ -49,7 +49,8 @@ final class ProAdminDashboardController extends AbstractController
     #[Route(
         '/pro/dashboard/upcoming',
         name: 'pro_admin_appointments_upcoming',
-        methods: ['GET']
+        methods: ['GET'],
+        env: 'dev'
     )]
     public function connectedUpcomingAppointments(Request $request): Response
     {
@@ -147,7 +148,7 @@ final class ProAdminDashboardController extends AbstractController
         ]);
     }
 
-    #[Route('/pro/logout', name: 'app_logout', methods: ['GET'])]
+    #[Route('/pro/logout', name: 'app_logout', methods: ['GET'], env: 'dev')]
     public function logout(): void
     {
         throw new LogicException('This route is intercepted by the security firewall logout handler.');

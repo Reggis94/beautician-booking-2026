@@ -4,26 +4,27 @@ controllers:
         namespace: App\Controller
     type: attribute
 
-availability_controllers:
-    resource:
-        path: ../src/Availability/UI/Http/Controller/
-        namespace: App\Availability\UI\Http\Controller
-    type: attribute
+when@dev:
+    availability_controllers:
+        resource:
+            path: ../src/Availability/UI/Http/Controller/
+            namespace: App\Availability\UI\Http\Controller
+        type: attribute
 
-profilepro_controllers:
-    resource:
-        path: ../src/ProfilePro/UI/Http/Controller/
-        namespace: App\ProfilePro\UI\Http\Controller
-    type: attribute
+    profilepro_controllers:
+        resource:
+            path: ../src/ProfilePro/UI/Http/Controller/
+            namespace: App\ProfilePro\UI\Http\Controller
+        type: attribute
 
-booking_controllers:
-    resource:
-        path: ../src/Booking/UI/Http/Controller/
-        namespace: App\Booking\UI\Http\Controller
-    type: attribute
+    booking_controllers:
+        resource:
+            path: ../src/Booking/UI/Http/Controller/
+            namespace: App\Booking\UI\Http\Controller
+        type: attribute
 
-service_controller:
-    resource:
-        path: ../src/Services/UI/Http/Controller/
-        namespace: App\Services\UI\Http\Controller
-    type: attribute
+    service_controller:
+        resource:
+            path: ../src/Services/UI/Http/Controller/
+            namespace: App\Services\UI\Http\Controller
+        type: attribute

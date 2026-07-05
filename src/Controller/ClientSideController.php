@@ -76,7 +76,8 @@ class ClientSideController extends AbstractController
         name: 'front_pro_banner',
         requirements: ['proId' => '\d+', 'bannerFile' => '\d+\.png'],
         methods: ['GET'],
-        priority: 10
+        priority: 10,
+        env: 'dev'
     )]
     public function banner(int $proId, string $bannerFile): BinaryFileResponse
     {
@@ -93,7 +94,7 @@ class ClientSideController extends AbstractController
         return $response;
     }
 
-    #[Route('/{proLinkSlug}', name: 'front_pro_home', methods: ['GET'])]
+    #[Route('/{proLinkSlug}', name: 'front_pro_home', methods: ['GET'], env: 'dev')]
     public function home(string $proLinkSlug): Response
     {
         $proId = $this->proDao->findIdByLinkSlug($proLinkSlug);
