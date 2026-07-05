@@ -729,6 +729,29 @@
                 status.textContent = '';
                 status.classList.remove('is-success');
             };
+            const resetAvailabilityPanel = (panel) => {
+                const title = panel.querySelector('[data-availability-title]');
+                const daysList = panel.querySelector('[data-availability-days]');
+                const slotsPanel = panel.querySelector('[data-availability-slots]');
+                const slotsTitle = panel.querySelector('[data-availability-slots-title]');
+                const slotList = panel.querySelector('[data-availability-slot-list]');
+
+                panel.hidden = true;
+                delete panel.dataset.visibleMonth;
+                title.textContent = '';
+                daysList.replaceChildren();
+                slotsPanel.hidden = true;
+                slotsTitle.textContent = '';
+                slotList.replaceChildren();
+                resetBookingForm(panel);
+            };
+            const closeOtherAvailabilityPanels = (currentPanel) => {
+                document.querySelectorAll('[data-availability-panel]').forEach((panel) => {
+                    if (panel !== currentPanel) {
+                        resetAvailabilityPanel(panel);
+                    }
+                });
+            };
             const showBookingForm = (panel, button, serviceName) => {
                 const form = panel.querySelector('[data-booking-form]');
                 const title = panel.querySelector('[data-booking-form-title]');
@@ -792,7 +815,7 @@
                     dayButton.addEventListener('click', () => renderSlots(panel, dayButton, serviceId, serviceName));
                     return dayButton;
                 }));
-                scrollToBookingStep(daysList);
+                scrollToBookingStep(panel);
             };
 
             document.querySelectorAll('[data-demo-booking]').forEach((button) => {
@@ -800,6 +823,7 @@
                     const card = button.closest('.service-card');
                     const panel = card ? card.querySelector('[data-availability-panel]') : null;
                     if (!panel) return;
+                    closeOtherAvailabilityPanels(panel);
                     renderBookableDays(
                         panel,
                         Number(button.dataset.serviceId),

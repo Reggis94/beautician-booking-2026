@@ -717,6 +717,7 @@
 
                 return [...new Set(slots)];
             };
+            let availabilityRequestSequence = 0;
             const resetBookableSlots = (availabilityPanel) => {
                 const slotsPanel = availabilityPanel.querySelector('[data-availability-slots]');
                 const slotsTitle = availabilityPanel.querySelector('[data-availability-slots-title]');
@@ -732,6 +733,7 @@
                 slotsStatus.hidden = false;
                 slotsStatus.textContent = '';
                 slotList.replaceChildren();
+                delete availabilityPanel.dataset.bookableSlotsRequestId;
                 availabilityPanel.querySelector('[data-booking-form]').hidden = true;
             };
             const resetBookingForm = (availabilityPanel) => {
@@ -746,6 +748,43 @@
                 bookingForm.reset();
                 bookingStatus.textContent = '';
                 bookingStatus.classList.remove('is-error', 'is-success');
+            };
+            const resetAvailabilityPanel = (availabilityPanel) => {
+                const card = availabilityPanel.closest('.service-card');
+                const bookButton = card ? card.querySelector('.service-card__book') : null;
+                const title = availabilityPanel.querySelector('[data-availability-title]');
+                const navigation = availabilityPanel.querySelector('[data-availability-nav]');
+                const statusMessage = availabilityPanel.querySelector('[data-availability-status]');
+                const daysList = availabilityPanel.querySelector('[data-availability-days]');
+
+                availabilityPanel.hidden = true;
+                delete availabilityPanel.dataset.loadedMonth;
+                delete availabilityPanel.dataset.visibleMonth;
+                delete availabilityPanel.dataset.bookableDaysRequestId;
+                title.textContent = '';
+                navigation.hidden = true;
+                statusMessage.hidden = false;
+                statusMessage.textContent = '';
+                daysList.replaceChildren();
+                availabilityPanel.querySelectorAll('button').forEach((button) => {
+                    button.disabled = false;
+                });
+                resetBookableSlots(availabilityPanel);
+                resetBookingForm(availabilityPanel);
+
+                if (bookButton) {
+                    bookButton.disabled = false;
+                }
+            };
+            const closeOtherAvailabilityPanels = (currentPanel) => {
+                document.querySelectorAll('[data-availability-panel]').forEach((availabilityPanel) => {
+                    if (availabilityPanel !== currentPanel) {
+                        resetAvailabilityPanel(availabilityPanel);
+                    }
+                });
+            };
+            const resetAvailabilityPanelsIn = (container) => {
+                container.querySelectorAll('[data-availability-panel]').forEach(resetAvailabilityPanel);
             };
             const showBookingForm = (service, availabilityPanel, slotButton) => {
                 const localDate = slotButton.dataset.localDate;
@@ -846,6 +885,8 @@
                 slotList.replaceChildren();
                 resetBookingForm(availabilityPanel);
                 dayButton.disabled = true;
+                const requestId = String(++availabilityRequestSequence);
+                availabilityPanel.dataset.bookableSlotsRequestId = requestId;
                 scrollToBookingStep(slotsPanel);
 
                 fetch(buildBookableRangesUrl(service.id, localDate), {
@@ -861,6 +902,13 @@
                         return response.json();
                     })
                     .then((bookableRanges) => {
+                        if (
+                            availabilityPanel.hidden
+                            || availabilityPanel.dataset.bookableSlotsRequestId !== requestId
+                        ) {
+                            return;
+                        }
+
                         const slots = Array.isArray(bookableRanges)
                             ? buildTenMinuteSlots(bookableRanges, localDate)
                             : [];
@@ -890,11 +938,21 @@
                         scrollToBookingStep(slotsPanel);
                     })
                     .catch(() => {
+                        if (
+                            availabilityPanel.hidden
+                            || availabilityPanel.dataset.bookableSlotsRequestId !== requestId
+                        ) {
+                            return;
+                        }
+
                         slotsStatus.hidden = false;
                         slotsStatus.textContent = 'Cannot load bookable slots.';
                     })
                     .finally(() => {
-                        dayButton.disabled = false;
+                        if (availabilityPanel.dataset.bookableSlotsRequestId === requestId) {
+                            delete availabilityPanel.dataset.bookableSlotsRequestId;
+                            dayButton.disabled = false;
+                        }
                     });
             };
             const updateMonthNavigation = (availabilityPanel, yearMonth) => {
@@ -926,7 +984,7 @@
                 resetBookableSlots(availabilityPanel);
 
                 if (availabilityPanel.dataset.loadedMonth === yearMonth) {
-                    scrollToBookingStep(availabilityPanel.querySelector('[data-availability-days]'));
+                    scrollToBookingStep(availabilityPanel);
                     return;
                 }
 
@@ -940,7 +998,9 @@
                 daysList.replaceChildren();
                 bookButton.disabled = true;
                 setAvailabilityControlsDisabled(availabilityPanel, true);
-                scrollToBookingStep(daysList);
+                const requestId = String(++availabilityRequestSequence);
+                availabilityPanel.dataset.bookableDaysRequestId = requestId;
+                scrollToBookingStep(availabilityPanel);
 
                 fetch(buildBookableDaysUrl(service.id, yearMonth), {
                     headers: {
@@ -955,6 +1015,13 @@
                         return response.json();
                     })
                     .then((bookableDays) => {
+                        if (
+                            availabilityPanel.hidden
+                            || availabilityPanel.dataset.bookableDaysRequestId !== requestId
+                        ) {
+                            return;
+                        }
+
                         availabilityPanel.dataset.loadedMonth = yearMonth;
 
                         if (!Array.isArray(bookableDays) || bookableDays.length === 0) {
@@ -978,15 +1045,25 @@
 
                         statusMessage.hidden = true;
                         daysList.replaceChildren(...dayButtons);
-                        scrollToBookingStep(daysList);
+                        scrollToBookingStep(availabilityPanel);
                     })
                     .catch(() => {
+                        if (
+                            availabilityPanel.hidden
+                            || availabilityPanel.dataset.bookableDaysRequestId !== requestId
+                        ) {
+                            return;
+                        }
+
                         statusMessage.hidden = false;
                         statusMessage.textContent = 'Cannot load bookable days.';
                     })
                     .finally(() => {
-                        bookButton.disabled = false;
-                        setAvailabilityControlsDisabled(availabilityPanel, false);
+                        if (availabilityPanel.dataset.bookableDaysRequestId === requestId) {
+                            delete availabilityPanel.dataset.bookableDaysRequestId;
+                            bookButton.disabled = false;
+                            setAvailabilityControlsDisabled(availabilityPanel, false);
+                        }
                     });
             };
             const createServiceCard = (service) => {
@@ -1026,6 +1103,7 @@
 
                 const availabilityPanel = document.createElement('div');
                 availabilityPanel.className = 'service-card__availability';
+                availabilityPanel.dataset.availabilityPanel = '';
                 availabilityPanel.hidden = true;
 
                 const availabilityTitle = document.createElement('p');
@@ -1196,6 +1274,12 @@
                 );
 
                 bookButton.addEventListener('click', () => {
+                    if (!availabilityPanel.hidden) {
+                        resetAvailabilityPanel(availabilityPanel);
+                        return;
+                    }
+
+                    closeOtherAvailabilityPanels(availabilityPanel);
                     loadBookableDays(service, availabilityPanel, bookButton);
                 });
                 previousMonthButton.addEventListener('click', () => {
@@ -1247,6 +1331,27 @@
                         servicesPanel.textContent = 'Cannot load services.';
                     });
             };
+            const closeCategoryItem = (item) => {
+                const toggle = item.querySelector('.service-category__toggle');
+                const arrow = item.querySelector('.service-category__arrow');
+                const servicesPanel = item.querySelector('.service-category__services');
+
+                if (!toggle || !arrow || !servicesPanel) {
+                    return;
+                }
+
+                toggle.setAttribute('aria-expanded', 'false');
+                arrow.textContent = '>';
+                servicesPanel.hidden = true;
+                resetAvailabilityPanelsIn(servicesPanel);
+            };
+            const closeOtherCategoryItems = (currentItem) => {
+                list.querySelectorAll('.service-category').forEach((item) => {
+                    if (item !== currentItem) {
+                        closeCategoryItem(item);
+                    }
+                });
+            };
             const createCategoryItem = (category) => {
                 const item = document.createElement('article');
                 item.className = 'service-category';
@@ -1284,12 +1389,11 @@
                     const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
 
                     if (isExpanded) {
-                        toggle.setAttribute('aria-expanded', 'false');
-                        arrow.textContent = '>';
-                        servicesPanel.hidden = true;
+                        closeCategoryItem(item);
                         return;
                     }
 
+                    closeOtherCategoryItems(item);
                     toggle.setAttribute('aria-expanded', 'true');
                     arrow.textContent = 'v';
                     servicesPanel.hidden = false;
