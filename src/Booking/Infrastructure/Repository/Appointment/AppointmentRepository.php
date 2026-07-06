@@ -90,6 +90,8 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
         $durationMinutes = max(1, (int) $durationMin);
         $endDateTimeUtc = $startDateTimeUtc->add(new \DateInterval('PT' . $durationMinutes . 'M'));
 
+        // Appointments are persisted as UTC instants.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $this->connection->executeStatement(
             'INSERT INTO appointment (pro_id, service_id, start_dt, end_dt, last_name, first_name, email, phone)
              VALUES (:pro_id, :service_id, :start_dt, :end_dt, :last_name, :first_name, :email, :phone)',
@@ -127,6 +129,9 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
      */
     private function listProAdminAppointments(int $proId, bool $upcoming): array
     {
+        // Double-check "now" comparisons: appointment datetimes are UTC, while NOW() uses the DB session timezone.
+        // See docs/adr/0013-datetime-timezone-policy.md.
+        // See docs/future-improvements/booking/book-0003-audit-datetime-timezone-boundaries.md.
         $dateComparison = $upcoming ? 'a.start_dt >= NOW()' : 'a.start_dt < NOW()';
         $orderDirection = $upcoming ? 'ASC' : 'DESC';
 

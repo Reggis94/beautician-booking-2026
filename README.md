@@ -48,3 +48,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0010: Monitor Comment ID Matches Monitor Doc ID
 - 0011: GET Endpoints Read Input From Query Parameters
 - 0012: ServiceCategory Owns Service Category Code
+- 0013: Datetime Timezone Policy

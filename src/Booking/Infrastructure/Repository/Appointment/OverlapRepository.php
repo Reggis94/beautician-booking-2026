@@ -47,6 +47,8 @@ final class OverlapRepository implements OverlapRepositoryInterface
             throw new \LogicException('Service does not belong to the pro.');
         }
 
+        // Appointment overlap checks compare UTC instants.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $sql = 'SELECT 1
                 FROM appointment a
                 INNER JOIN service requested_service ON requested_service.id = :service_id

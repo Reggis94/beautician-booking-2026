@@ -33,6 +33,8 @@ final class CreateAppointmentByClientCommandHandler
             $command->startDateTimeLocal,
             new \DateTimeZone($this->getProTimezone->getProTimezone($command->proId))
         );
+        // Convert the pro-local request datetime to the UTC appointment storage instant.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $startDateTimeUtc = $proDateTimeWithLocalTz->setTimezone(new \DateTimeZone('UTC'));
 
         if (new \DateTime('now', new \DateTimeZone('UTC')) >= $startDateTimeUtc) {

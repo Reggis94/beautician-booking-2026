@@ -179,6 +179,8 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         int $serviceId,
         \DateTimeImmutable $monthStart
     ): array {
+        // Availability windows are pro-local schedules converted through pro.timezone_iana to UTC.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         // Future improvement: for today, compare free ranges against the pro's current local timestamp.
         // See docs/future-improvements/availability/filter-past-bookable-ranges-for-today.md.
         $rows = $this->connection->fetchAllAssociative(
@@ -350,6 +352,8 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         int $serviceId,
         \DateTimeImmutable $localDate
     ): array {
+        // Availability windows are pro-local schedules converted through pro.timezone_iana to UTC.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $rows = $this->connection->fetchAllAssociative(
             "WITH requested_service AS (
                 SELECT id, pro_id, COALESCE(duration_min, 1) AS duration_min
@@ -536,6 +540,8 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         int $serviceId,
         string $proLocalDateTime
     ): bool {
+        // Business-time validation receives a pro-local datetime, not a UTC appointment instant.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $localDateTime = new \DateTimeImmutable($proLocalDateTime);
 
         $dayOfWeek = (int) $localDateTime->format('N');
