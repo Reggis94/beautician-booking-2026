@@ -17,6 +17,9 @@ class UpsertWeekAvailabilityController
         // TODO: Authentication/authorization for this endpoint will be handled in a follow-up ticket.
         $data = json_decode($request->getContent(), true) ?? [];
         try {
+            // Future improvement: add a one-day upsert that rebuilds the target week from existing storage
+            // plus the submitted day, then stores only open days for the resolved week range.
+            // See docs/future-improvements/availability/explicit-day-by-day-week-upsert.md.
             if (!is_array($data) || $data === []) {
                 throw new \InvalidArgumentException('Payload must be a non-empty array of availabilities.');
             }
@@ -55,6 +58,8 @@ class UpsertWeekAvailabilityController
                     throw new \LogicException('All availabilities must share the same week range.');
                 }
 
+                // Future improvement: reject duplicate dayOfWeek values for the same week range.
+                // See docs/future-improvements/availability/explicit-day-by-day-week-upsert.md.
                 $newAvailabilities[] = $weekAvailability;
             }
         } catch (\Throwable $exception) {

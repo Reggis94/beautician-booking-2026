@@ -102,6 +102,46 @@ final class ServiceDao implements ServiceDaoInterface
     }
 
     /**
+     * @return list<array{
+     *     id: int,
+     *     name: string,
+     *     duration_minutes: ?int,
+     *     price_cents: ?int,
+     *     currency: string
+     * }>
+     */
+    public function listProAdminServices(int $proId): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT s.id,
+                    s.name,
+                    s.duration_min,
+                    s.price_cents
+             FROM service s
+             WHERE s.pro_id = :pro_id
+               AND s.deleted_at IS NULL
+             ORDER BY s.id ASC',
+            [
+                'pro_id' => $proId,
+            ],
+            [
+                'pro_id' => Types::INTEGER,
+            ]
+        );
+
+        return array_map(
+            static fn (array $row): array => [
+                'currency' => 'USD',
+                'duration_minutes' => $row['duration_min'] !== null ? (int) $row['duration_min'] : null,
+                'id' => (int) $row['id'],
+                'name' => $row['name'],
+                'price_cents' => $row['price_cents'] !== null ? (int) $row['price_cents'] : null,
+            ],
+            $rows
+        );
+    }
+
+    /**
      * @return array<int, array{
      *     id: int,
      *     name: string,

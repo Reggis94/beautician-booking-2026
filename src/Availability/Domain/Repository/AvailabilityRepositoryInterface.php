@@ -30,6 +30,11 @@ interface AvailabilityRepositoryInterface
     ): void;
 
     /**
+     * @return array<int, array{date: string, startTimeLocal: string, endTimeLocal: string}>
+     */
+    public function getAvailabilitiesForMonth(int $proId, \DateTimeImmutable $monthStart): array;
+
+    /**
      * @return array<int, string>
      */
     public function getBookableDaysForService(

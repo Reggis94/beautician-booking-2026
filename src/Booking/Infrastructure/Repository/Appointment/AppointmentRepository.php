@@ -36,6 +36,34 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
         );
     }
 
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminUpcomingAppointments(int $proId): array
+    {
+        return $this->listProAdminAppointments($proId, true);
+    }
+
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminPastAppointments(int $proId): array
+    {
+        return $this->listProAdminAppointments($proId, false);
+    }
+
     public function createFromClient(
         int $proId,
         int $serviceId,
@@ -62,6 +90,8 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
         $durationMinutes = max(1, (int) $durationMin);
         $endDateTimeUtc = $startDateTimeUtc->add(new \DateInterval('PT' . $durationMinutes . 'M'));
 
+        // Appointments are persisted as UTC instants.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $this->connection->executeStatement(
             'INSERT INTO appointment (pro_id, service_id, start_dt, end_dt, last_name, first_name, email, phone)
              VALUES (:pro_id, :service_id, :start_dt, :end_dt, :last_name, :first_name, :email, :phone)',
@@ -86,5 +116,70 @@ final class AppointmentRepository implements AppointmentRepositoryInterface
                 'phone' => Types::STRING,
             ]
         );
+    }
+
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    private function listProAdminAppointments(int $proId, bool $upcoming): array
+    {
+        // Double-check "now" comparisons: appointment datetimes are UTC, while NOW() uses the DB session timezone.
+        // See docs/adr/0013-datetime-timezone-policy.md.
+        // See docs/future-improvements/booking/book-0003-audit-datetime-timezone-boundaries.md.
+        $dateComparison = $upcoming ? 'a.start_dt >= NOW()' : 'a.start_dt < NOW()';
+        $orderDirection = $upcoming ? 'ASC' : 'DESC';
+
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT a.id,
+                    TRIM(CONCAT(COALESCE(a.first_name, \'\'), \' \', COALESCE(a.last_name, \'\'))) AS client_name,
+                    s.name AS service_name,
+                    a.start_dt AS start_at,
+                    CASE
+                        WHEN a.end_dt IS NULL THEN s.duration_min
+                        ELSE CAST(EXTRACT(EPOCH FROM (a.end_dt - a.start_dt)) / 60 AS INTEGER)
+                    END AS duration_minutes
+             FROM appointment a
+             LEFT JOIN service s ON s.id = a.service_id AND s.pro_id = a.pro_id
+             WHERE a.pro_id = :pro_id
+               AND a.deleted_at IS NULL
+               AND ' . $dateComparison . '
+             ORDER BY a.start_dt ' . $orderDirection . ', a.id ' . $orderDirection,
+            [
+                'pro_id' => $proId,
+            ],
+            [
+                'pro_id' => Types::INTEGER,
+            ]
+        );
+
+        return array_map(
+            static fn (array $row): array => [
+                'client_name' => $row['client_name'] !== '' ? $row['client_name'] : 'Unknown client',
+                'duration_minutes' => $row['duration_minutes'] !== null ? (int) $row['duration_minutes'] : null,
+                'id' => (int) $row['id'],
+                'service_name' => $row['service_name'],
+                'start_at' => self::formatDateTime($row['start_at']),
+            ],
+            $rows
+        );
+    }
+
+    private static function formatDateTime(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format(\DateTimeInterface::ATOM);
+        }
+
+        return (new \DateTimeImmutable((string) $value))->format(\DateTimeInterface::ATOM);
     }
 }

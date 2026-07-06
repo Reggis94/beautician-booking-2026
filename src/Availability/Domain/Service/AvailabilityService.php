@@ -6,10 +6,13 @@ use App\Availability\Domain\ValueObject\WeekAvailability;
 
 class AvailabilityService
 {
-    // TODO: Implement DST-safe, multi-timezone, and non-UK logic before 2026-03-29 (current approach becomes obsolete).
     public static function resolveExistingOverlaps(array $newAvailabilities, array $existingAvailabilities): array
     {
-        $newRange = null;
+        // Future improvement: pass the backend-calculated replacement range explicitly so the resolver can
+        // handle a fully closed week where no new open availability rows exist.
+        // See docs/future-improvements/availability/explicit-day-by-day-week-upsert.md.
+        $newRangeStartDateTime = null;
+        $newRangeEndDateTime = null;
         $newStartDateTime = null;
         $newEndDateTime = null;
         foreach ($newAvailabilities as $newAvailability) {
@@ -20,15 +23,13 @@ class AvailabilityService
             $newStartDateTime = $newAvailability->getStartDateTime();
             $newEndDateTime = $newAvailability->getEndDateTime();
 
-            $startTs = $newStartDateTime->getTimestamp();
-            $endTs = $newEndDateTime->getTimestamp();
-
-            if ($newRange === null) {
-                $newRange = [$startTs, $endTs];
+            if ($newRangeStartDateTime === null || $newRangeEndDateTime === null) {
+                $newRangeStartDateTime = $newStartDateTime;
+                $newRangeEndDateTime = $newEndDateTime;
                 continue;
             }
 
-            if ($newRange[0] !== $startTs || $newRange[1] !== $endTs) {
+            if ($newRangeStartDateTime != $newStartDateTime || $newRangeEndDateTime != $newEndDateTime) {
                 // Duplicated week range consistency check in UpsertWeekAvailabilityCommandHandler and UpsertWeekAvailabilityController.
                 throw new \LogicException('All new availabilities must share the same week range.');
             }
@@ -55,20 +56,17 @@ class AvailabilityService
             $existingStartDateTime = $existingAvailability->getStartDateTime();
             $existingEndDateTime = $existingAvailability->getEndDateTime();
 
-            $existingStartTs = $existingStartDateTime->getTimestamp();
-            $existingEndTs = $existingEndDateTime->getTimestamp();
-
-            if (!($existingStartTs <= $newRange[1] && $newRange[0] <= $existingEndTs)) {
+            if (!($existingStartDateTime <= $newRangeEndDateTime && $newRangeStartDateTime <= $existingEndDateTime)) {
                 throw new \LogicException(
                     __FUNCTION__ . ' requires that all existing availabilities overlap the new availability week range. This violates the repository query contract.'
                 );
             }
 
-            if ($newRange[0] <= $existingStartTs && $existingEndTs <= $newRange[1]) {
+            if ($newRangeStartDateTime <= $existingStartDateTime && $existingEndDateTime <= $newRangeEndDateTime) {
                 continue;
             }
 
-            if ($existingStartTs < $newRange[0]) {
+            if ($existingStartDateTime < $newRangeStartDateTime) {
                 $before[] = new WeekAvailability(
                     $existingAvailability->getProId(),
                     $existingStartDateTime,
@@ -79,7 +77,7 @@ class AvailabilityService
                 );
             }
 
-            if ($existingEndTs > $newRange[1]) {
+            if ($existingEndDateTime > $newRangeEndDateTime) {
                 $after[] = new WeekAvailability(
                     $existingAvailability->getProId(),
                     $afterStartDateTime,

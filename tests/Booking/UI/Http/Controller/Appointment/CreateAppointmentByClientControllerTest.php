@@ -83,6 +83,34 @@ final class TransactionTrackingAppointmentRepository implements AppointmentRepos
         throw new \LogicException('Appointments should not be locked for an invalid service/pro pair.');
     }
 
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminUpcomingAppointments(int $proId): array
+    {
+        throw new \LogicException('Upcoming appointments should not be listed for an invalid service/pro pair.');
+    }
+
+    /**
+     * @return list<array{
+     *     id: int,
+     *     client_name: string,
+     *     service_name: ?string,
+     *     start_at: string,
+     *     duration_minutes: ?int
+     * }>
+     */
+    public function listProAdminPastAppointments(int $proId): array
+    {
+        throw new \LogicException('Past appointments should not be listed for an invalid service/pro pair.');
+    }
+
     public function createFromClient(
         int $proId,
         int $serviceId,

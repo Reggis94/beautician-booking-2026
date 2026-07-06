@@ -1,0 +1,923 @@
+{#
+  templates/pro_admin/opening_hours.html.twig
+
+  Frontend-only opening hours page for the pro admin area.
+
+  Variables expected when a backend route is added:
+    - currentMonth: DateTimeInterface
+    - openingHours: array keyed by 'Y-m-d' =>
+        { isOpen: bool, openTime: string '08:00', closeTime: string '18:00' }
+    - prevMonth: DateTimeInterface
+    - nextMonth: DateTimeInterface
+    - firstWeekdayOffset: int 0-6
+    - daysInMonth: int
+    - today: string 'Y-m-d'
+
+  Optional frontend URL placeholders:
+    - openingHoursPath: string default '/demo/pro/dashboard/opening-hours'
+    - saveOpeningHoursUrlTemplate: string containing '__date__'
+      default '/demo/pro/dashboard/opening-hours/__date__'
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opening hours - Glam4Style</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --cream: #FAF6F1;
+      --blush: #F2E0D6;
+      --rose: #D4998A;
+      --rose-deep: #B8765F;
+      --charcoal: #1C1916;
+      --warm-grey: #6B5F58;
+      --mid: #A89890;
+      --soft-border: rgba(180, 150, 135, 0.22);
+      --green: #3B6D11;
+      --green-bg: #EAF3DE;
+      --green-border: #639922;
+      --sidebar-w: 220px;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--cream);
+      color: var(--charcoal);
+      display: flex;
+      font-family: var(--sans);
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--charcoal);
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      left: 0;
+      min-height: 100vh;
+      padding: 36px 0 32px;
+      position: fixed;
+      top: 0;
+      width: var(--sidebar-w);
+      z-index: 50;
+    }
+
+    .sidebar-header { display: block; }
+
+    .sidebar-logo {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      color: var(--cream);
+      display: block;
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 0 28px 36px;
+      text-decoration: none;
+    }
+    .sidebar-logo span { color: var(--rose); }
+
+    .sidebar-nav {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 2px;
+      padding: 28px 0;
+    }
+
+    .sidebar-nav a {
+      align-items: center;
+      color: rgba(255, 255, 255, 0.45);
+      display: flex;
+      font-size: 13px;
+      font-weight: 400;
+      gap: 12px;
+      letter-spacing: 0.03em;
+      padding: 11px 28px;
+      position: relative;
+      text-decoration: none;
+      transition: color 0.18s, background 0.18s;
+    }
+    .sidebar-nav a:hover { background: rgba(255, 255, 255, 0.05); color: var(--cream); }
+    .sidebar-nav a.active { color: var(--cream); }
+    .sidebar-nav a.active::before {
+      background: var(--rose);
+      bottom: 0;
+      content: '';
+      left: 0;
+      position: absolute;
+      top: 0;
+      width: 2px;
+    }
+
+    .nav-icon {
+      flex-shrink: 0;
+      height: 16px;
+      opacity: 0.6;
+      width: 16px;
+    }
+    .sidebar-nav a.active .nav-icon,
+    .sidebar-nav a:hover .nav-icon { opacity: 1; }
+
+    .sidebar-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 24px 28px 0;
+    }
+
+    .mobile-menu-toggle { display: none; }
+
+    .logout-btn {
+      align-items: center;
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      display: flex;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 400;
+      gap: 10px;
+      letter-spacing: 0.06em;
+      padding: 0;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.18s;
+    }
+    .logout-btn:hover { color: var(--rose); }
+
+    .main {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+    }
+
+    .main-header {
+      align-items: flex-end;
+      border-bottom: 1px solid var(--soft-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: space-between;
+      padding: 40px 52px 28px;
+    }
+
+    .page-eyebrow {
+      color: var(--rose-deep);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .page-title {
+      font-family: var(--serif);
+      font-size: clamp(26px, 3vw, 40px);
+      font-weight: 300;
+      line-height: 1.15;
+    }
+    .page-title em { color: var(--rose-deep); font-style: italic; }
+
+    .month-nav {
+      align-items: center;
+      display: flex;
+      gap: 16px;
+    }
+
+    .month-nav-btn {
+      align-items: center;
+      background: none;
+      border: 1px solid var(--soft-border);
+      color: var(--warm-grey);
+      cursor: pointer;
+      display: flex;
+      height: 36px;
+      justify-content: center;
+      text-decoration: none;
+      transition: border-color 0.18s, color 0.18s, background 0.18s;
+      width: 36px;
+    }
+    .month-nav-btn:hover { background: var(--blush); border-color: var(--rose); color: var(--rose-deep); }
+
+    .month-label {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 400;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    .main-content { padding: 36px 52px 60px; }
+
+    .calendar-scroll { width: 100%; }
+
+    .week-header {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      margin-bottom: 10px;
+    }
+
+    .week-header-cell {
+      color: var(--mid);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      padding: 0 0 4px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .calendar-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .day-cell {
+      background: var(--cream);
+      border: 1px solid var(--soft-border);
+      display: flex;
+      flex-direction: column;
+      min-height: 148px;
+      overflow: hidden;
+      transition: border-color 0.18s;
+    }
+    .day-cell:hover { border-color: var(--rose); }
+    .day-cell.empty { background: transparent; border-color: transparent; pointer-events: none; }
+    .day-cell.past {
+      background: #F0ECE8;
+      border-color: rgba(120, 112, 106, 0.18);
+      color: #999;
+      pointer-events: none;
+    }
+    .day-cell.past:hover { border-color: rgba(120, 112, 106, 0.18); }
+
+    .day-header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px 6px;
+    }
+    .day-cell.open .day-header { background: var(--green-bg); border-bottom: 1px solid rgba(99, 153, 34, 0.25); }
+    .day-cell.closed .day-header { background: #EBEBEB; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+    .day-cell.past .day-header { background: #E1DDD8; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+
+    .day-number {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1;
+    }
+    .day-cell.open .day-number { color: var(--green); }
+    .day-cell.closed .day-number { color: #888; }
+    .day-cell.past .day-number { color: #9B938D; }
+
+    .day-status-badge {
+      border-radius: 2px;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      padding: 2px 7px;
+      text-transform: uppercase;
+    }
+    .day-cell.open .day-status-badge { background: rgba(99, 153, 34, 0.15); color: var(--green); }
+    .day-cell.closed .day-status-badge { background: rgba(0, 0, 0, 0.06); color: #888; }
+    .day-cell.past .day-status-badge { background: rgba(0, 0, 0, 0.06); color: #8F8781; }
+
+    .day-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px 12px 10px;
+    }
+
+    .day-hours {
+      color: var(--warm-grey);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .day-cell.closed .day-hours { color: #999; font-style: italic; }
+    .day-cell.past .day-hours { color: #9B938D; }
+
+    .change-btn {
+      align-self: flex-start;
+      background: none;
+      border: 1px solid var(--soft-border);
+      color: var(--rose-deep);
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      margin-top: 10px;
+      padding: 5px 10px;
+      text-transform: uppercase;
+      transition: background 0.16s, border-color 0.16s, color 0.16s;
+      white-space: nowrap;
+    }
+    .change-btn:hover { background: var(--blush); border-color: var(--rose); }
+
+    .day-cell.today { border-color: var(--rose); }
+    .day-cell.today .day-number { font-weight: 500; }
+
+    .modal-overlay {
+      align-items: center;
+      background: rgba(28, 25, 22, 0.55);
+      display: flex;
+      inset: 0;
+      justify-content: center;
+      opacity: 0;
+      padding: 24px;
+      pointer-events: none;
+      position: fixed;
+      transition: opacity 0.28s ease;
+      z-index: 200;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--cream);
+      max-width: 420px;
+      padding: 48px 44px;
+      position: relative;
+      transform: translateY(18px);
+      transition: transform 0.32s ease;
+      width: 100%;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--mid);
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+      position: absolute;
+      right: 20px;
+      top: 16px;
+      transition: color 0.18s;
+    }
+    .modal-close:hover { color: var(--charcoal); }
+
+    .modal-eyebrow {
+      color: var(--rose-deep);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .modal-title {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 28px;
+    }
+
+    .checkbox-row {
+      align-items: center;
+      background: var(--blush);
+      border: 1px solid var(--soft-border);
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding: 12px 14px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      accent-color: var(--rose-deep);
+      cursor: pointer;
+      flex-shrink: 0;
+      height: 16px;
+      width: 16px;
+    }
+
+    .checkbox-label {
+      color: var(--charcoal);
+      cursor: pointer;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .hours-fields {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr 1fr;
+      margin-bottom: 28px;
+      transition: opacity 0.2s;
+    }
+    .hours-fields.dimmed { opacity: 0.35; pointer-events: none; }
+
+    .form-label {
+      color: var(--warm-grey);
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      margin-bottom: 7px;
+      text-transform: uppercase;
+    }
+
+    .form-input {
+      background: var(--blush);
+      border: 1px solid var(--soft-border);
+      color: var(--charcoal);
+      font-family: var(--sans);
+      font-size: 14px;
+      outline: none;
+      padding: 11px 14px;
+      transition: border-color 0.18s;
+      width: 100%;
+    }
+    .form-input:focus { border-color: var(--rose); }
+
+    .modal-actions { display: flex; gap: 12px; }
+
+    .btn-primary {
+      background: var(--charcoal);
+      border: none;
+      color: var(--cream);
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      padding: 13px 28px;
+      text-transform: uppercase;
+      transition: background 0.18s, transform 0.12s;
+    }
+    .btn-primary:hover { background: var(--rose-deep); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--soft-border);
+      color: var(--warm-grey);
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      padding: 13px 28px;
+      text-transform: uppercase;
+      transition: border-color 0.18s, color 0.18s;
+    }
+    .btn-ghost:hover { border-color: var(--rose); color: var(--rose-deep); }
+
+    @media (max-width: 900px) {
+      .calendar-scroll {
+        overflow-x: auto;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .calendar-grid,
+      .week-header {
+        grid-template-columns: repeat(7, minmax(112px, 1fr));
+        min-width: 840px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+
+      body {
+        display: block;
+        padding-top: 58px;
+      }
+
+      .sidebar {
+        bottom: auto;
+        box-shadow: 0 8px 24px rgba(28, 25, 22, 0.12);
+        height: auto;
+        left: 0;
+        min-height: auto;
+        padding: 0;
+        right: 0;
+        top: 0;
+        width: 100%;
+        z-index: 100;
+      }
+
+      .sidebar-header {
+        align-items: center;
+        display: flex;
+        min-height: 58px;
+        width: 100%;
+      }
+
+      .mobile-menu-toggle {
+        align-items: center;
+        background: none;
+        border: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.07);
+        color: var(--cream);
+        cursor: pointer;
+        display: flex;
+        height: 58px;
+        justify-content: center;
+        padding: 0;
+        width: 58px;
+      }
+
+      .mobile-menu-toggle svg {
+        height: 22px;
+        width: 22px;
+      }
+
+      .sidebar-logo {
+        border-bottom: none;
+        flex: 1;
+        padding: 16px 20px;
+      }
+
+      .sidebar-nav,
+      .sidebar-footer {
+        display: none;
+        width: 100%;
+      }
+
+      .sidebar.is-open .sidebar-nav,
+      .sidebar.is-open .sidebar-footer {
+        display: flex;
+      }
+
+      .sidebar-nav {
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        flex: none;
+        flex-direction: column;
+        gap: 0;
+        padding: 8px 0;
+      }
+
+      .sidebar-nav a {
+        padding: 14px 20px;
+        white-space: nowrap;
+      }
+
+      .sidebar-nav a.active::before {
+        bottom: 0;
+        height: auto;
+        left: 0;
+        right: auto;
+        top: 0;
+        width: 2px;
+      }
+
+      .sidebar-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 16px 20px 18px;
+      }
+
+      .main { margin-left: 0; }
+      .main-header { padding: 24px 20px 20px; }
+      .main-content { padding: 20px 20px 48px; }
+      .calendar-grid,
+      .week-header { gap: 8px; }
+      .day-cell { min-height: 130px; }
+      .modal { padding: 36px 24px; }
+    }
+
+    @media (max-width: 480px) {
+      .month-nav { width: 100%; }
+      .month-label { flex: 1; min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+{% set currentMonth = currentMonth|default(date('first day of this month')) %}
+{% set prevMonth = prevMonth|default(currentMonth|date_modify('-1 month')) %}
+{% set nextMonth = nextMonth|default(currentMonth|date_modify('+1 month')) %}
+{% set openingHours = openingHours|default({}) %}
+{% set firstWeekdayOffset = firstWeekdayOffset|default((currentMonth|date('N')) - 1) %}
+{% set daysInMonth = daysInMonth|default(currentMonth|date('t')) %}
+{% set today = today|default('now'|date('Y-m-d')) %}
+{% set openingHoursPath = openingHoursPath|default('/demo/pro/dashboard/opening-hours') %}
+{% set saveOpeningHoursUrlTemplate = saveOpeningHoursUrlTemplate|default('/demo/pro/dashboard/opening-hours/__date__') %}
+
+<aside class="sidebar" role="navigation" aria-label="Main navigation">
+  <div class="sidebar-header">
+    <button
+      class="mobile-menu-toggle"
+      type="button"
+      aria-label="Open navigation"
+      aria-controls="dashboardNav"
+      aria-expanded="false"
+      data-mobile-menu-toggle
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+    </button>
+    <a href="{{ path('demo_pro_admin_dashboard') }}" class="sidebar-logo">Glam<span>4Style</span></a>
+  </div>
+
+  <nav class="sidebar-nav" id="dashboardNav">
+    <a href="{{ path('demo_pro_admin_appointments_upcoming') }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <rect x="1" y="3" width="14" height="12" rx="1"/><path d="M5 1v4M11 1v4M1 7h14"/>
+      </svg>
+      Upcoming
+    </a>
+    <a href="{{ path('demo_pro_admin_appointments_past') }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <circle cx="8" cy="8" r="6.5"/><path d="M8 5v3.5l2.5 1.5"/>
+      </svg>
+      Past
+    </a>
+    <a href="{{ path('demo_pro_admin_services_index') }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M2 4h12M2 8h8M2 12h10"/>
+      </svg>
+      Services
+    </a>
+    <a href="{{ openingHoursPath|default('/demo/pro/dashboard/opening-hours') }}" class="active" aria-current="page">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <circle cx="8" cy="8" r="6.5"/><path d="M8 3v5h4"/>
+      </svg>
+      Opening hours
+    </a>
+    <a href="{{ path('demo_front_pro_home') }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M2 8.5L8 3l6 5.5"/><path d="M4 7.5V14h8V7.5"/>
+      </svg>
+      Go to my website
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="#" class="logout-btn" data-demo-logout>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
+      </svg>
+      Log out
+    </a>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="main-header">
+    <div>
+      <p class="page-eyebrow">Availability</p>
+      <h1 class="page-title">Opening <em>hours</em></h1>
+    </div>
+    <nav class="month-nav" aria-label="Month navigation">
+      <a
+        href="{{ openingHoursPath }}?month={{ prevMonth|date('Y-m') }}"
+        class="month-nav-btn"
+        aria-label="Previous month"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M10 3L5 8l5 5"/>
+        </svg>
+      </a>
+      <span class="month-label">{{ currentMonth|date('F Y') }}</span>
+      <a
+        href="{{ openingHoursPath }}?month={{ nextMonth|date('Y-m') }}"
+        class="month-nav-btn"
+        aria-label="Next month"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M6 3l5 5-5 5"/>
+        </svg>
+      </a>
+    </nav>
+  </header>
+
+  <div class="main-content">
+    <div class="calendar-scroll">
+      <div class="week-header" aria-hidden="true">
+        {% for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+          <div class="week-header-cell">{{ day }}</div>
+        {% endfor %}
+      </div>
+
+      <div
+        class="calendar-grid"
+        role="grid"
+        aria-label="Calendar for {{ currentMonth|date('F Y') }}"
+        data-save-url-template="{{ saveOpeningHoursUrlTemplate }}"
+      >
+        {% if firstWeekdayOffset > 0 %}
+          {% for i in 1..firstWeekdayOffset %}
+            <div class="day-cell empty" role="gridcell" aria-hidden="true"></div>
+          {% endfor %}
+        {% endif %}
+
+        {% for day in 1..daysInMonth %}
+          {% set dateKey = currentMonth|date('Y-m') ~ '-' ~ '%02d'|format(day) %}
+          {% set dayData = openingHours[dateKey] ?? {'isOpen': false, 'openTime': '00:00', 'closeTime': '00:00'} %}
+          {% set isOpen = dayData.isOpen %}
+          {% set openTimeLabel = dayData.openTime|date('g:i A') %}
+          {% set closeTimeLabel = dayData.closeTime|date('g:i A') %}
+          {% set isToday = dateKey == today %}
+          {% set isPast = dateKey < today %}
+
+          <div
+            class="day-cell {{ isOpen ? 'open' : 'closed' }} {{ isToday ? 'today' : '' }} {{ isPast ? 'past' : '' }}"
+            role="gridcell"
+            aria-disabled="{{ isPast ? 'true' : 'false' }}"
+            aria-label="{{ currentMonth|date('F') }} {{ day }}, {{ isPast ? 'past date, ' : '' }}{{ isOpen ? 'open ' ~ openTimeLabel ~ ' to ' ~ closeTimeLabel : 'closed' }}"
+          >
+            <div class="day-header">
+              <span class="day-number">{{ day }}</span>
+              <span class="day-status-badge">{{ isOpen ? 'Open' : 'Closed' }}</span>
+            </div>
+
+            <div class="day-body">
+              <p class="day-hours">
+                {% if isOpen %}
+                  {{ openTimeLabel }} - {{ closeTimeLabel }}
+                {% else %}
+                  Closed
+                {% endif %}
+              </p>
+
+              {% if not isPast %}
+                <button
+                  class="change-btn"
+                  type="button"
+                  data-hours-edit
+                  data-date="{{ dateKey }}"
+                  data-is-open="{{ isOpen ? 'true' : 'false' }}"
+                  data-open-time="{{ isOpen ? dayData.openTime : '00:00' }}"
+                  data-close-time="{{ isOpen ? dayData.closeTime : '00:00' }}"
+                  data-label="{{ currentMonth|date('F') }} {{ day }}"
+                  aria-haspopup="dialog"
+                >
+                  Change hours
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="hoursModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <button class="modal-close" type="button" data-modal-close aria-label="Close">x</button>
+
+    <p class="modal-eyebrow">Opening hours</p>
+    <h2 class="modal-title" id="modalTitle">Edit hours</h2>
+
+    <form id="hoursForm" method="post" action="">
+      <input type="hidden" name="_method" value="POST">
+      <input type="hidden" name="date" id="formDate">
+
+      <label class="checkbox-row" for="isClosed">
+        <input type="checkbox" id="isClosed" name="isClosed" data-closed-toggle>
+        <span class="checkbox-label">Mark as closed all day</span>
+      </label>
+
+      <div class="hours-fields" id="hoursFields">
+        <div class="form-field">
+          <label class="form-label" for="openTime">Opens at</label>
+          <input class="form-input" type="time" id="openTime" name="openTime" data-time-field required>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="closeTime">Closes at</label>
+          <input class="form-input" type="time" id="closeTime" name="closeTime" data-time-field required>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary">Save</button>
+        <button type="button" class="btn-ghost" data-modal-close>Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const sidebar = document.querySelector('.sidebar');
+    const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
+    const demoLogout = document.querySelector('[data-demo-logout]');
+
+    if (sidebar && mobileMenuToggle) {
+      mobileMenuToggle.addEventListener('click', () => {
+        const isOpen = sidebar.classList.toggle('is-open');
+
+        mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+        mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+      });
+    }
+
+    if (demoLogout) {
+      demoLogout.addEventListener('click', (event) => {
+        event.preventDefault();
+      });
+    }
+
+    const calendar = document.querySelector('[data-save-url-template]');
+    const overlay = document.getElementById('hoursModal');
+    const form = document.getElementById('hoursForm');
+    const formDate = document.getElementById('formDate');
+    const isClosed = document.getElementById('isClosed');
+    const hoursFields = document.getElementById('hoursFields');
+    const openTime = document.getElementById('openTime');
+    const closeTime = document.getElementById('closeTime');
+    const modalTitle = document.getElementById('modalTitle');
+
+    if (!calendar || !overlay || !form) {
+      return;
+    }
+
+    const closeModal = () => {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    };
+
+    const setClosed = (closed) => {
+      isClosed.checked = closed;
+      hoursFields.classList.toggle('dimmed', closed);
+
+      if (closed) {
+        openTime.value = '00:00';
+        closeTime.value = '00:00';
+      }
+    };
+
+    const openModal = (button) => {
+      const isOpen = button.dataset.isOpen === 'true';
+      const saveUrl = calendar.dataset.saveUrlTemplate.replace('__date__', button.dataset.date);
+
+      formDate.value = button.dataset.date;
+      modalTitle.textContent = button.dataset.label;
+      openTime.value = button.dataset.openTime;
+      closeTime.value = button.dataset.closeTime;
+      form.action = saveUrl;
+      setClosed(!isOpen);
+
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    calendar.querySelectorAll('[data-hours-edit]').forEach((button) => {
+      button.addEventListener('click', () => openModal(button));
+    });
+
+    isClosed.addEventListener('change', () => {
+      setClosed(isClosed.checked);
+
+      if (!isClosed.checked) {
+        openTime.focus();
+      }
+    });
+
+    [openTime, closeTime].forEach((field) => {
+      field.addEventListener('change', () => {
+        isClosed.checked = false;
+        hoursFields.classList.remove('dimmed');
+      });
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      closeModal();
+    });
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        closeModal();
+      }
+    });
+
+    document.querySelectorAll('[data-modal-close]').forEach((button) => {
+      button.addEventListener('click', closeModal);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    });
+  })();
+</script>
+{% include 'demo/_g4s_account_prompt.html.twig' with {
+  demo_side: 'admin',
+  front_url: path('demo_front_pro_home')
+} %}
+</body>
+</html>

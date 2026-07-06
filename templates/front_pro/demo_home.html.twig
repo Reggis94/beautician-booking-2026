@@ -1,0 +1,867 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="page-content">
+        {% if banner_urls|default([]) is not empty %}
+            {% for bannerUrl in banner_urls %}
+                <img src="{{ bannerUrl }}" alt="" loading="lazy" decoding="async" class="banner-image">
+            {% endfor %}
+        {% endif %}
+
+        <div class="demo-front-toolbar">
+            <a href="{{ demo_admin_url }}" class="demo-front-toolbar__admin-link">Back to admin</a>
+        </div>
+
+        <section class="service-categories">
+            <div class="service-categories__header">
+                <p class="service-categories__eyebrow">What we offer</p>
+                <h2>Services</h2>
+                <p class="service-categories__sub">Pick a treatment and request a demo appointment.</p>
+            </div>
+
+            <div class="service-categories__list">
+                {% for category in demo_service_categories %}
+                    <article class="service-category">
+                        <button class="service-category__toggle" type="button" aria-expanded="true">
+                            <span class="service-category__main">
+                                <span class="service-category__arrow">&#8964;</span>
+                                <span class="service-category__name">{{ category.name }}</span>
+                            </span>
+                            <span class="service-category__count">
+                                {{ category.services|length }} {{ category.services|length > 1 ? 'services' : 'service' }}
+                            </span>
+                        </button>
+
+                        <div class="service-category__services">
+                            {% for service in category.services %}
+                                <article class="service-card">
+                                    <div class="service-card__header">
+                                        <h3 class="service-card__name">{{ service.name }}</h3>
+                                        <span class="service-card__price">${{ service.price }}</span>
+                                    </div>
+                                    <p class="service-card__description">{{ service.description }}</p>
+                                    <div class="service-card__meta">
+                                        <span class="service-card__meta-pill">{{ service.durationMinutes }} min</span>
+                                        <span class="service-card__meta-pill">Demo availability</span>
+                                    </div>
+                                    <button
+                                        class="service-card__book"
+                                        type="button"
+                                        data-demo-booking
+                                        data-service-id="{{ service.id }}"
+                                        data-service-name="{{ service.name }}"
+                                    >
+                                        Book this service
+                                    </button>
+                                    <div class="service-card__availability" hidden data-availability-panel>
+                                        <p class="service-card__availability-title" data-availability-title></p>
+
+                                        <div class="service-card__availability-nav" data-availability-nav>
+                                            <button
+                                                class="service-card__availability-nav-button"
+                                                type="button"
+                                                data-availability-previous
+                                            ></button>
+                                            <button
+                                                class="service-card__availability-nav-button"
+                                                type="button"
+                                                data-availability-next
+                                            ></button>
+                                        </div>
+
+                                        <div class="service-card__availability-days" data-availability-days></div>
+
+                                        <div class="service-card__availability-slots" hidden data-availability-slots>
+                                            <p class="service-card__availability-slots-title" data-availability-slots-title></p>
+                                            <div class="service-card__availability-slot-list" data-availability-slot-list></div>
+                                        </div>
+
+                                        <form class="service-card__booking-form" hidden data-booking-form>
+                                            <p class="service-card__booking-form-title" data-booking-form-title></p>
+                                            <input type="hidden" name="proId" value="1">
+                                            <input type="hidden" name="serviceId" value="{{ service.id }}">
+                                            <input type="hidden" name="startDateTimeLocal">
+
+                                            <div class="service-card__booking-fields">
+                                                <div class="service-card__booking-field">
+                                                    <label>Last name</label>
+                                                    <input name="lastName" type="text" autocomplete="family-name" maxlength="50" required>
+                                                </div>
+                                                <div class="service-card__booking-field">
+                                                    <label>First name</label>
+                                                    <input name="firstName" type="text" autocomplete="given-name" maxlength="50" required>
+                                                </div>
+                                                <div class="service-card__booking-field">
+                                                    <label>Email</label>
+                                                    <input name="email" type="email" autocomplete="email" required>
+                                                </div>
+                                                <div class="service-card__booking-field">
+                                                    <label>Phone</label>
+                                                    <input name="extraPhone" type="tel" autocomplete="tel" minlength="7" maxlength="30" required>
+                                                </div>
+                                            </div>
+
+                                            <button class="service-card__booking-submit" type="submit">
+                                                Confirm appointment
+                                            </button>
+                                            <p class="service-card__booking-status" data-demo-booking-status></p>
+                                        </form>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <div
+        class="booking-result-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="demoBookingResultTitle"
+        hidden
+        data-booking-result-modal
+    >
+        <div class="booking-result-modal__backdrop" data-booking-result-close></div>
+        <div class="booking-result-modal__dialog">
+            <button class="booking-result-modal__close" type="button" aria-label="Close" data-booking-result-close>x</button>
+            <p class="booking-result-modal__eyebrow">Appointment requested</p>
+            <h2 class="booking-result-modal__title" id="demoBookingResultTitle">Thank you, your appointment is requested</h2>
+            <p class="booking-result-modal__body">
+                We have sent you an email with the appointment details. The business has also been notified.
+            </p>
+            <button class="booking-result-modal__action" type="button" data-booking-result-close>Close</button>
+        </div>
+    </div>
+
+    <style>
+        /* ── TOKENS ── */
+        :root {
+            --cream:       #FAF6F1;
+            --blush:       #F2E0D6;
+            --rose:        #D4998A;
+            --rose-deep:   #B8765F;
+            --charcoal:    #1C1916;
+            --warm-grey:   #6B5F58;
+            --mid:         #A89890;
+            --soft-border: rgba(180,150,135,0.22);
+            --serif: 'Cormorant Garamond', Georgia, serif;
+            --sans:  'DM Sans', system-ui, sans-serif;
+        }
+
+        /* ── LAYOUT ── */
+        .page-content {
+            max-width: 1025px;
+            margin: 0 auto;
+            background: var(--cream);
+            font-family: var(--sans);
+            font-weight: 300;
+            color: var(--charcoal);
+        }
+        .banner-image {
+            display: block;
+            height: auto;
+            margin: 0;
+            width: 100%;
+        }
+
+        /* ── TOOLBAR ── */
+        .demo-front-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--soft-border);
+        }
+        .demo-front-toolbar__admin-link {
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--cream);
+            background: var(--charcoal);
+            padding: 9px 18px;
+            text-decoration: none;
+            transition: background .18s;
+        }
+        .demo-front-toolbar__admin-link:hover {
+            background: var(--rose-deep);
+            color: var(--cream);
+        }
+
+        /* ── SECTION HEADER ── */
+        .service-categories {
+            padding: 48px 24px 60px;
+        }
+        .service-categories__header {
+            margin-bottom: 36px;
+        }
+        .service-categories__eyebrow {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: var(--rose-deep);
+            margin: 0 0 10px;
+        }
+        .service-categories__header h2 {
+            font-family: var(--serif);
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 300;
+            line-height: 1.15;
+            margin: 0 0 8px;
+            color: var(--charcoal);
+        }
+        .service-categories__sub {
+            font-size: 14px;
+            color: var(--warm-grey);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* ── CATEGORY ── */
+        .service-categories__list {
+            display: grid;
+            gap: 16px;
+        }
+        .service-category {
+            border: 1px solid var(--soft-border);
+            background: var(--cream);
+            overflow: hidden;
+        }
+        .service-category__toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: var(--cream);
+            border: 0;
+            padding: 18px 20px;
+            text-align: left;
+            cursor: default;
+            min-height: 56px;
+            border-bottom: 1px solid var(--soft-border);
+        }
+        .service-category__main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .service-category__arrow {
+            font-size: 18px;
+            color: var(--mid);
+            line-height: 1;
+            width: 16px;
+        }
+        .service-category__name {
+            font-family: var(--serif);
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--charcoal);
+        }
+        .service-category__count {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--mid);
+        }
+
+        /* ── SERVICE CARDS ── */
+        .service-category__services {
+            background: var(--blush);
+            display: grid;
+            gap: 1px;
+            padding: 0;
+            border-top: none;
+        }
+        .service-card {
+            background: var(--cream);
+            padding: 24px 20px 24px 32px;
+            position: relative;
+            transition: background .18s;
+        }
+        .service-card:hover { background: #FEFCF9; }
+
+        .service-card__header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .service-card__name {
+            font-family: var(--serif);
+            font-size: 22px;
+            font-weight: 400;
+            margin: 0;
+            color: var(--charcoal);
+            line-height: 1.2;
+        }
+        .service-card__price {
+            font-family: var(--serif);
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--rose-deep);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .service-card__description {
+            font-size: 13px;
+            color: var(--warm-grey);
+            margin: 0 0 14px;
+            line-height: 1.65;
+        }
+        .service-card__meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .service-card__meta-pill {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .08em;
+            color: var(--warm-grey);
+            background: var(--blush);
+            border: 1px solid var(--soft-border);
+            padding: 4px 10px;
+        }
+
+        /* ── BOOK BUTTON ── */
+        .service-card__book {
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--cream);
+            background: var(--charcoal);
+            border: none;
+            padding: 11px 22px;
+            cursor: pointer;
+            transition: background .18s, transform .12s;
+        }
+        .service-card__book:hover {
+            background: var(--rose-deep);
+            transform: translateY(-1px);
+        }
+
+        /* ── AVAILABILITY PANEL ── */
+        .service-card__availability {
+            border-top: 1px solid var(--soft-border);
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+        .service-card__availability-title {
+            font-family: var(--serif);
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--charcoal);
+            margin: 0 0 14px;
+        }
+
+        /* nav buttons */
+        .service-card__availability-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .service-card__availability-nav-button {
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .08em;
+            color: var(--warm-grey);
+            background: var(--cream);
+            border: 1px solid var(--soft-border);
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: border-color .18s, color .18s, background .18s;
+        }
+        .service-card__availability-nav-button:hover {
+            border-color: var(--rose);
+            color: var(--rose-deep);
+            background: var(--blush);
+        }
+
+        /* day buttons */
+        .service-card__availability-days,
+        .service-card__availability-slot-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 0;
+        }
+        .service-card__availability-day {
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: .06em;
+            color: var(--warm-grey);
+            background: var(--blush);
+            border: 1px solid var(--soft-border);
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: border-color .18s, color .18s, background .18s;
+        }
+        .service-card__availability-day:hover {
+            border-color: var(--rose);
+            color: var(--rose-deep);
+        }
+        .service-card__availability-day.is-selected {
+            background: var(--charcoal);
+            border-color: var(--charcoal);
+            color: var(--cream);
+        }
+
+        /* slots */
+        .service-card__availability-slots {
+            border-top: 1px solid var(--soft-border);
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+        .service-card__availability-slots-title {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--mid);
+            margin: 0 0 12px;
+        }
+        .service-card__availability-slot {
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: .06em;
+            color: var(--warm-grey);
+            background: var(--cream);
+            border: 1px solid var(--soft-border);
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: border-color .18s, color .18s, background .18s;
+        }
+        .service-card__availability-slot:hover {
+            border-color: var(--rose);
+            color: var(--rose-deep);
+            background: var(--blush);
+        }
+        .service-card__availability-slot.is-selected {
+            background: var(--rose-deep);
+            border-color: var(--rose-deep);
+            color: var(--cream);
+        }
+
+        /* ── BOOKING FORM ── */
+        .service-card__booking-form {
+            border-top: 1px solid var(--soft-border);
+            display: grid;
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+        .service-card__booking-form-title {
+            font-family: var(--serif);
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--charcoal);
+            margin: 0;
+        }
+        .service-card__booking-fields {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        }
+        .service-card__booking-field {
+            display: grid;
+            gap: 6px;
+        }
+        .service-card__booking-field label {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: var(--warm-grey);
+        }
+        .service-card__booking-field input {
+            font-family: var(--sans);
+            font-size: 14px;
+            color: var(--charcoal);
+            background: var(--blush);
+            border: 1px solid var(--soft-border);
+            padding: 11px 14px;
+            outline: none;
+            transition: border-color .18s;
+            border-radius: 0;
+            -webkit-appearance: none;
+        }
+        .service-card__booking-field input:focus {
+            border-color: var(--rose);
+        }
+        .service-card__booking-field input::placeholder {
+            color: var(--mid);
+        }
+
+        /* submit */
+        .service-card__booking-submit {
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--cream);
+            background: var(--rose-deep);
+            border: none;
+            padding: 13px 28px;
+            cursor: pointer;
+            justify-self: start;
+            transition: background .18s, transform .12s;
+        }
+        .service-card__booking-submit:hover {
+            background: var(--charcoal);
+            transform: translateY(-1px);
+        }
+
+        /* status */
+        .service-card__booking-status {
+            font-size: 13px;
+            color: var(--mid);
+            margin: 4px 0 0;
+            line-height: 1.5;
+        }
+        .service-card__booking-status.is-success {
+            color: #3B6D11;
+            font-weight: 400;
+        }
+        .booking-result-modal {
+            align-items: center;
+            display: flex;
+            inset: 0;
+            justify-content: center;
+            padding: 24px;
+            position: fixed;
+            z-index: 50;
+        }
+        .booking-result-modal[hidden] { display: none; }
+        .booking-result-modal__backdrop {
+            background: rgba(28, 25, 22, .42);
+            inset: 0;
+            position: absolute;
+        }
+        .booking-result-modal__dialog {
+            background: var(--cream);
+            border: 1px solid var(--soft-border);
+            box-shadow: 0 24px 70px rgba(28, 25, 22, .24);
+            max-width: 420px;
+            padding: 40px 32px 32px;
+            position: relative;
+            width: min(100%, 420px);
+        }
+        .booking-result-modal__close {
+            background: transparent;
+            border: 0;
+            color: var(--mid);
+            cursor: pointer;
+            font-family: var(--sans);
+            font-size: 18px;
+            line-height: 1;
+            padding: 8px;
+            position: absolute;
+            right: 14px;
+            top: 14px;
+        }
+        .booking-result-modal__close:hover { color: var(--charcoal); }
+        .booking-result-modal__eyebrow {
+            color: var(--rose-deep);
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: .2em;
+            margin: 0 0 10px;
+            text-transform: uppercase;
+        }
+        .booking-result-modal__title {
+            color: var(--charcoal);
+            font-family: var(--serif);
+            font-size: 30px;
+            font-weight: 300;
+            line-height: 1.15;
+            margin: 0 0 12px;
+        }
+        .booking-result-modal__body {
+            color: var(--warm-grey);
+            font-size: 14px;
+            line-height: 1.65;
+            margin: 0 0 24px;
+        }
+        .booking-result-modal__action {
+            background: var(--charcoal);
+            border: 0;
+            color: var(--cream);
+            cursor: pointer;
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            padding: 11px 22px;
+            text-transform: uppercase;
+            transition: background .18s, transform .12s;
+        }
+        .booking-result-modal__action:hover {
+            background: var(--rose-deep);
+            transform: translateY(-1px);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 600px) {
+            .service-categories { padding: 36px 16px 48px; }
+            .service-card { padding: 20px 16px; }
+            .booking-result-modal__dialog { padding: 36px 24px 28px; }
+            .service-card__name { font-size: 19px; }
+        }
+    </style>
+
+    <script>
+        (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const bookingResultModal = document.querySelector('[data-booking-result-modal]');
+            const openBookingResultModal = () => {
+                if (bookingResultModal) {
+                    bookingResultModal.hidden = false;
+                }
+            };
+            const closeBookingResultModal = () => {
+                if (bookingResultModal) {
+                    bookingResultModal.hidden = true;
+                }
+            };
+
+            document.querySelectorAll('[data-booking-result-close]').forEach((button) => {
+                button.addEventListener('click', closeBookingResultModal);
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    closeBookingResultModal();
+                }
+            });
+            const scrollToBookingStep = (element) => {
+                if (!element) {
+                    return;
+                }
+
+                window.requestAnimationFrame(() => {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                    });
+                });
+            };
+
+            const getCurrentYearMonth = () => {
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                return `${today.getFullYear()}-${month}`;
+            };
+            const addMonths = (yearMonth, monthsToAdd) => {
+                const [year, month] = yearMonth.split('-').map(Number);
+                const date = new Date(year, month - 1 + monthsToAdd, 1);
+                const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+                return `${date.getFullYear()}-${nextMonth}`;
+            };
+            const formatMonthLabel = (yearMonth) => {
+                const [year, month] = yearMonth.split('-').map(Number);
+                const date = new Date(year, month - 1, 1);
+                return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
+            };
+            const formatBookableDay = (dateString) => {
+                const [year, month, day] = dateString.split('-').map(Number);
+                const date = new Date(year, month - 1, day);
+                return new Intl.DateTimeFormat('en-US', { day: 'numeric', weekday: 'short' }).format(date);
+            };
+            const formatTimeWithMeridiem = (time) => {
+                const [hours, minutes] = time.split(':').map(Number);
+                const period = hours >= 12 ? 'PM' : 'AM';
+                const displayHours = hours % 12 || 12;
+                const displayMinutes = String(minutes).padStart(2, '0');
+                return `${displayHours}:${displayMinutes} ${period}`;
+            };
+            const formatSelectedAppointment = (localDate, startTime) => {
+                return `${formatBookableDay(localDate)} at ${formatTimeWithMeridiem(startTime)}`;
+            };
+            const buildLocalDate = (date) => {
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${date.getFullYear()}-${month}-${day}`;
+            };
+            const resolveBookableDays = (yearMonth) => {
+                const [year, month] = yearMonth.split('-').map(Number);
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const todayDay = today.getFullYear() === year && today.getMonth() === month - 1 ? today.getDate() : 0;
+                const firstDemoDay = Math.min(Math.max(todayDay + 1, 10), Math.max(daysInMonth - 1, 1));
+                const secondDemoDay = Math.min(firstDemoDay + 7, daysInMonth);
+                const days = [firstDemoDay, secondDemoDay]
+                    .filter((day, index, values) => values.indexOf(day) === index)
+                    .map((day) => buildLocalDate(new Date(year, month - 1, day)));
+                if (days.length === 1 && firstDemoDay > 1) {
+                    days.unshift(buildLocalDate(new Date(year, month - 1, firstDemoDay - 1)));
+                }
+                return days.slice(0, 2);
+            };
+            const resolveSlots = (serviceId, dayIndex) => {
+                const baseSlots = {
+                    301: [['09:30', '11:00'], ['14:00', '15:30']],
+                    302: [['10:00', '12:10'], ['13:40', '16:20']],
+                    303: [['09:00', '13:00'], ['15:00', '16:30']],
+                    304: [['11:30', '14:30'], ['16:00', '17:30']],
+                };
+                const slots = baseSlots[serviceId] || [['10:00', '14:00'], ['11:00', '15:00']];
+                return slots[dayIndex] || slots[0];
+            };
+            const resetBookingForm = (panel) => {
+                const form = panel.querySelector('[data-booking-form]');
+                const status = panel.querySelector('[data-demo-booking-status]');
+                panel.querySelectorAll('[data-start-time]').forEach((slotButton) => slotButton.classList.remove('is-selected'));
+                form.hidden = true;
+                form.reset();
+                status.textContent = '';
+                status.classList.remove('is-success');
+            };
+            const resetAvailabilityPanel = (panel) => {
+                const title = panel.querySelector('[data-availability-title]');
+                const daysList = panel.querySelector('[data-availability-days]');
+                const slotsPanel = panel.querySelector('[data-availability-slots]');
+                const slotsTitle = panel.querySelector('[data-availability-slots-title]');
+                const slotList = panel.querySelector('[data-availability-slot-list]');
+
+                panel.hidden = true;
+                delete panel.dataset.visibleMonth;
+                title.textContent = '';
+                daysList.replaceChildren();
+                slotsPanel.hidden = true;
+                slotsTitle.textContent = '';
+                slotList.replaceChildren();
+                resetBookingForm(panel);
+            };
+            const closeOtherAvailabilityPanels = (currentPanel) => {
+                document.querySelectorAll('[data-availability-panel]').forEach((panel) => {
+                    if (panel !== currentPanel) {
+                        resetAvailabilityPanel(panel);
+                    }
+                });
+            };
+            const showBookingForm = (panel, button, serviceName) => {
+                const form = panel.querySelector('[data-booking-form]');
+                const title = panel.querySelector('[data-booking-form-title]');
+                const localDate = button.dataset.localDate;
+                const startTime = button.dataset.startTime;
+                resetBookingForm(panel);
+                button.classList.add('is-selected');
+                form.hidden = false;
+                form.elements.startDateTimeLocal.value = `${localDate} ${startTime}:00`;
+                title.textContent = `Book ${serviceName} — ${formatSelectedAppointment(localDate, startTime)}`;
+                scrollToBookingStep(form);
+            };
+            const renderSlots = (panel, dayButton, serviceId, serviceName) => {
+                const slotsPanel = panel.querySelector('[data-availability-slots]');
+                const slotsTitle = panel.querySelector('[data-availability-slots-title]');
+                const slotList = panel.querySelector('[data-availability-slot-list]');
+                const localDate = dayButton.dataset.localDate;
+                const dayIndex = Number(dayButton.dataset.dayIndex);
+                const slotButtons = resolveSlots(serviceId, dayIndex).map((slot) => {
+                    const slotButton = document.createElement('button');
+                    slotButton.className = 'service-card__availability-slot';
+                    slotButton.type = 'button';
+                    slotButton.textContent = formatTimeWithMeridiem(slot);
+                    slotButton.dataset.localDate = localDate;
+                    slotButton.dataset.startTime = slot;
+                    slotButton.addEventListener('click', () => showBookingForm(panel, slotButton, serviceName));
+                    return slotButton;
+                });
+                panel.querySelectorAll('[data-local-date]').forEach((button) => {
+                    button.classList.toggle('is-selected', button === dayButton);
+                });
+                resetBookingForm(panel);
+                slotsTitle.textContent = `Available slots — ${formatBookableDay(localDate)}`;
+                slotList.replaceChildren(...slotButtons);
+                slotsPanel.hidden = false;
+                scrollToBookingStep(slotsPanel);
+            };
+            const renderBookableDays = (panel, serviceId, serviceName, yearMonth) => {
+                const title = panel.querySelector('[data-availability-title]');
+                const previousButton = panel.querySelector('[data-availability-previous]');
+                const nextButton = panel.querySelector('[data-availability-next]');
+                const daysList = panel.querySelector('[data-availability-days]');
+                const previousYearMonth = addMonths(yearMonth, -1);
+                const nextYearMonth = addMonths(yearMonth, 1);
+                const days = resolveBookableDays(yearMonth);
+                panel.hidden = false;
+                panel.dataset.visibleMonth = yearMonth;
+                title.textContent = `Bookable days — ${formatMonthLabel(yearMonth)}`;
+                previousButton.hidden = previousYearMonth < getCurrentYearMonth();
+                previousButton.textContent = `← ${formatMonthLabel(previousYearMonth)}`;
+                nextButton.textContent = `${formatMonthLabel(nextYearMonth)} →`;
+                panel.querySelector('[data-availability-slots]').hidden = true;
+                resetBookingForm(panel);
+                daysList.replaceChildren(...days.map((localDate, index) => {
+                    const dayButton = document.createElement('button');
+                    dayButton.className = 'service-card__availability-day';
+                    dayButton.type = 'button';
+                    dayButton.textContent = formatBookableDay(localDate);
+                    dayButton.dataset.dayIndex = String(index);
+                    dayButton.dataset.localDate = localDate;
+                    dayButton.addEventListener('click', () => renderSlots(panel, dayButton, serviceId, serviceName));
+                    return dayButton;
+                }));
+                scrollToBookingStep(panel);
+            };
+
+            document.querySelectorAll('[data-demo-booking]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const card = button.closest('.service-card');
+                    const panel = card ? card.querySelector('[data-availability-panel]') : null;
+                    if (!panel) return;
+                    closeOtherAvailabilityPanels(panel);
+                    renderBookableDays(
+                        panel,
+                        Number(button.dataset.serviceId),
+                        button.dataset.serviceName,
+                        panel.dataset.visibleMonth || getCurrentYearMonth()
+                    );
+                });
+            });
+
+            document.querySelectorAll('[data-availability-panel]').forEach((panel) => {
+                const card = panel.closest('.service-card');
+                const bookButton = card ? card.querySelector('[data-demo-booking]') : null;
+                const previousButton = panel.querySelector('[data-availability-previous]');
+                const nextButton = panel.querySelector('[data-availability-next]');
+                const form = panel.querySelector('[data-booking-form]');
+                const status = panel.querySelector('[data-demo-booking-status]');
+                if (!bookButton || !form) return;
+                previousButton.addEventListener('click', () => {
+                    const previousYearMonth = addMonths(panel.dataset.visibleMonth, -1);
+                    if (previousYearMonth >= getCurrentYearMonth()) {
+                        renderBookableDays(panel, Number(bookButton.dataset.serviceId), bookButton.dataset.serviceName, previousYearMonth);
+                    }
+                });
+                nextButton.addEventListener('click', () => {
+                    renderBookableDays(panel, Number(bookButton.dataset.serviceId), bookButton.dataset.serviceName, addMonths(panel.dataset.visibleMonth, 1));
+                });
+                form.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    status.textContent = 'Demo appointment booked. No real data was saved.';
+                    status.classList.add('is-success');
+                    openBookingResultModal();
+                });
+            });
+        })();
+    </script>
+
+    {% include 'demo/_g4s_account_prompt.html.twig' with {
+        admin_url: demo_admin_url,
+        demo_side: 'front'
+    } %}
+{% endblock %}

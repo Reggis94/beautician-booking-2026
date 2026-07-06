@@ -1,0 +1,371 @@
+<div
+  class="g4s-account-prompt"
+  data-g4s-account-prompt
+  data-demo-side="{{ demo_side|default('admin') }}"
+  data-admin-url="{{ admin_url|default(path('demo_pro_admin_dashboard')) }}"
+  data-checkout-url="{{ checkout_url|default(path('g4s_checkout')) }}"
+  data-front-url="{{ front_url|default(path('demo_front_pro_home')) }}"
+  hidden
+>
+  <div class="g4s-account-prompt__backdrop" data-g4s-account-prompt-close></div>
+  <section
+    class="g4s-account-prompt__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="g4s-account-prompt-title"
+  >
+    <button
+      class="g4s-account-prompt__close"
+      type="button"
+      aria-label="Close demo prompt"
+      data-g4s-account-prompt-close
+    >x</button>
+    <p class="g4s-account-prompt__eyebrow" data-g4s-account-prompt-eyebrow></p>
+    <h2 class="g4s-account-prompt__title" id="g4s-account-prompt-title" data-g4s-account-prompt-title></h2>
+    <p class="g4s-account-prompt__body" data-g4s-account-prompt-body></p>
+    <div class="g4s-account-prompt__actions">
+      <a class="g4s-account-prompt__primary" href="{{ checkout_url|default(path('g4s_checkout')) }}" data-g4s-account-prompt-primary></a>
+      <button class="g4s-account-prompt__secondary" type="button" data-g4s-account-prompt-close>
+      </button>
+    </div>
+  </section>
+</div>
+
+<style>
+  .g4s-account-prompt[hidden] { display: none; }
+  .g4s-account-prompt {
+    align-items: center;
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 24px;
+    position: fixed;
+    z-index: 1000;
+  }
+  .g4s-account-prompt__backdrop {
+    background: rgba(28, 25, 22, 0.55);
+    inset: 0;
+    position: absolute;
+  }
+  .g4s-account-prompt__dialog {
+    background: #FAF6F1;
+    color: #1C1916;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    max-width: 420px;
+    padding: 36px;
+    position: relative;
+    width: min(100%, 420px);
+  }
+  .g4s-account-prompt__close {
+    background: none;
+    border: 0;
+    color: #A89890;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 8px;
+    position: absolute;
+    right: 14px;
+    top: 14px;
+  }
+  .g4s-account-prompt__eyebrow {
+    color: #B8765F;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    margin: 0 28px 10px 0;
+    text-transform: uppercase;
+  }
+  .g4s-account-prompt__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 34px;
+    font-weight: 300;
+    line-height: 1.12;
+    margin: 0 0 14px;
+  }
+  .g4s-account-prompt__body {
+    color: #6B5F58;
+    font-size: 14px;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .g4s-account-prompt__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+  }
+  .g4s-account-prompt__primary,
+  .g4s-account-prompt__secondary {
+    border: 1px solid rgba(180, 150, 135, 0.28);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: 600 11px/1 'DM Sans', system-ui, sans-serif;
+    letter-spacing: 0.1em;
+    padding: 13px 18px;
+    text-decoration: none;
+    text-decoration-line: none;
+    text-transform: uppercase;
+  }
+  .g4s-account-prompt__primary:hover,
+  .g4s-account-prompt__primary:focus,
+  .g4s-account-prompt__primary:active,
+  .g4s-account-prompt__primary:visited {
+    color: #FAF6F1;
+    text-decoration: none;
+    text-decoration-line: none;
+  }
+  .g4s-account-prompt__primary {
+    background: #1C1916;
+    color: #FAF6F1;
+  }
+  .g4s-account-prompt__secondary {
+    background: transparent;
+    color: #6B5F58;
+  }
+  @media (max-width: 480px) {
+    .g4s-account-prompt { padding: 18px; }
+    .g4s-account-prompt__dialog { padding: 32px 24px 24px; }
+    .g4s-account-prompt__actions { display: grid; }
+    .g4s-account-prompt__primary,
+    .g4s-account-prompt__secondary {
+      text-align: center;
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const prompt = document.querySelector('[data-g4s-account-prompt]');
+
+    if (!prompt) {
+      return;
+    }
+
+    const stateCookieName = 'g4s_demo_prompt_state_v2';
+    const accountIntervalMs = 20000;
+    const switchIntervalMs = 30000;
+    const stateLifetimeMs = 60 * 5 * 1000;
+    const cookieMaxAgeSeconds = stateLifetimeMs / 1000;
+    const demoSide = prompt.dataset.demoSide === 'front' ? 'front' : 'admin';
+    const adminUrl = prompt.dataset.adminUrl;
+    const checkoutUrl = prompt.dataset.checkoutUrl;
+    const frontUrl = prompt.dataset.frontUrl;
+    const eyebrow = prompt.querySelector('[data-g4s-account-prompt-eyebrow]');
+    const title = prompt.querySelector('[data-g4s-account-prompt-title]');
+    const body = prompt.querySelector('[data-g4s-account-prompt-body]');
+    const primary = prompt.querySelector('[data-g4s-account-prompt-primary]');
+    const secondary = prompt.querySelector('[data-g4s-account-prompt-close].g4s-account-prompt__secondary');
+    let activePromptKind = null;
+    let restoreOverflow = '';
+
+    const readCookie = (name) => {
+      return document.cookie
+        .split('; ')
+        .find((row) => row.startsWith(name + '='))
+        ?.split('=')
+        .slice(1)
+        .join('=') || '';
+    };
+
+    const writeCookie = (name, value) => {
+      document.cookie = `${name}=${encodeURIComponent(value)}; path=/demo; max-age=${cookieMaxAgeSeconds}; samesite=lax`;
+    };
+
+    const readState = () => {
+      const rawState = readCookie(stateCookieName);
+
+      if (!rawState) {
+        return null;
+      }
+
+      try {
+        const state = JSON.parse(decodeURIComponent(rawState));
+        const expiresAt = Number(state.expiresAt || 0);
+
+        if (!expiresAt || Date.now() >= expiresAt) {
+          return null;
+        }
+
+        return state;
+      } catch (error) {
+        return null;
+      }
+    };
+
+    const writeState = (state) => {
+      writeCookie(stateCookieName, JSON.stringify(state));
+    };
+
+    const isComingFromDemoArea = () => {
+      if (!document.referrer) {
+        return false;
+      }
+
+      try {
+        const referrer = new URL(document.referrer);
+
+        return referrer.origin === window.location.origin
+          && referrer.pathname.startsWith('/demo');
+      } catch (error) {
+        return false;
+      }
+    };
+
+    const createInitialState = () => {
+      return {
+        expiresAt: Date.now() + stateLifetimeMs,
+        nextAt: Date.now() + switchIntervalMs,
+        nextKind: 'switch',
+        switchFlow: demoSide === 'front' ? 'needs_admin' : 'needs_front',
+      };
+    };
+
+    const normalizeStateForPage = (state) => {
+      const nextState = state || createInitialState();
+
+      if (!nextState.expiresAt) {
+        nextState.expiresAt = Date.now() + stateLifetimeMs;
+      }
+
+      return nextState;
+    };
+
+    const resolveDuePromptKind = (state) => {
+      if (Date.now() < Number(state.nextAt || 0)) {
+        return null;
+      }
+
+      if (state.switchFlow === 'complete') {
+        return 'account';
+      }
+
+      if (state.switchFlow === 'needs_front' && demoSide === 'admin') {
+        return 'switch_to_front';
+      }
+
+      if (state.switchFlow === 'needs_admin' && demoSide === 'front') {
+        return 'switch_to_admin';
+      }
+
+      return null;
+    };
+
+    const renderPromptCopy = (kind) => {
+      const copy = {
+        account: {
+          body: 'Keep the booking tools you need for $3.39/month instead of paying Acuity pricing.',
+          eyebrow: 'Still comparing with Acuity?',
+          primary: 'Create G4S account',
+          secondary: 'Keep using demo',
+          title: 'Create your G4S account instead',
+          url: checkoutUrl,
+        },
+        switch_to_admin: {
+          body: 'You have seen the booking page your clients use. Go to the admin demo to manage appointments, services, and hours.',
+          eyebrow: 'See the dashboard',
+          primary: 'Go to admin',
+          secondary: 'Stay on client view',
+          title: 'Want to see the admin side?',
+          url: adminUrl,
+        },
+        switch_to_front: {
+          body: 'Now that you have seen the admin tools, go back to the website view your clients use.',
+          eyebrow: 'See what clients see',
+          primary: 'View client side',
+          secondary: 'Stay in admin',
+          title: 'Want to see the website view with a template from Canva?',
+          url: frontUrl,
+        },
+      }[kind];
+
+      eyebrow.textContent = copy.eyebrow;
+      title.textContent = copy.title;
+      body.textContent = copy.body;
+      primary.textContent = copy.primary;
+      primary.href = copy.url;
+      secondary.textContent = copy.secondary;
+    };
+
+    const scheduleAfterPrompt = (state, promptKind, shownAt) => {
+      if (promptKind === 'account') {
+        state.nextKind = 'account';
+        state.nextAt = shownAt + accountIntervalMs;
+
+        return state;
+      }
+
+      state.nextKind = 'switch';
+      state.nextAt = shownAt + switchIntervalMs;
+
+      return state;
+    };
+
+    const showPrompt = () => {
+      const state = normalizeStateForPage(readState());
+      const promptKind = resolveDuePromptKind(state);
+
+      if (!promptKind || !prompt.hidden) {
+        writeState(state);
+
+        return;
+      }
+
+      activePromptKind = promptKind;
+      renderPromptCopy(promptKind);
+      writeState(scheduleAfterPrompt(state, promptKind, Date.now()));
+      restoreOverflow = document.body.style.overflow;
+      prompt.hidden = false;
+      document.body.style.overflow = 'hidden';
+      primary?.focus();
+    };
+
+    const closePrompt = () => {
+      const state = normalizeStateForPage(readState());
+
+      prompt.hidden = true;
+      document.body.style.overflow = restoreOverflow;
+      writeState(state);
+      activePromptKind = null;
+    };
+
+    prompt.querySelectorAll('[data-g4s-account-prompt-close]').forEach((button) => {
+      button.addEventListener('click', closePrompt);
+    });
+
+    primary?.addEventListener('click', (event) => {
+      const state = normalizeStateForPage(readState());
+      const targetUrl = primary.href;
+
+      event.preventDefault();
+
+      if (activePromptKind === 'switch_to_front') {
+        state.switchFlow = 'complete';
+        state.nextKind = 'account';
+        state.nextAt = Date.now() + accountIntervalMs;
+      } else if (activePromptKind === 'switch_to_admin') {
+        state.switchFlow = 'needs_front';
+        state.nextKind = 'switch';
+        state.nextAt = Date.now() + switchIntervalMs;
+      } else {
+        scheduleAfterPrompt(state, 'account', Date.now());
+      }
+
+      writeState(state);
+      window.location.href = targetUrl;
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !prompt.hidden) {
+        closePrompt();
+      }
+    });
+
+    writeState(normalizeStateForPage(isComingFromDemoArea() ? readState() : null));
+
+    window.setInterval(showPrompt, 500);
+  })();
+</script>

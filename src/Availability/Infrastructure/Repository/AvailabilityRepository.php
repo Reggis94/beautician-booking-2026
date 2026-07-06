@@ -123,12 +123,64 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
     }
 
     /**
+     * @return array<int, array{date: string, startTimeLocal: string, endTimeLocal: string}>
+     */
+    public function getAvailabilitiesForMonth(int $proId, \DateTimeImmutable $monthStart): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            "WITH month_bounds AS (
+                SELECT CAST(:month_start AS date) AS month_start,
+                       (CAST(:month_start AS date) + INTERVAL '1 month')::date AS month_end
+            ),
+            concrete_availabilities AS (
+                SELECT concrete_day::date AS local_date,
+                       av.start_time,
+                       av.end_time
+                FROM availability av
+                CROSS JOIN month_bounds mb
+                CROSS JOIN LATERAL generate_series(
+                    GREATEST(av.week_start_date, mb.month_start),
+                    LEAST(av.week_end_date, mb.month_end - 1),
+                    INTERVAL '1 day'
+                ) AS concrete_day
+                WHERE av.pro_id = :pro_id
+                  AND EXTRACT(ISODOW FROM concrete_day)::smallint = av.day_of_week
+            )
+            SELECT local_date::text AS date,
+                   to_char(MIN(start_time), 'HH24:MI') AS start_time_local,
+                   to_char(MAX(end_time), 'HH24:MI') AS end_time_local
+            FROM concrete_availabilities
+            GROUP BY local_date
+            ORDER BY local_date",
+            [
+                'pro_id' => $proId,
+                'month_start' => $monthStart,
+            ],
+            [
+                'pro_id' => Types::INTEGER,
+                'month_start' => Types::DATE_IMMUTABLE,
+            ]
+        );
+
+        return array_map(
+            static fn (array $row): array => [
+                'date' => (string) $row['date'],
+                'startTimeLocal' => (string) $row['start_time_local'],
+                'endTimeLocal' => (string) $row['end_time_local'],
+            ],
+            $rows
+        );
+    }
+
+    /**
      * @return array<int, string>
      */
     public function getBookableDaysForService(
         int $serviceId,
         \DateTimeImmutable $monthStart
     ): array {
+        // Availability windows are pro-local schedules converted through pro.timezone_iana to UTC.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         // Future improvement: for today, compare free ranges against the pro's current local timestamp.
         // See docs/future-improvements/availability/filter-past-bookable-ranges-for-today.md.
         $rows = $this->connection->fetchAllAssociative(
@@ -300,6 +352,8 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         int $serviceId,
         \DateTimeImmutable $localDate
     ): array {
+        // Availability windows are pro-local schedules converted through pro.timezone_iana to UTC.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $rows = $this->connection->fetchAllAssociative(
             "WITH requested_service AS (
                 SELECT id, pro_id, COALESCE(duration_min, 1) AS duration_min
@@ -486,6 +540,8 @@ final class AvailabilityRepository implements AvailabilityRepositoryInterface
         int $serviceId,
         string $proLocalDateTime
     ): bool {
+        // Business-time validation receives a pro-local datetime, not a UTC appointment instant.
+        // See docs/adr/0013-datetime-timezone-policy.md.
         $localDateTime = new \DateTimeImmutable($proLocalDateTime);
 
         $dayOfWeek = (int) $localDateTime->format('N');

@@ -1,0 +1,391 @@
+{#
+  templates/security/login.html.twig
+
+  Static login page preview.
+
+  This template is intentionally not connected to authentication yet.
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Glam4Style</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream:       #FAF6F1;
+      --blush:       #F2E0D6;
+      --rose:        #D4998A;
+      --rose-deep:   #B8765F;
+      --charcoal:    #1C1916;
+      --warm-grey:   #6B5F58;
+      --mid:         #A89890;
+      --soft-border: rgba(180,150,135,0.22);
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans:  'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--cream);
+      color: var(--charcoal);
+      font-family: var(--sans);
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── LEFT PANEL ── */
+    .left {
+      background: var(--charcoal);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* large decorative letterform */
+    .left::before {
+      content: 'G';
+      font-family: var(--serif);
+      font-size: 480px;
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(255,255,255,0.04);
+      position: absolute;
+      bottom: -80px;
+      right: -40px;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .left-logo {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--cream);
+      text-decoration: none;
+    }
+    .left-logo span { color: var(--rose); }
+
+    .left-body { position: relative; z-index: 1; }
+
+    .left-eyebrow {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--rose);
+      margin-bottom: 18px;
+    }
+
+    .left-headline {
+      font-family: var(--serif);
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--cream);
+      margin-bottom: 24px;
+    }
+    .left-headline em { font-style: italic; color: var(--rose); }
+
+    .left-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+      max-width: 320px;
+      line-height: 1.7;
+    }
+
+    .left-footer {
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.04em;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .right {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 64px 72px;
+    }
+
+    .form-wrap {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .form-eyebrow {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--rose-deep);
+      margin-bottom: 10px;
+    }
+
+    .form-title {
+      font-family: var(--serif);
+      font-size: clamp(28px, 3.5vw, 42px);
+      font-weight: 300;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+    .form-title em { font-style: italic; color: var(--rose-deep); }
+
+    .form-desc {
+      font-size: 14px;
+      color: var(--warm-grey);
+      line-height: 1.65;
+      margin-bottom: 36px;
+    }
+
+    /* error banner */
+    .error-banner {
+      background: #fff5f5;
+      border-left: 2px solid #c0392b;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #7a1f1f;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .form-field { margin-bottom: 20px; }
+
+    .form-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--warm-grey);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      border: 1px solid var(--soft-border);
+      background: var(--blush);
+      padding: 14px 16px;
+      font-family: var(--sans);
+      font-size: 15px;
+      color: var(--charcoal);
+      outline: none;
+      transition: border-color 0.18s, background 0.18s;
+      -webkit-appearance: none;
+    }
+    .form-input::placeholder { color: var(--mid); }
+    .form-input:focus { border-color: var(--rose); background: #fff; }
+    .form-input.invalid { border-color: #c0392b; }
+
+    .btn-primary {
+      width: 100%;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream);
+      background: var(--charcoal);
+      border: none;
+      padding: 16px 28px;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.12s;
+      margin-top: 4px;
+    }
+    .btn-primary:hover  { background: var(--rose-deep); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .form-note {
+      font-size: 12px;
+      color: var(--mid);
+      text-align: center;
+      margin-top: 18px;
+      line-height: 1.6;
+    }
+
+    /* ── SUCCESS STATE ── */
+    .success-wrap {
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .success-mark {
+      font-family: var(--serif);
+      font-size: 48px;
+      font-weight: 300;
+      color: var(--rose);
+      display: block;
+      margin-bottom: 20px;
+      line-height: 1;
+    }
+
+    .success-title {
+      font-family: var(--serif);
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+    .success-title em { font-style: italic; color: var(--rose-deep); }
+
+    .success-desc {
+      font-size: 14px;
+      color: var(--warm-grey);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .success-email {
+      font-weight: 500;
+      color: var(--charcoal);
+    }
+
+    .success-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--soft-border);
+      margin: 0 auto 24px;
+    }
+
+    .try-again-btn {
+      background: none;
+      border: none;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      color: var(--mid);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.18s;
+      padding: 0;
+    }
+    .try-again-btn:hover { color: var(--rose-deep); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 780px) {
+      body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      .left {
+        padding: 32px 28px 40px;
+        min-height: auto;
+      }
+      .left::before { font-size: 260px; bottom: -40px; right: -20px; }
+      .left-headline { font-size: 36px; }
+      .left-footer { display: none; }
+      .right { padding: 48px 28px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+{# ── LEFT ── #}
+<div class="left">
+  <a href="{{ path('glam4style_landing_page') }}" class="left-logo">Glam<span>4Style</span></a>
+
+  <div class="left-body">
+    <p class="left-eyebrow">Booking for beauty professionals</p>
+    <h1 class="left-headline">Your clients,<br><em>beautifully</em><br>organised.</h1>
+    <p class="left-sub">Manage your appointments and services from one simple place.</p>
+  </div>
+
+  <p class="left-footer">© {{ "now"|date("Y") }} Glam4Style</p>
+</div>
+
+{# ── RIGHT ── #}
+<div class="right">
+
+  {% if sent %}
+  {# ── SUCCESS STATE ── #}
+  <div class="success-wrap" role="status" aria-live="polite">
+    <span class="success-mark" aria-hidden="true">✦</span>
+    <h2 class="success-title">Check your <em>inbox</em></h2>
+    <p class="success-desc">
+      We sent a sign-in link to<br>
+      <span class="success-email">{{ email }}</span>.<br>
+      Click the link in that email to access your dashboard.
+    </p>
+    <div class="success-divider"></div>
+    <p class="form-note" style="margin-top:0">
+      Didn't receive it? Check your spam folder or
+    </p>
+    <form method="get" action="{{ path('login_page') }}" style="margin-top:10px; text-align:center">
+      <input type="hidden" name="email" value="{{ email }}">
+      <button type="submit" class="try-again-btn">send the link again</button>
+    </form>
+  </div>
+
+  {% else %}
+  {# ── LOGIN FORM ── #}
+  <div class="form-wrap">
+    <p class="form-eyebrow">Welcome back</p>
+    <h2 class="form-title">Sign <em>in</em></h2>
+    <p class="form-desc">Enter your email and we'll send you a link to sign in — no password needed.</p>
+
+    {% if error %}
+    <div class="error-banner" role="alert">
+      {{ error.messageKey|trans(error.messageData, 'security') }}
+    </div>
+    {% endif %}
+
+    <form method="get" action="{{ path('login_page') }}" novalidate id="loginForm">
+
+      <div class="form-field">
+        <label class="form-label" for="email">Email address</label>
+        <input
+          class="form-input"
+          type="email"
+          id="email"
+          name="email"
+          value="{{ last_username ?? '' }}"
+          placeholder="you@example.com"
+          autocomplete="email"
+          autofocus
+          required>
+      </div>
+
+      <button type="submit" class="btn-primary">Send sign-in link</button>
+
+      <p class="form-note">No account yet? Just enter your email<br>and we'll get you set up.</p>
+    </form>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  const form  = document.getElementById('loginForm');
+  const input = document.getElementById('email');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const val = input ? input.value.trim() : '';
+      if (!val || !val.includes('@')) {
+        e.preventDefault();
+        if (input) {
+          input.classList.add('invalid');
+          input.focus();
+        }
+      }
+    });
+    if (input) {
+      input.addEventListener('input', () => input.classList.remove('invalid'));
+    }
+  }
+</script>
+</body>
+</html>
