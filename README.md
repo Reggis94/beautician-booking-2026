@@ -49,3 +49,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0011: GET Endpoints Read Input From Query Parameters
 - 0012: ServiceCategory Owns Service Category Code
 - 0013: Datetime Timezone Policy
+- 0014: Account for Environment Differences
