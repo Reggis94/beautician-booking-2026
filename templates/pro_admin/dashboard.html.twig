@@ -13,7 +13,7 @@
 {% set dashboardUrl = dashboardUrl|default(path('demo_pro_admin_dashboard')) %}
 {% set frontUrl = frontUrl|default(path('demo_front_pro_home')) %}
 {% set isDemoDashboard = isDemoDashboard|default(true) %}
-{% set logoutUrl = logoutUrl|default(path('app_logout')) %}
+{% set logoutUrl = logoutUrl|default(null) %}
 {% set openingHoursUrl = openingHoursUrl|default(path('demo_pro_admin_opening_hours')) %}
 {% set pastUrl = pastUrl|default(path('demo_pro_admin_appointments_past')) %}
 {% set servicesUrl = servicesUrl|default(path('demo_pro_admin_services_index')) %}
@@ -629,7 +629,7 @@
   </nav>
 
   <div class="sidebar-footer">
-    <a href="{{ isDemoDashboard ? '#' : logoutUrl }}" class="logout-btn"{% if isDemoDashboard %} data-demo-logout{% endif %}>
+    <a href="{{ isDemoDashboard ? '#' : (logoutUrl ?? '#') }}" class="logout-btn"{% if isDemoDashboard %} data-demo-logout{% endif %}>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
       </svg>
