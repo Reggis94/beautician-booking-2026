@@ -849,14 +849,31 @@
 <script>
   const sidebar = document.querySelector('.sidebar');
   const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
+  const mainHeader = document.querySelector('.main-header');
   const demoLogout = document.querySelector('[data-demo-logout]');
 
   if (sidebar && mobileMenuToggle) {
+    const closeMobileMenu = () => {
+      sidebar.classList.remove('is-open');
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      mobileMenuToggle.setAttribute('aria-label', 'Open navigation');
+    };
+
     mobileMenuToggle.addEventListener('click', () => {
       const isOpen = sidebar.classList.toggle('is-open');
 
       mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
       mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+    });
+
+    document.addEventListener('click', (event) => {
+      if (
+        sidebar.classList.contains('is-open')
+        && !sidebar.contains(event.target)
+        && (!mainHeader || !mainHeader.contains(event.target))
+      ) {
+        closeMobileMenu();
+      }
     });
   }
 

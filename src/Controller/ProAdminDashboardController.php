@@ -17,11 +17,13 @@ final class ProAdminDashboardController extends AbstractController
      * Temporary fake-data route for customer preview of the professional dashboard shell.
      * Defaults to the upcoming appointments view until real ProAdmin navigation
      * and read models are connected.
+     *
+     * Priority avoids a collision with the demo_front_pro_home_specific_user route.
      */
-    #[Route('/demo/pro/dashboard', name: 'demo_pro_admin_dashboard', methods: ['GET'])]
-    public function dashboard(): Response
+    #[Route('/demo/pro/dashboard', name: 'demo_pro_admin_dashboard', methods: ['GET'], priority: 1)]
+    public function dashboard(Request $request): Response
     {
-        return $this->renderDashboard('upcoming');
+        return $this->renderDashboard('upcoming', $request);
     }
 
     /**
@@ -35,9 +37,9 @@ final class ProAdminDashboardController extends AbstractController
         name: 'demo_pro_admin_appointments_upcoming',
         methods: ['GET']
     )]
-    public function upcomingAppointments(): Response
+    public function upcomingAppointments(Request $request): Response
     {
-        return $this->renderDashboard('upcoming');
+        return $this->renderDashboard('upcoming', $request);
     }
 
     /**
@@ -89,9 +91,9 @@ final class ProAdminDashboardController extends AbstractController
         name: 'demo_pro_admin_appointments_past',
         methods: ['GET']
     )]
-    public function pastAppointments(): Response
+    public function pastAppointments(Request $request): Response
     {
-        return $this->renderDashboard('past');
+        return $this->renderDashboard('past', $request);
     }
 
     /**
@@ -104,9 +106,9 @@ final class ProAdminDashboardController extends AbstractController
         name: 'demo_pro_admin_services_index',
         methods: ['GET']
     )]
-    public function services(): Response
+    public function services(Request $request): Response
     {
-        return $this->renderDashboard('services');
+        return $this->renderDashboard('services', $request);
     }
 
     /**
@@ -121,6 +123,7 @@ final class ProAdminDashboardController extends AbstractController
     )]
     public function openingHours(Request $request): Response
     {
+        $demoUrls = $this->getDemoUrls($request);
         $currentMonth = $this->resolveCurrentMonth($request->query->get('month'));
         $prevMonth = $currentMonth->modify('-1 month');
         $nextMonth = $currentMonth->modify('+1 month');
@@ -131,21 +134,50 @@ final class ProAdminDashboardController extends AbstractController
             'firstWeekdayOffset' => ((int) $currentMonth->format('N')) - 1,
             'nextMonth' => $nextMonth,
             'openingHours' => $this->fakeOpeningHours($currentMonth),
-            'openingHoursPath' => $this->generateUrl('demo_pro_admin_opening_hours'),
+            'openingHoursPath' => $demoUrls['openingHoursUrl'],
             'prevMonth' => $prevMonth,
             'saveOpeningHoursUrlTemplate' => '/demo/pro/dashboard/opening-hours/__date__',
             'today' => (new DateTimeImmutable())->format('Y-m-d'),
-        ]);
+        ] + $demoUrls);
     }
 
-    private function renderDashboard(string $activeTab): Response
+    private function renderDashboard(string $activeTab, Request $request): Response
     {
         return $this->render('pro_admin/dashboard.html.twig', [
             'activeTab' => $activeTab,
             'pastAppointments' => $this->fakePastAppointments(),
             'services' => $this->fakeServices(),
             'upcomingAppointments' => $this->fakeUpcomingAppointments(),
-        ]);
+        ] + $this->getDemoUrls($request));
+    }
+
+    /**
+     * @return array{
+     *     dashboardUrl: string,
+     *     frontUrl: string,
+     *     openingHoursUrl: string,
+     *     pastUrl: string,
+     *     servicesUrl: string,
+     *     upcomingUrl: string
+     * }
+     */
+    private function getDemoUrls(Request $request): array
+    {
+        $username = $request->query->getString('username');
+        $username = preg_match('/^[a-zA-Z0-9_-]+$/', $username) === 1 ? $username : '';
+        $adminParameters = $username === '' ? [] : ['username' => $username];
+        $frontUrl = $username === ''
+            ? $this->generateUrl('demo_front_pro_home')
+            : $this->generateUrl('demo_front_pro_home_specific_user', ['username' => $username]);
+
+        return [
+            'dashboardUrl' => $this->generateUrl('demo_pro_admin_dashboard', $adminParameters),
+            'frontUrl' => $frontUrl,
+            'openingHoursUrl' => $this->generateUrl('demo_pro_admin_opening_hours', $adminParameters),
+            'pastUrl' => $this->generateUrl('demo_pro_admin_appointments_past', $adminParameters),
+            'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index', $adminParameters),
+            'upcomingUrl' => $this->generateUrl('demo_pro_admin_appointments_upcoming', $adminParameters),
+        ];
     }
 
     #[Route('/pro/logout', name: 'app_logout', methods: ['GET'], env: 'dev')]

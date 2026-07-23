@@ -30,12 +30,29 @@ class ClientSideController extends AbstractController
     //     return $this->redirectToRoute('front_pro_home', ['proLinkSlug' => $slug]);
     // }
 
-    #[Route('/demo/pro', name: 'demo_front_pro_home', methods: ['GET'], priority: 20)]
+    #[Route('/demo/pro', name: 'demo_front_pro_home', methods: ['GET'])]
     public function demoHome(): Response
     {
         return $this->render('front_pro/demo_home.html.twig', [
             'banner_urls' => $this->getDemoBannerUrls(),
             'demo_admin_url' => $this->generateUrl('demo_pro_admin_dashboard'),
+            'demo_service_categories' => $this->fakeDemoServiceCategories(),
+        ]);
+    }
+
+    #[Route(
+        '/demo/pro/{username}',
+        name: 'demo_front_pro_home_specific_user',
+        requirements: ['username' => '[a-zA-Z0-9_-]+'],
+        methods: ['GET']
+    )]
+    public function demoHomeSpecificUser(string $username): Response
+    {
+        return $this->render('front_pro/demo_home.html.twig', [
+            'banner_urls' => $this->getDemoBannerUrls($username),
+            'demo_admin_url' => $this->generateUrl('demo_pro_admin_dashboard', [
+                'username' => $username,
+            ]),
             'demo_service_categories' => $this->fakeDemoServiceCategories(),
         ]);
     }
@@ -69,6 +86,18 @@ class ClientSideController extends AbstractController
     public function demoBanner(string $bannerFile): BinaryFileResponse
     {
         return $this->serveBanner($this->getDemoBannerPath($bannerFile));
+    }
+
+    #[Route(
+        '/demo/pro-banners/{username}/{bannerFile}',
+        name: 'demo_front_pro_specific_user_banner',
+        requirements: ['username' => '[a-zA-Z0-9_-]+', 'bannerFile' => '\d+\.png'],
+        methods: ['GET'],
+        priority: 20
+    )]
+    public function demoSpecificUserBanner(string $username, string $bannerFile): BinaryFileResponse
+    {
+        return $this->serveBanner($this->getDemoBannerPath($bannerFile, $username));
     }
 
     #[Route(
@@ -140,10 +169,9 @@ class ClientSideController extends AbstractController
     /**
      * @return list<string>
      */
-    private function getDemoBannerUrls(): array
+    private function getDemoBannerUrls(string $username = ''): array
     {
-        $bannerDirectory = dirname($this->projectDir) . DIRECTORY_SEPARATOR . 'pro-banners'
-            . DIRECTORY_SEPARATOR . 'demo';
+        $bannerDirectory = $this->getDemoBannerDirectory($username);
         $bannerPaths = glob($bannerDirectory . DIRECTORY_SEPARATOR . '*.png') ?: [];
         $bannerPaths = array_values(array_filter(
             $bannerPaths,
@@ -156,12 +184,19 @@ class ClientSideController extends AbstractController
                 <=> (int) basename($second, '.png')
         );
 
-        return array_map(
-            fn (string $path): string => $this->generateUrl('demo_front_pro_banner', [
-                'bannerFile' => basename($path),
-            ]),
-            $bannerPaths
-        );
+        $routeName = $username === ''
+            ? 'demo_front_pro_banner'
+            : 'demo_front_pro_specific_user_banner';
+
+        return array_map(function (string $path) use ($routeName, $username): string {
+            $parameters = ['bannerFile' => basename($path)];
+
+            if ($username !== '') {
+                $parameters['username'] = $username;
+            }
+
+            return $this->generateUrl($routeName, $parameters);
+        }, $bannerPaths);
     }
 
     private function getProBannerPath(int $proId, string $bannerFile): string
@@ -170,10 +205,15 @@ class ClientSideController extends AbstractController
             . DIRECTORY_SEPARATOR . $proId . DIRECTORY_SEPARATOR . $bannerFile;
     }
 
-    private function getDemoBannerPath(string $bannerFile): string
+    private function getDemoBannerPath(string $bannerFile, string $username = ''): string
+    {
+        return $this->getDemoBannerDirectory($username) . DIRECTORY_SEPARATOR . $bannerFile;
+    }
+
+    private function getDemoBannerDirectory(string $username = ''): string
     {
         return dirname($this->projectDir) . DIRECTORY_SEPARATOR . 'pro-banners'
-            . DIRECTORY_SEPARATOR . 'demo' . DIRECTORY_SEPARATOR . $bannerFile;
+            . DIRECTORY_SEPARATOR . 'demo' . DIRECTORY_SEPARATOR . $username;
     }
 
     private function serveBanner(string $bannerPath): BinaryFileResponse
