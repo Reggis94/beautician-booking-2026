@@ -627,23 +627,23 @@
         <path d="M4 7h16M4 12h16M4 17h16"/>
       </svg>
     </button>
-    <a href="{{ path('demo_pro_admin_dashboard') }}" class="sidebar-logo">Glam<span>4Style</span></a>
+    <a href="{{ dashboardUrl }}" class="sidebar-logo">Glam<span>4Style</span></a>
   </div>
 
   <nav class="sidebar-nav" id="dashboardNav">
-    <a href="{{ path('demo_pro_admin_appointments_upcoming') }}">
+    <a href="{{ upcomingUrl }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <rect x="1" y="3" width="14" height="12" rx="1"/><path d="M5 1v4M11 1v4M1 7h14"/>
       </svg>
       Upcoming
     </a>
-    <a href="{{ path('demo_pro_admin_appointments_past') }}">
+    <a href="{{ pastUrl }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <circle cx="8" cy="8" r="6.5"/><path d="M8 5v3.5l2.5 1.5"/>
       </svg>
       Past
     </a>
-    <a href="{{ path('demo_pro_admin_services_index') }}">
+    <a href="{{ servicesUrl }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <path d="M2 4h12M2 8h8M2 12h10"/>
       </svg>
@@ -655,7 +655,7 @@
       </svg>
       Opening hours
     </a>
-    <a href="{{ path('demo_front_pro_home') }}">
+    <a href="{{ frontUrl }}">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
         <path d="M2 8.5L8 3l6 5.5"/><path d="M4 7.5V14h8V7.5"/>
       </svg>
@@ -681,7 +681,7 @@
     </div>
     <nav class="month-nav" aria-label="Month navigation">
       <a
-        href="{{ openingHoursPath }}?month={{ prevMonth|date('Y-m') }}"
+        href="{{ openingHoursPath }}{{ '?' in openingHoursPath ? '&' : '?' }}month={{ prevMonth|date('Y-m') }}"
         class="month-nav-btn"
         aria-label="Previous month"
       >
@@ -691,7 +691,7 @@
       </a>
       <span class="month-label">{{ currentMonth|date('F Y') }}</span>
       <a
-        href="{{ openingHoursPath }}?month={{ nextMonth|date('Y-m') }}"
+        href="{{ openingHoursPath }}{{ '?' in openingHoursPath ? '&' : '?' }}month={{ nextMonth|date('Y-m') }}"
         class="month-nav-btn"
         aria-label="Next month"
       >
@@ -813,14 +813,31 @@
   (() => {
     const sidebar = document.querySelector('.sidebar');
     const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
+    const mainHeader = document.querySelector('.main-header');
     const demoLogout = document.querySelector('[data-demo-logout]');
 
     if (sidebar && mobileMenuToggle) {
+      const closeMobileMenu = () => {
+        sidebar.classList.remove('is-open');
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+        mobileMenuToggle.setAttribute('aria-label', 'Open navigation');
+      };
+
       mobileMenuToggle.addEventListener('click', () => {
         const isOpen = sidebar.classList.toggle('is-open');
 
         mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
         mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+      });
+
+      document.addEventListener('click', (event) => {
+        if (
+          sidebar.classList.contains('is-open')
+          && !sidebar.contains(event.target)
+          && (!mainHeader || !mainHeader.contains(event.target))
+        ) {
+          closeMobileMenu();
+        }
       });
     }
 
@@ -917,7 +934,7 @@
 </script>
 {% include 'demo/_g4s_account_prompt.html.twig' with {
   demo_side: 'admin',
-  front_url: path('demo_front_pro_home')
+  front_url: frontUrl
 } %}
 </body>
 </html>
