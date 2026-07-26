@@ -4,6 +4,12 @@ controllers:
         namespace: App\Controller
     type: attribute
 
+tracking_controllers:
+    resource: 
+        path: ../src/Tracking/UI/Http/Controller
+        namespace: App\Tracking\UI\Http\Controller
+    type: attribute
+
 when@dev:
     availability_controllers:
         resource:

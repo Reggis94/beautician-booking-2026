@@ -1,0 +1,19 @@
+<script>
+    (() => {
+        window.addEventListener('load', () => {
+            fetch('{{ path('api_tracking_track_current_page_visited') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    currentUrl: window.location.href,
+                    referer: document.referrer || null,
+                }),
+                keepalive: true,
+            }).catch(() => {
+                // Tracking must never interfere with the page experience.
+            });
+        }, { once: true });
+    })();
+</script>

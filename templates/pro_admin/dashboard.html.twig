@@ -1136,5 +1136,8 @@
   demo_side: 'admin',
   front_url: frontUrl
 } %}
+{% if isDemoDashboard %}
+  {% include 'tracking/_track_page_visit.html.twig' %}
+{% endif %}
 </body>
 </html>
