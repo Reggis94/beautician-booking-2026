@@ -23,8 +23,11 @@ DDD-lite:
 - `ProfilePro`
 - `Services`
 - `Booking`
+- `Tracking`
 
 Service categories are modeled inside the `Services` domain under `ServiceCategory`.
+DDD-lite persistence prefers narrow application DAO contracts implemented with
+explicit Doctrine DBAL SQL; see ADR 0015.
 
 ## Partial Hexagonal Architecture (ProfilePro)
 
@@ -50,3 +53,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0012: ServiceCategory Owns Service Category Code
 - 0013: Datetime Timezone Policy
 - 0014: Account for Environment Differences
+- 0015: Prefer SQL DAOs for DDD-lite Data Access

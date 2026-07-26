@@ -5,6 +5,9 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
 
+    tracking.visitor_id_length: 20
+    tracking.demo_and_marketing_max_age: 15552000
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -36,6 +39,7 @@ services:
     App\Availability\Public\Query\ServiceIsWithinProBusinessTimeQueryInterface: '@App\Availability\Public\Query\ServiceIsWithinProBusinessTime'
     App\Availability\Domain\Repository\AvailabilityRepositoryInterface: '@App\Availability\Infrastructure\Repository\AvailabilityRepository'
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
+    App\Tracking\Application\Dao\VisitorTrackingDaoInterface: '@App\Tracking\Infrastructure\Dao\VisitorTrackingDao'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

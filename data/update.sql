@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS service_category (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at  TIMESTAMPTZ
 );
-
 -- ft-SERVICE-7-create-service --
 ALTER TABLE service
   ADD COLUMN IF NOT EXISTS category_id BIGINT;
@@ -132,3 +131,13 @@ BEGIN
   END IF;
 END $$;
 
+-- ft-TRACKING-37-cookie-marketing-demo --
+CREATE TABLE IF NOT EXISTS tracking_page_visit (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  visitor_id      VARCHAR(20) NOT NULL,
+  ip              VARCHAR(45) NOT NULL,
+  current_url     TEXT NOT NULL,
+  referer         TEXT,
+  user_agent      TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
