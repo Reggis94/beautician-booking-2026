@@ -1,11 +1,21 @@
 <script>
     (() => {
         window.addEventListener('load', () => {
-            fetch('{{ path('api_tracking_track_current_page_visited') }}', {
+            const trackingUrl = new URL(
+                '{{ path('api_tracking_track_current_page_visited') }}',
+                window.location.origin,
+            );
+
+            if (new URLSearchParams(window.location.search).has('isme')) {
+                trackingUrl.searchParams.set('isme', '1');
+            }
+
+            fetch(trackingUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     currentUrl: window.location.href,
                     referer: document.referrer || null,

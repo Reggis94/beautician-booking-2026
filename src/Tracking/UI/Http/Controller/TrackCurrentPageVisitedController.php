@@ -21,6 +21,24 @@ class TrackCurrentPageVisitedController
         #[Autowire('%tracking.demo_and_marketing_max_age%')] int $cookieLifetime,
         #[Autowire('%tracking.visitor_id_length%')] int $visitorIdLength
     ): Response {
+        if ($request->cookies->has('isme')) {
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        if ($request->query->has('isme')) {
+            $newIsMeCookie = new Response('', Response::HTTP_NO_CONTENT);
+            $newIsMeCookie->headers->setCookie(
+                (new Cookie('isme'))
+                    ->withValue('1')
+                    ->withExpires(time() + $cookieLifetime)
+                    ->withHttpOnly(true)
+                    ->withSameSite('strict')
+                    ->withSecure(false)
+            );
+
+            return $newIsMeCookie;
+        }
+
         $userAgent = $request->headers->get('User-Agent', null);
         $visitorId = $request->cookies->get('visitorId', null);
         $command->setUserAgent($userAgent);
@@ -30,16 +48,17 @@ class TrackCurrentPageVisitedController
         $newVisitorId = $handler($command);
 
         if ($newVisitorId !== null) {
-            $response = new Response('', 201);
-            $response->headers->setCookie((new Cookie('visitorId'))
-                ->withValue($newVisitorId)
-                ->withExpires(time() + $cookieLifetime)
-                ->withHttpOnly(true)
-                ->withSameSite('strict')
-                ->withSecure(false)
+            $response = new Response('', Response::HTTP_CREATED);
+            $response->headers->setCookie(
+                (new Cookie('visitorId'))
+                    ->withValue($newVisitorId)
+                    ->withExpires(time() + $cookieLifetime)
+                    ->withHttpOnly(true)
+                    ->withSameSite('strict')
+                    ->withSecure(false)
             );
         } else {
-            $response = new Response('', 201);
+            $response = new Response('', Response::HTTP_CREATED);
         }
 
         return $response;

@@ -3,7 +3,6 @@
 namespace App\Tracking\Application\Command;
 
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class TrackCurrentPageVisitedCommand
 {
@@ -39,11 +38,18 @@ class TrackCurrentPageVisitedCommand
 
     public function setVisitorId(?string $visitorId): void
     {
-        if (! isset($this->visitorIdLength)) {
-            throw new \InvalidArgumentException('Visitor ID length must be set from configuration parameter "tracking.visitor_id_length" with function setVisitorIdLength(int $visitorIdLength) before calling setVisitorId().');
+        if (!isset($this->visitorIdLength)) {
+            throw new \InvalidArgumentException(
+                'Visitor ID length must be set from configuration parameter '
+                . '"tracking.visitor_id_length" with function setVisitorIdLength(int $visitorIdLength) '
+                . 'before calling setVisitorId().'
+            );
         }
 
-        if ($visitorId !== null && (! ctype_alnum($visitorId) || mb_strlen($visitorId) !== $this->visitorIdLength)) {
+        if (
+            $visitorId !== null
+            && (!ctype_alnum($visitorId) || mb_strlen($visitorId) !== $this->visitorIdLength)
+        ) {
             $this->visitorId = null;
 
             return;
@@ -54,7 +60,7 @@ class TrackCurrentPageVisitedCommand
 
     public function setIp(string $ip): void
     {
-        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new \InvalidArgumentException('Must be a valid IP');
         }
 
