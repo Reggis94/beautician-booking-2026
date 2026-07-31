@@ -4,12 +4,14 @@ namespace App\Tracking\Application\CommandHandler;
 
 use App\Tracking\Application\Command\TrackCurrentPageVisitedCommand;
 use App\Tracking\Application\Dao\VisitorTrackingDaoInterface;
+use App\Tracking\Application\Guard\VisitedPageRequestGuardInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class TrackCurrentPageVisitedCommandHandler
 {
     public function __construct(
         private readonly VisitorTrackingDaoInterface $visitorTrackingDao,
+        private readonly VisitedPageRequestGuardInterface $guard,
         #[Autowire('%tracking.visitor_id_length%')]
         private readonly int $visitorIdLength,
     ) {
@@ -22,6 +24,20 @@ final class TrackCurrentPageVisitedCommandHandler
         }
 
         $visitorId = $command->getVisitorId();
+        $ip = $command->getIp();
+        $isBlocked = [$this->visitorTrackingDao, 'isBlocked'];
+        $findExceededRateLimit = [$this->visitorTrackingDao, 'findExceededRateLimit'];
+        $blockIdentifiers = [$this->visitorTrackingDao, 'blockIdentifiers'];
+
+        $this->guard->guard(
+            $ip,
+            $visitorId,
+            $command->getUserAgent(),
+            $isBlocked,
+            $findExceededRateLimit,
+            $blockIdentifiers
+        );
+
         if ($visitorId === null) {
             do {
                 $visitorId = $this->generateVisitorId();
@@ -34,7 +50,7 @@ final class TrackCurrentPageVisitedCommandHandler
 
         $this->visitorTrackingDao->createPageVisit(
             $visitorId,
-            $command->getIp(),
+            $ip,
             $command->getCurrentUrl(),
             $command->getReferer(),
             $command->getUserAgent()
