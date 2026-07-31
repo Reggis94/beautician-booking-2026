@@ -11,7 +11,7 @@ parameters:
     tracking.guard.short.window_seconds: 120
     tracking.guard.medium.limit: 120
     tracking.guard.medium.window_seconds: 7200
-    tracking.guard.long.limit: 400
+    tracking.guard.long.limit: 300
     tracking.guard.long.window_seconds: 86400
     tracking.guard.block_seconds: 86400
     tracking.guard.user_agent_min_length: 20
