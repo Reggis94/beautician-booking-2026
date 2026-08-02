@@ -36,20 +36,20 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
         );
     }
 
-    public function isBlocked(string $ip, ?string $visitorId): bool
+    public function isBlocked(string $ip, ?string $visitorCookieId): bool
     {
         return (bool) $this->connection->fetchOne(
             'SELECT 1 FROM blocked_access '
             . 'WHERE expires_at > NOW() AND (ip = :ip OR visitor_id_cookie = :visitor_id_cookie) LIMIT 1',
-            ['ip' => $ip, 'visitor_id_cookie' => $visitorId],
+            ['ip' => $ip, 'visitor_id_cookie' => $visitorCookieId],
             ['ip' => Types::STRING, 'visitor_id_cookie' => Types::STRING]
         );
     }
 
-    public function findExceededRateLimit(string $ip, ?string $visitorId, array $tiers): ?array
+    public function findExceededRateLimit(string $ip, ?string $visitorCookieId, array $tiers): ?array
     {
         $selects = [];
-        $parameters = ['ip' => $ip, 'visitor_id' => $visitorId];
+        $parameters = ['ip' => $ip, 'visitor_id' => $visitorCookieId];
         $types = ['ip' => Types::STRING, 'visitor_id' => Types::STRING];
 
         foreach ($tiers as $index => $tier) {
@@ -76,15 +76,15 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
         );
         foreach ($tiers as $index => $tier) {
             $ipExceeded = (int) ($row['ip_' . $index] ?? 0) >= $tier['limit'];
-            $visitorIdExceeded = (int) ($row['visitor_' . $index] ?? 0) >= $tier['limit'];
+            $visitorCookieIdExceeded = (int) ($row['visitor_' . $index] ?? 0) >= $tier['limit'];
 
-            if (!$ipExceeded && !$visitorIdExceeded) {
+            if (!$ipExceeded && !$visitorCookieIdExceeded) {
                 continue;
             }
 
             return [
                 'ip' => $ipExceeded ? $ip : null,
-                'visitor_id_cookie' => $visitorIdExceeded ? $visitorId : null,
+                'visitor_id_cookie' => $visitorCookieIdExceeded ? $visitorCookieId : null,
                 'window_seconds' => $tier['window_seconds'],
                 'reason' => $tier['reason'],
             ];
@@ -95,7 +95,7 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
 
     public function blockIdentifiers(
         ?string $ip,
-        ?string $visitorId,
+        ?string $visitorCookieId,
         int $durationSeconds,
         IdentifierBlockReason $reason,
         ?int $suspiciousWindowSeconds = null
@@ -108,7 +108,7 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
             . 'OR (:visitor_id_cookie IS NOT NULL AND visitor_id_cookie = :visitor_id_cookie)))',
             [
                 'ip' => $ip,
-                'visitor_id_cookie' => $visitorId,
+                'visitor_id_cookie' => $visitorCookieId,
                 'duration' => $durationSeconds,
                 'reason' => $reason->value,
             ],
@@ -129,13 +129,13 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
             . "WHERE created_at >= NOW() - (:window * INTERVAL '1 second') "
             . 'AND ((:ip IS NOT NULL AND ip = :ip) '
             . 'OR (:visitor_id IS NOT NULL AND visitor_id = :visitor_id))',
-            ['window' => $suspiciousWindowSeconds, 'ip' => $ip, 'visitor_id' => $visitorId],
+            ['window' => $suspiciousWindowSeconds, 'ip' => $ip, 'visitor_id' => $visitorCookieId],
             ['window' => Types::INTEGER, 'ip' => Types::STRING, 'visitor_id' => Types::STRING]
         );
     }
 
     public function createPageVisit(
-        string $visitorId,
+        string $visitorCookieId,
         string $ip,
         string $currentUrl,
         ?string $referer,
@@ -145,7 +145,7 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
             'INSERT INTO tracking_page_visit (visitor_id, ip, current_url, referer, user_agent) '
             . 'VALUES (:visitor_id, :ip, :current_url, :referer, :user_agent)',
             [
-                'visitor_id' => $visitorId,
+                'visitor_id' => $visitorCookieId,
                 'ip' => $ip,
                 'current_url' => $currentUrl,
                 'referer' => $referer,
@@ -161,12 +161,12 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
         );
     }
 
-    public function visitorIdExists(string $visitorId): bool
+    public function visitorIdExists(string $visitorCookieId): bool
     {
         return (bool) $this->connection->fetchOne(
             'SELECT 1 FROM tracking_page_visit WHERE visitor_id = :visitor_id LIMIT 1',
             [
-                'visitor_id' => $visitorId,
+                'visitor_id' => $visitorCookieId,
             ],
             [
                 'visitor_id' => Types::STRING,

@@ -6,7 +6,7 @@ interface VisitedPageRequestGuardInterface
 {
     public function guard(
         string $ip,
-        ?string $visitorId,
+        ?string $visitorCookieId,
         ?string $userAgent,
         callable $isBlocked,
         callable $findExceededRateLimit,

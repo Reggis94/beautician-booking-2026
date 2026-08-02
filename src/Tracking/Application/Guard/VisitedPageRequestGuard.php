@@ -33,20 +33,20 @@ final class VisitedPageRequestGuard implements VisitedPageRequestGuardInterface
 
     public function guard(
         string $ip,
-        ?string $visitorId,
+        ?string $visitorCookieId,
         ?string $userAgent,
         callable $isBlocked,
         callable $findExceededRateLimit,
         callable $blockIdentifiers
     ): void {
-        if (!$this->isAllowed(!$isBlocked($ip, $visitorId))) {
+        if (!$this->isAllowed(!$isBlocked($ip, $visitorCookieId))) {
             throw new TrackingRequestIsBlockedException('identifier is currently blocked');
         }
 
         if (!$this->isAllowed($this->isUserAgentAllowed($userAgent))) {
             $blockIdentifiers(
                 $ip,
-                $visitorId,
+                $visitorCookieId,
                 $this->blockSeconds,
                 IdentifierBlockReason::UserAgentRejected,
                 null
@@ -55,7 +55,7 @@ final class VisitedPageRequestGuard implements VisitedPageRequestGuardInterface
             throw new TrackingRequestIsBlockedException('identifier is currently blocked');
         }
 
-        $rateLimit = $this->findExceededRateLimit($ip, $visitorId, $findExceededRateLimit);
+        $rateLimit = $this->findExceededRateLimit($ip, $visitorCookieId, $findExceededRateLimit);
         if (!$this->isAllowed($rateLimit === null)) {
             $blockIdentifiers(
                 $rateLimit['ip'],
@@ -88,10 +88,10 @@ final class VisitedPageRequestGuard implements VisitedPageRequestGuardInterface
      */
     private function findExceededRateLimit(
         string $ip,
-        ?string $visitorId,
+        ?string $visitorCookieId,
         callable $findExceededRateLimit
     ): ?array {
-        return $findExceededRateLimit($ip, $visitorId, $this->rateLimitTiers());
+        return $findExceededRateLimit($ip, $visitorCookieId, $this->rateLimitTiers());
     }
 
     /**

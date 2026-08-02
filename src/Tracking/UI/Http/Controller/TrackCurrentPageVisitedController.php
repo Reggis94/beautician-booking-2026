@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Attribute\Route;
  *
  * The endpoint derives the IP and user agent from the request and the visitor ID from the
  * visitorId cookie. It returns 201 after tracking, 204 for excluded internal users, and an
- * intentionally opaque 401 when the tracking guard rejects the request.
+ * intentionally opaque 403 when the tracking guard rejects the request.
  */
 #[Route('/api/tracking/current-page-visited', name: 'api_tracking_track_current_page_visited', methods: ['POST'])]
 class TrackCurrentPageVisitedController
@@ -31,7 +31,7 @@ class TrackCurrentPageVisitedController
         #[MapRequestPayload] TrackCurrentPageVisitedCommand $command,
         TrackCurrentPageVisitedCommandHandler $handler,
         #[Autowire('%tracking.demo_and_marketing_max_age%')] int $cookieLifetime,
-        #[Autowire('%tracking.visitor_id_length%')] int $visitorIdLength
+        #[Autowire('%tracking.visitor_id_length%')] int $visitorCookieIdLength
     ): Response {
         // A previously identified internal user must not generate tracking records.
         if ($request->cookies->has('isme')) {
@@ -54,23 +54,23 @@ class TrackCurrentPageVisitedController
         }
 
         $userAgent = $request->headers->get('User-Agent', null);
-        $visitorId = $request->cookies->get('visitorId', null);
+        $visitorCookieId = $request->cookies->get('visitorId', null);
         $command->setUserAgent($userAgent);
-        $command->setVisitorIdLength($visitorIdLength);
-        $command->setVisitorId($visitorId);
+        $command->setVisitorIdLength($visitorCookieIdLength);
+        $command->setVisitorId($visitorCookieId);
         $command->setIp($request->getClientIp());
         try {
-            $newVisitorId = $handler($command);
+            $newVisitorCookieId = $handler($command);
         } catch (TrackingRequestIsBlockedException | TrackingTooManyRequestsException) {
             // Do not expose which guard rule, threshold, or block duration rejected the request.
-            return new Response('', Response::HTTP_UNAUTHORIZED);
+            return new Response('', Response::HTTP_FORBIDDEN);
         }
 
-        if ($newVisitorId !== null) {
+        if ($newVisitorCookieId !== null) {
             $response = new Response('', Response::HTTP_CREATED);
             $response->headers->setCookie(
                 (new Cookie('visitorId'))
-                    ->withValue($newVisitorId)
+                    ->withValue($newVisitorCookieId)
                     ->withExpires(time() + $cookieLifetime)
                     ->withHttpOnly(true)
                     ->withSameSite('strict')

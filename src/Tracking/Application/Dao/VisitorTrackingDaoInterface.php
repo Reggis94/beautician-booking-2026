@@ -15,7 +15,7 @@ interface VisitorTrackingDaoInterface
     /** Locks tracking rate checks and writes until the current transaction ends. */
     public function lockPageVisitWrites(): void;
 
-    public function isBlocked(string $ip, ?string $visitorId): bool;
+    public function isBlocked(string $ip, ?string $visitorCookieId): bool;
 
     /**
      * @param list<array{
@@ -31,24 +31,24 @@ interface VisitorTrackingDaoInterface
      *     reason: IdentifierBlockReason
      * }
      */
-    public function findExceededRateLimit(string $ip, ?string $visitorId, array $tiers): ?array;
+    public function findExceededRateLimit(string $ip, ?string $visitorCookieId, array $tiers): ?array;
 
     /** Persists a block within the transaction opened by the command handler. */
     public function blockIdentifiers(
         ?string $ip,
-        ?string $visitorId,
+        ?string $visitorCookieId,
         int $durationSeconds,
         IdentifierBlockReason $reason,
         ?int $suspiciousWindowSeconds = null
     ): void;
 
     public function createPageVisit(
-        string $visitorId,
+        string $visitorCookieId,
         string $ip,
         string $currentUrl,
         ?string $referer,
         ?string $userAgent
     ): void;
 
-    public function visitorIdExists(string $visitorId): bool;
+    public function visitorIdExists(string $visitorCookieId): bool;
 }
