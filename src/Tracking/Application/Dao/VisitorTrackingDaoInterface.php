@@ -6,6 +6,15 @@ use App\Tracking\Application\Enum\IdentifierBlockReason;
 
 interface VisitorTrackingDaoInterface
 {
+    public function beginTransaction(): void;
+
+    public function commit(): void;
+
+    public function rollBack(): void;
+
+    /** Locks tracking rate checks and writes until the current transaction ends. */
+    public function lockPageVisitWrites(): void;
+
     public function isBlocked(string $ip, ?string $visitorId): bool;
 
     /**
@@ -24,6 +33,7 @@ interface VisitorTrackingDaoInterface
      */
     public function findExceededRateLimit(string $ip, ?string $visitorId, array $tiers): ?array;
 
+    /** Persists a block within the transaction opened by the command handler. */
     public function blockIdentifiers(
         ?string $ip,
         ?string $visitorId,

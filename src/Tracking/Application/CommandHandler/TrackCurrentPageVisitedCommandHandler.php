@@ -4,6 +4,8 @@ namespace App\Tracking\Application\CommandHandler;
 
 use App\Tracking\Application\Command\TrackCurrentPageVisitedCommand;
 use App\Tracking\Application\Dao\VisitorTrackingDaoInterface;
+use App\Tracking\Application\Exception\TrackingRequestIsBlockedException;
+use App\Tracking\Application\Exception\TrackingTooManyRequestsException;
 use App\Tracking\Application\Guard\VisitedPageRequestGuardInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -29,34 +31,48 @@ final class TrackCurrentPageVisitedCommandHandler
         $findExceededRateLimit = [$this->visitorTrackingDao, 'findExceededRateLimit'];
         $blockIdentifiers = [$this->visitorTrackingDao, 'blockIdentifiers'];
 
-        $this->guard->guard(
-            $ip,
-            $visitorId,
-            $command->getUserAgent(),
-            $isBlocked,
-            $findExceededRateLimit,
-            $blockIdentifiers
-        );
+        $this->visitorTrackingDao->beginTransaction();
 
-        if ($visitorId === null) {
-            do {
-                $visitorId = $this->generateVisitorId();
-            } while ($this->visitorTrackingDao->visitorIdExists($visitorId));
+        try {
+            $this->visitorTrackingDao->lockPageVisitWrites();
+            $this->guard->guard(
+                $ip,
+                $visitorId,
+                $command->getUserAgent(),
+                $isBlocked,
+                $findExceededRateLimit,
+                $blockIdentifiers
+            );
 
-            $newVisitorId = $visitorId;
-        } else {
-            $newVisitorId = null;
+            if ($visitorId === null) {
+                do {
+                    $visitorId = $this->generateVisitorId();
+                } while ($this->visitorTrackingDao->visitorIdExists($visitorId));
+
+                $newVisitorId = $visitorId;
+            } else {
+                $newVisitorId = null;
+            }
+
+            $this->visitorTrackingDao->createPageVisit(
+                $visitorId,
+                $ip,
+                $command->getCurrentUrl(),
+                $command->getReferer(),
+                $command->getUserAgent()
+            );
+            $this->visitorTrackingDao->commit();
+
+            return $newVisitorId;
+        } catch (TrackingRequestIsBlockedException | TrackingTooManyRequestsException $exception) {
+            $this->visitorTrackingDao->commit();
+
+            throw $exception;
+        } catch (\Throwable $exception) {
+            $this->visitorTrackingDao->rollBack();
+
+            throw $exception;
         }
-
-        $this->visitorTrackingDao->createPageVisit(
-            $visitorId,
-            $ip,
-            $command->getCurrentUrl(),
-            $command->getReferer(),
-            $command->getUserAgent()
-        );
-
-        return $newVisitorId;
     }
 
     public function generateVisitorId(): string

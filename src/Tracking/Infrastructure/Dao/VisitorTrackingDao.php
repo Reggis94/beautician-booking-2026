@@ -14,6 +14,28 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
     ) {
     }
 
+    public function beginTransaction(): void
+    {
+        $this->connection->beginTransaction();
+    }
+
+    public function commit(): void
+    {
+        $this->connection->commit();
+    }
+
+    public function rollBack(): void
+    {
+        $this->connection->rollBack();
+    }
+
+    public function lockPageVisitWrites(): void
+    {
+        $this->connection->fetchOne(
+            'SELECT id FROM tracking_page_visit_write_lock WHERE id = 1 FOR UPDATE'
+        );
+    }
+
     public function isBlocked(string $ip, ?string $visitorId): bool
     {
         return (bool) $this->connection->fetchOne(
@@ -78,49 +100,38 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
         IdentifierBlockReason $reason,
         ?int $suspiciousWindowSeconds = null
     ): void {
-        $this->connection->beginTransaction();
+        $this->connection->executeStatement(
+            "INSERT INTO blocked_access (ip, visitor_id_cookie, expires_at, reason) "
+            . "SELECT :ip, :visitor_id_cookie, NOW() + (:duration * INTERVAL '1 second'), :reason "
+            . 'WHERE NOT EXISTS (SELECT 1 FROM blocked_access '
+            . 'WHERE expires_at > NOW() AND ((:ip IS NOT NULL AND ip = :ip) '
+            . 'OR (:visitor_id_cookie IS NOT NULL AND visitor_id_cookie = :visitor_id_cookie)))',
+            [
+                'ip' => $ip,
+                'visitor_id_cookie' => $visitorId,
+                'duration' => $durationSeconds,
+                'reason' => $reason->value,
+            ],
+            [
+                'ip' => Types::STRING,
+                'visitor_id_cookie' => Types::STRING,
+                'duration' => Types::INTEGER,
+                'reason' => Types::STRING,
+            ]
+        );
 
-        try {
-            $this->connection->executeStatement(
-                "INSERT INTO blocked_access (ip, visitor_id_cookie, expires_at, reason) "
-                . "SELECT :ip, :visitor_id_cookie, NOW() + (:duration * INTERVAL '1 second'), :reason "
-                . 'WHERE NOT EXISTS (SELECT 1 FROM blocked_access '
-                . 'WHERE expires_at > NOW() AND ((:ip IS NOT NULL AND ip = :ip) '
-                . 'OR (:visitor_id_cookie IS NOT NULL AND visitor_id_cookie = :visitor_id_cookie)))',
-                [
-                    'ip' => $ip,
-                    'visitor_id_cookie' => $visitorId,
-                    'duration' => $durationSeconds,
-                    'reason' => $reason->value,
-                ],
-                [
-                    'ip' => Types::STRING,
-                    'visitor_id_cookie' => Types::STRING,
-                    'duration' => Types::INTEGER,
-                    'reason' => Types::STRING,
-                ]
-            );
-
-            if ($suspiciousWindowSeconds === null) {
-                $this->connection->commit();
-
-                return;
-            }
-
-            $this->connection->executeStatement(
-                "UPDATE tracking_page_visit SET is_suspicious = TRUE "
-                . "WHERE created_at >= NOW() - (:window * INTERVAL '1 second') "
-                . 'AND ((:ip IS NOT NULL AND ip = :ip) '
-                . 'OR (:visitor_id IS NOT NULL AND visitor_id = :visitor_id))',
-                ['window' => $suspiciousWindowSeconds, 'ip' => $ip, 'visitor_id' => $visitorId],
-                ['window' => Types::INTEGER, 'ip' => Types::STRING, 'visitor_id' => Types::STRING]
-            );
-            $this->connection->commit();
-        } catch (\Throwable $exception) {
-            $this->connection->rollBack();
-
-            throw $exception;
+        if ($suspiciousWindowSeconds === null) {
+            return;
         }
+
+        $this->connection->executeStatement(
+            "UPDATE tracking_page_visit SET is_suspicious = TRUE "
+            . "WHERE created_at >= NOW() - (:window * INTERVAL '1 second') "
+            . 'AND ((:ip IS NOT NULL AND ip = :ip) '
+            . 'OR (:visitor_id IS NOT NULL AND visitor_id = :visitor_id))',
+            ['window' => $suspiciousWindowSeconds, 'ip' => $ip, 'visitor_id' => $visitorId],
+            ['window' => Types::INTEGER, 'ip' => Types::STRING, 'visitor_id' => Types::STRING]
+        );
     }
 
     public function createPageVisit(
