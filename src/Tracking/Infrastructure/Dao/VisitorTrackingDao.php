@@ -29,11 +29,22 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
         $this->connection->rollBack();
     }
 
-    public function lockPageVisitWrites(): void
+    public function lockPageVisitIdentifiers(string $ip, ?string $visitorCookieId): void
     {
-        $this->connection->fetchOne(
-            'SELECT id FROM tracking_page_visit_write_lock WHERE id = 1 FOR UPDATE'
-        );
+        $identifiers = ['ip:' . $ip];
+        if ($visitorCookieId !== null) {
+            $identifiers[] = 'visitor-cookie:' . $visitorCookieId;
+        }
+
+        sort($identifiers, SORT_STRING);
+
+        foreach ($identifiers as $identifier) {
+            $this->connection->fetchOne(
+                'SELECT pg_advisory_xact_lock(hashtextextended(:identifier, 0))',
+                ['identifier' => $identifier],
+                ['identifier' => Types::STRING]
+            );
+        }
     }
 
     public function isBlocked(string $ip, ?string $visitorCookieId): bool
@@ -104,8 +115,8 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
             "INSERT INTO blocked_access (ip, visitor_id_cookie, expires_at, reason) "
             . "SELECT :ip, :visitor_id_cookie, NOW() + (:duration * INTERVAL '1 second'), :reason "
             . 'WHERE NOT EXISTS (SELECT 1 FROM blocked_access '
-            . 'WHERE expires_at > NOW() AND ((:ip IS NOT NULL AND ip = :ip) '
-            . 'OR (:visitor_id_cookie IS NOT NULL AND visitor_id_cookie = :visitor_id_cookie)))',
+            . 'WHERE expires_at > NOW() AND (ip = :ip '
+            . 'OR visitor_id_cookie = :visitor_id_cookie))',
             [
                 'ip' => $ip,
                 'visitor_id_cookie' => $visitorCookieId,
@@ -127,8 +138,7 @@ final class VisitorTrackingDao implements VisitorTrackingDaoInterface
         $this->connection->executeStatement(
             "UPDATE tracking_page_visit SET is_suspicious = TRUE "
             . "WHERE created_at >= NOW() - (:window * INTERVAL '1 second') "
-            . 'AND ((:ip IS NOT NULL AND ip = :ip) '
-            . 'OR (:visitor_id IS NOT NULL AND visitor_id = :visitor_id))',
+            . 'AND (ip = :ip OR visitor_id = :visitor_id)',
             ['window' => $suspiciousWindowSeconds, 'ip' => $ip, 'visitor_id' => $visitorCookieId],
             ['window' => Types::INTEGER, 'ip' => Types::STRING, 'visitor_id' => Types::STRING]
         );

@@ -12,8 +12,8 @@ interface VisitorTrackingDaoInterface
 
     public function rollBack(): void;
 
-    /** Locks tracking rate checks and writes until the current transaction ends. */
-    public function lockPageVisitWrites(): void;
+    /** Locks rate checks and writes sharing either identifier until the transaction ends. */
+    public function lockPageVisitIdentifiers(string $ip, ?string $visitorCookieId): void;
 
     public function isBlocked(string $ip, ?string $visitorCookieId): bool;
 

@@ -142,18 +142,10 @@ CREATE TABLE IF NOT EXISTS tracking_page_visit (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- codex/add-guard-for-visited-page-tracking --
 -- Guard tracking writes against abusive request volume.
 ALTER TABLE tracking_page_visit
   ADD COLUMN IF NOT EXISTS is_suspicious BOOLEAN NOT NULL DEFAULT FALSE;
-
--- Serializes the rate-limit decision and its matching page-visit insert.
-CREATE TABLE IF NOT EXISTS tracking_page_visit_write_lock (
-  id SMALLINT PRIMARY KEY CHECK (id = 1)
-);
-
-INSERT INTO tracking_page_visit_write_lock (id)
-VALUES (1)
-ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS blocked_access (
   id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

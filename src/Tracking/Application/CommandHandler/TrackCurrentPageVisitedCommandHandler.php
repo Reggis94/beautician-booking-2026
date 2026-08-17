@@ -34,7 +34,7 @@ final class TrackCurrentPageVisitedCommandHandler
         $this->visitorTrackingDao->beginTransaction();
 
         try {
-            $this->visitorTrackingDao->lockPageVisitWrites();
+            $this->visitorTrackingDao->lockPageVisitIdentifiers($ip, $visitorCookieId);
             $this->guard->guard(
                 $ip,
                 $visitorCookieId,
