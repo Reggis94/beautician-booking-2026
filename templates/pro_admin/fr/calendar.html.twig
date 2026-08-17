@@ -566,7 +566,15 @@
   }
 
   render();
-  window.addEventListener('resize', render);
+  let viewportWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === viewportWidth) {
+      return;
+    }
+
+    viewportWidth = window.innerWidth;
+    render();
+  });
 
   document.querySelector('[data-calendar-previous]').addEventListener('click', () => {
     visibleMonday.setDate(visibleMonday.getDate() - 7);
