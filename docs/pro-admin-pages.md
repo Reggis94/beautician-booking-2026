@@ -21,6 +21,13 @@ possible and load backend data through the ProAdmin API routes.
 | `demo_pro_admin_services_index` | `GET` | `/demo/pro/dashboard/services` | Demo services managed by the professional. |
 | `demo_pro_admin_opening_hours` | `GET` | `/demo/pro/dashboard/opening-hours` | Demo opening hours managed by the professional. |
 | `demo_front_pro_home` | `GET` | `/demo/pro` | Demo public frontend page with fake presentation data and a return link to ProAdmin. |
+| `demo_pro_admin_dashboard_fr` | `GET` | `/fr/demo/pro/dashboard` | French demo ProAdmin landing page. |
+| `demo_pro_admin_calendar_fr` | `GET` | `/fr/demo/pro/dashboard/calendar` | French-only weekly demo calendar. |
+| `demo_pro_admin_appointments_upcoming_fr` | `GET` | `/fr/demo/pro/dashboard/upcoming` | French demo upcoming appointments page. |
+| `demo_pro_admin_appointments_past_fr` | `GET` | `/fr/demo/pro/dashboard/past` | French demo past appointments page. |
+| `demo_pro_admin_services_index_fr` | `GET` | `/fr/demo/pro/dashboard/services` | French demo services page. |
+| `demo_pro_admin_opening_hours_fr` | `GET` | `/fr/demo/pro/dashboard/opening-hours` | French demo opening hours page. |
+| `demo_front_pro_home_fr` | `GET` | `/fr/demo/pro` | French demo public frontend page. |
 | `g4s_checkout` | `GET` | `/checkout` | Public checkout entry point for professionals creating a G4S account. |
 | `pro_admin_appointments_upcoming` | `GET` | `/pro/dashboard/upcoming?proId={proId}` | Backend-connected upcoming appointments page. |
 
