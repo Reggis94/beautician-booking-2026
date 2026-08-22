@@ -59,12 +59,18 @@ class ClientSideController extends AbstractController
     )]
     public function demoHomeSpecificUserFr(string $username): Response
     {
+        $isNyebahDemo = strcasecmp($username, 'Nyebah') === 0;
+
         return $this->render('front_pro/fr/demo_home.html.twig', [
-            'banner_urls' => $this->getDemoBannerUrls($username),
+            'banner_urls' => $this->getDemoBannerUrls($isNyebahDemo ? '' : $username),
             'demo_admin_url' => $this->generateUrl('demo_pro_admin_calendar_fr', [
                 'username' => $username,
             ]),
             'demo_service_categories' => $this->fakeDemoServiceCategoriesFr(),
+            'demo_video_url' => $isNyebahDemo ? $this->generateUrl('demo_front_pro_video', [
+                'username' => 'nyebah',
+            ]) : null,
+            'is_nyebah_demo' => $isNyebahDemo,
             'page_locale' => 'fr',
         ]);
     }
@@ -77,12 +83,18 @@ class ClientSideController extends AbstractController
     )]
     public function demoHomeSpecificUser(string $username): Response
     {
+        $isNyebahDemo = strcasecmp($username, 'Nyebah') === 0;
+
         return $this->render('front_pro/demo_home.html.twig', [
-            'banner_urls' => $this->getDemoBannerUrls($username),
+            'banner_urls' => $this->getDemoBannerUrls($isNyebahDemo ? '' : $username),
             'demo_admin_url' => $this->generateUrl('demo_pro_admin_dashboard', [
                 'username' => $username,
             ]),
             'demo_service_categories' => $this->fakeDemoServiceCategories(),
+            'demo_video_url' => $isNyebahDemo ? $this->generateUrl('demo_front_pro_video', [
+                'username' => 'nyebah',
+            ]) : null,
+            'is_nyebah_demo' => $isNyebahDemo,
         ]);
     }
 
@@ -115,6 +127,28 @@ class ClientSideController extends AbstractController
     public function demoBanner(string $bannerFile): BinaryFileResponse
     {
         return $this->serveBanner($this->getDemoBannerPath($bannerFile));
+    }
+
+    #[Route(
+        '/demo/pro-banners/{username}/video.mp4',
+        name: 'demo_front_pro_video',
+        requirements: ['username' => 'nyebah'],
+        methods: ['GET'],
+        priority: 30
+    )]
+    public function demoVideo(string $username): BinaryFileResponse
+    {
+        $videoPath = $this->getDemoBannerDirectory($username) . DIRECTORY_SEPARATOR . 'video.mp4';
+
+        if (!is_file($videoPath)) {
+            throw $this->createNotFoundException('Demo video not found');
+        }
+
+        $response = new BinaryFileResponse($videoPath);
+        $response->headers->set('Cache-Control', 'public, max-age=600');
+        $response->headers->set('Content-Type', 'video/mp4');
+
+        return $response;
     }
 
     #[Route(

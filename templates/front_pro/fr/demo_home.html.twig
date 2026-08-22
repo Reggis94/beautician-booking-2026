@@ -5,6 +5,26 @@
         {% if banner_urls|default([]) is not empty %}
             {% for bannerUrl in banner_urls %}
                 <img src="{{ bannerUrl }}" alt="" loading="lazy" decoding="async" class="banner-image">
+                {% if loop.index == 2 and demo_video_url|default(null) %}
+                    <div class="demo-video-frame is-loading" data-demo-video-frame>
+                        <video
+                            class="demo-video"
+                            src="{{ demo_video_url }}#t=780"
+                            autoplay
+                            muted
+                            playsinline
+                            preload="auto"
+                            disablepictureinpicture
+                            disableremoteplayback
+                            aria-label="Vidéo de démonstration Nyebah"
+                            data-demo-video
+                        ></video>
+                        <div class="demo-video-loader" role="status" aria-live="polite">
+                            <span class="demo-video-loader__spinner" aria-hidden="true"></span>
+                            <span>Loading media</span>
+                        </div>
+                    </div>
+                {% endif %}
             {% endfor %}
         {% endif %}
 
@@ -12,7 +32,18 @@
             <a href="{{ demo_admin_url }}" class="demo-front-toolbar__admin-link">Aller sur votre espace Pro</a>
         </div>
 
-        <section class="service-categories">
+        {% if is_nyebah_demo|default(false) %}
+            <iframe
+                src="https://app.acuityscheduling.com/schedule.php?owner=40202245&amp;owner=40202245&amp;appointmentType=97386496"
+                width="100%"
+                height="800"
+                frameborder="0"
+                allow="payment"
+                title="Prendre rendez-vous avec Nyebah"
+            ></iframe>
+            <script src="https://embed.acuityscheduling.com/js/embed.js" type="text/javascript"></script>
+        {% else %}
+            <section class="service-categories">
             <div class="service-categories__header">
                 <p class="service-categories__eyebrow">Nos prestations</p>
                 <h2>Services</h2>
@@ -113,7 +144,8 @@
                     </article>
                 {% endfor %}
             </div>
-        </section>
+            </section>
+        {% endif %}
 
         <footer class="demo-front-footer">
             <button class="demo-front-footer__legal-link" type="button" data-legal-modal-open>
@@ -231,6 +263,48 @@
             height: auto;
             margin: 0;
             width: 100%;
+        }
+        .demo-video {
+            display: block;
+            height: auto;
+            margin: 0;
+            pointer-events: none;
+            width: 100%;
+        }
+        .demo-video-frame {
+            min-height: 240px;
+            position: relative;
+        }
+        .demo-video-frame:not(.is-loading) {
+            min-height: 0;
+        }
+        .demo-video-loader {
+            align-items: center;
+            background: var(--charcoal);
+            color: var(--cream);
+            display: none;
+            flex-direction: column;
+            font-size: 12px;
+            gap: 14px;
+            inset: 0;
+            justify-content: center;
+            letter-spacing: .12em;
+            position: absolute;
+            text-transform: uppercase;
+        }
+        .demo-video-frame.is-loading .demo-video-loader {
+            display: flex;
+        }
+        .demo-video-loader__spinner {
+            animation: demo-video-spin .8s linear infinite;
+            border: 3px solid rgba(250, 246, 241, .3);
+            border-radius: 50%;
+            border-top-color: var(--cream);
+            height: 30px;
+            width: 30px;
+        }
+        @keyframes demo-video-spin {
+            to { transform: rotate(360deg); }
         }
 
 
@@ -870,6 +944,49 @@
             .legal-modal__title { font-size: 31px; }
         }
     </style>
+
+    {% if demo_video_url|default(null) %}
+        <script>
+            (() => {
+                const video = document.querySelector('[data-demo-video]');
+                if (!video) return;
+                const frame = video.closest('[data-demo-video-frame]');
+
+                const startTime = 13 * 60;
+                const endTime = 15 * 60;
+                const playVideo = () => video.play().catch(() => {});
+                const restartVideo = () => {
+                    video.currentTime = startTime;
+                    playVideo();
+                };
+
+                video.muted = true;
+                if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+                    restartVideo();
+                } else {
+                    video.addEventListener('loadedmetadata', restartVideo, { once: true });
+                }
+                const hideLoader = () => frame?.classList.remove('is-loading');
+                if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+                    hideLoader();
+                } else {
+                    video.addEventListener('canplay', hideLoader, { once: true });
+                }
+                video.addEventListener('timeupdate', () => {
+                    if (video.currentTime >= endTime || video.currentTime < startTime) {
+                        restartVideo();
+                    }
+                });
+                video.addEventListener('pause', () => {
+                    if (video.currentTime >= endTime) {
+                        video.currentTime = startTime;
+                    }
+                    playVideo();
+                });
+                playVideo();
+            })();
+        </script>
+    {% endif %}
 
     <script>
         (() => {
