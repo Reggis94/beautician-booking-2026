@@ -10,9 +10,8 @@
                         <video
                             class="demo-video"
                             src="{{ demo_video_url }}"
-                            autoplay
+                            controls
                             loop
-                            muted
                             playsinline
                             preload="auto"
                             disablepictureinpicture
@@ -706,16 +705,12 @@
                 if (!video) return;
                 const frame = video.closest('[data-demo-video-frame]');
 
-                const playVideo = () => video.play().catch(() => {});
-
-                video.muted = true;
                 const hideLoader = () => frame?.classList.remove('is-loading');
                 if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
                     hideLoader();
                 } else {
                     video.addEventListener('canplay', hideLoader, { once: true });
                 }
-                playVideo();
             })();
         </script>
     {% endif %}
