@@ -9,8 +9,9 @@
                     <div class="demo-video-frame is-loading" data-demo-video-frame>
                         <video
                             class="demo-video"
-                            src="{{ demo_video_url }}#t=780"
+                            src="{{ demo_video_url }}"
                             autoplay
+                            loop
                             muted
                             playsinline
                             preload="auto"
@@ -705,37 +706,15 @@
                 if (!video) return;
                 const frame = video.closest('[data-demo-video-frame]');
 
-                const startTime = 13 * 60;
-                const endTime = 15 * 60;
                 const playVideo = () => video.play().catch(() => {});
-                const restartVideo = () => {
-                    video.currentTime = startTime;
-                    playVideo();
-                };
 
                 video.muted = true;
-                if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-                    restartVideo();
-                } else {
-                    video.addEventListener('loadedmetadata', restartVideo, { once: true });
-                }
                 const hideLoader = () => frame?.classList.remove('is-loading');
                 if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
                     hideLoader();
                 } else {
                     video.addEventListener('canplay', hideLoader, { once: true });
                 }
-                video.addEventListener('timeupdate', () => {
-                    if (video.currentTime >= endTime || video.currentTime < startTime) {
-                        restartVideo();
-                    }
-                });
-                video.addEventListener('pause', () => {
-                    if (video.currentTime >= endTime) {
-                        video.currentTime = startTime;
-                    }
-                    playVideo();
-                });
                 playVideo();
             })();
         </script>
