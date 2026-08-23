@@ -6,23 +6,18 @@
             {% for bannerUrl in banner_urls %}
                 <img src="{{ bannerUrl }}" alt="" loading="lazy" decoding="async" class="banner-image">
                 {% if loop.index == 2 and demo_video_url|default(null) %}
-                    <div class="demo-video-frame is-loading" data-demo-video-frame>
+                    <div class="demo-video-frame">
                         <video
                             class="demo-video"
                             src="{{ demo_video_url }}"
                             controls
                             loop
                             playsinline
-                            preload="auto"
+                            preload="metadata"
                             disablepictureinpicture
                             disableremoteplayback
                             aria-label="Vidéo de démonstration Nyebah"
-                            data-demo-video
                         ></video>
-                        <div class="demo-video-loader" role="status" aria-live="polite">
-                            <span class="demo-video-loader__spinner" aria-hidden="true"></span>
-                            <span>Loading media</span>
-                        </div>
                     </div>
                 {% endif %}
             {% endfor %}
@@ -271,39 +266,7 @@
             width: 100%;
         }
         .demo-video-frame {
-            min-height: 240px;
             position: relative;
-        }
-        .demo-video-frame:not(.is-loading) {
-            min-height: 0;
-        }
-        .demo-video-loader {
-            align-items: center;
-            background: var(--charcoal);
-            color: var(--cream);
-            display: none;
-            flex-direction: column;
-            font-size: 12px;
-            gap: 14px;
-            inset: 0;
-            justify-content: center;
-            letter-spacing: .12em;
-            position: absolute;
-            text-transform: uppercase;
-        }
-        .demo-video-frame.is-loading .demo-video-loader {
-            display: flex;
-        }
-        .demo-video-loader__spinner {
-            animation: demo-video-spin .8s linear infinite;
-            border: 3px solid rgba(250, 246, 241, .3);
-            border-radius: 50%;
-            border-top-color: var(--cream);
-            height: 30px;
-            width: 30px;
-        }
-        @keyframes demo-video-spin {
-            to { transform: rotate(360deg); }
         }
 
 
@@ -943,23 +906,6 @@
             .legal-modal__title { font-size: 31px; }
         }
     </style>
-
-    {% if demo_video_url|default(null) %}
-        <script>
-            (() => {
-                const video = document.querySelector('[data-demo-video]');
-                if (!video) return;
-                const frame = video.closest('[data-demo-video-frame]');
-
-                const hideLoader = () => frame?.classList.remove('is-loading');
-                if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
-                    hideLoader();
-                } else {
-                    video.addEventListener('canplay', hideLoader, { once: true });
-                }
-            })();
-        </script>
-    {% endif %}
 
     <script>
         (() => {
