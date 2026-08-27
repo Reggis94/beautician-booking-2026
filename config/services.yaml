@@ -7,6 +7,14 @@ parameters:
 
     tracking.visitor_id_length: 20
     tracking.demo_and_marketing_max_age: 15552000
+    tracking.guard.short.limit: 60
+    tracking.guard.short.window_seconds: 120
+    tracking.guard.medium.limit: 120
+    tracking.guard.medium.window_seconds: 7200
+    tracking.guard.long.limit: 300
+    tracking.guard.long.window_seconds: 86400
+    tracking.guard.block_seconds: 86400
+    tracking.guard.user_agent_min_length: 20
 
 services:
     # default configuration for services in *this* file
@@ -40,6 +48,7 @@ services:
     App\Availability\Domain\Repository\AvailabilityRepositoryInterface: '@App\Availability\Infrastructure\Repository\AvailabilityRepository'
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
     App\Tracking\Application\Dao\VisitorTrackingDaoInterface: '@App\Tracking\Infrastructure\Dao\VisitorTrackingDao'
+    App\Tracking\Application\Guard\VisitedPageRequestGuardInterface: '@App\Tracking\Application\Guard\VisitedPageRequestGuard'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -8,9 +8,9 @@ class TrackCurrentPageVisitedCommand
 {
     private ?string $userAgent = null;
     private ?string $ip = null;
-    private ?string $visitorId = null;
+    private ?string $visitorCookieId = null;
 
-    private readonly int $visitorIdLength;
+    private readonly int $visitorCookieIdLength;
 
     public function __construct(
         #[Assert\Url(
@@ -26,9 +26,9 @@ class TrackCurrentPageVisitedCommand
     ) {
     }
 
-    public function setVisitorIdLength(int $visitorIdLength): void
+    public function setVisitorIdLength(int $visitorCookieIdLength): void
     {
-        $this->visitorIdLength = $visitorIdLength;
+        $this->visitorCookieIdLength = $visitorCookieIdLength;
     }
 
     public function setUserAgent(?string $userAgent): void
@@ -36,26 +36,26 @@ class TrackCurrentPageVisitedCommand
         $this->userAgent = $userAgent;
     }
 
-    public function setVisitorId(?string $visitorId): void
+    public function setVisitorId(?string $visitorCookieId): void
     {
-        if (!isset($this->visitorIdLength)) {
+        if (!isset($this->visitorCookieIdLength)) {
             throw new \InvalidArgumentException(
                 'Visitor ID length must be set from configuration parameter '
-                . '"tracking.visitor_id_length" with function setVisitorIdLength(int $visitorIdLength) '
+                . '"tracking.visitor_id_length" with function setVisitorIdLength(int $visitorCookieIdLength) '
                 . 'before calling setVisitorId().'
             );
         }
 
         if (
-            $visitorId !== null
-            && (!ctype_alnum($visitorId) || mb_strlen($visitorId) !== $this->visitorIdLength)
+            $visitorCookieId !== null
+            && (!ctype_alnum($visitorCookieId) || mb_strlen($visitorCookieId) !== $this->visitorCookieIdLength)
         ) {
-            $this->visitorId = null;
+            $this->visitorCookieId = null;
 
             return;
         }
 
-        $this->visitorId = $visitorId;
+        $this->visitorCookieId = $visitorCookieId;
     }
 
     public function setIp(string $ip): void
@@ -74,7 +74,7 @@ class TrackCurrentPageVisitedCommand
 
     public function getVisitorId(): ?string
     {
-        return $this->visitorId;
+        return $this->visitorCookieId;
     }
 
     public function getUserAgent(): ?string

@@ -141,3 +141,31 @@ CREATE TABLE IF NOT EXISTS tracking_page_visit (
   user_agent      TEXT,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- codex/add-guard-for-visited-page-tracking --
+-- Guard tracking writes against abusive request volume.
+ALTER TABLE tracking_page_visit
+  ADD COLUMN IF NOT EXISTS is_suspicious BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS blocked_access (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  ip          VARCHAR(45),
+  visitor_id_cookie VARCHAR(20),
+  expires_at  TIMESTAMPTZ NOT NULL,
+  reason      TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT blocked_access_has_identifier
+    CHECK (ip IS NOT NULL OR visitor_id_cookie IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tracking_page_visit_ip_created_at
+  ON tracking_page_visit (ip, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_tracking_page_visit_visitor_created_at
+  ON tracking_page_visit (visitor_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_blocked_access_ip_expires_at
+  ON blocked_access (ip, expires_at);
+
+CREATE INDEX IF NOT EXISTS idx_blocked_access_visitor_cookie_expires_at
+  ON blocked_access (visitor_id_cookie, expires_at);
