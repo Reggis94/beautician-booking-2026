@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
 {% block body %}
     <div class="page-content">
@@ -16,7 +16,7 @@
                             preload="metadata"
                             disablepictureinpicture
                             disableremoteplayback
-                            aria-label="Nyebah demo video"
+                            aria-label="Vidéo de démonstration Nyebah"
                         ></video>
                     </div>
                 {% endif %}
@@ -24,7 +24,7 @@
         {% endif %}
 
         <div class="demo-front-toolbar">
-            <a href="{{ demo_admin_url }}" class="demo-front-toolbar__admin-link">Back to admin</a>
+            <a href="{{ demo_admin_url }}" class="demo-front-toolbar__admin-link">Aller sur votre espace Pro</a>
         </div>
 
         {% if is_nyebah_demo|default(false) %}
@@ -34,15 +34,15 @@
                 height="800"
                 frameborder="0"
                 allow="payment"
-                title="Schedule an appointment with Nyebah"
+                title="Prendre rendez-vous avec Nyebah"
             ></iframe>
             <script src="https://embed.acuityscheduling.com/js/embed.js" type="text/javascript"></script>
         {% else %}
             <section class="service-categories">
             <div class="service-categories__header">
-                <p class="service-categories__eyebrow">What we offer</p>
+                <p class="service-categories__eyebrow">Nos prestations</p>
                 <h2>Services</h2>
-                <p class="service-categories__sub">Pick a treatment and request a demo appointment.</p>
+                <p class="service-categories__sub">Choisissez une prestation et demandez un rendez-vous.</p>
             </div>
 
             <div class="service-categories__list">
@@ -54,7 +54,7 @@
                                 <span class="service-category__name">{{ category.name }}</span>
                             </span>
                             <span class="service-category__count">
-                                {{ category.services|length }} {{ category.services|length > 1 ? 'services' : 'service' }}
+                                {{ category.services|length }} {{ category.services|length > 1 ? 'prestations' : 'prestation' }}
                             </span>
                         </button>
 
@@ -63,12 +63,12 @@
                                 <article class="service-card">
                                     <div class="service-card__header">
                                         <h3 class="service-card__name">{{ service.name }}</h3>
-                                        <span class="service-card__price">${{ service.price }}</span>
+                                        <span class="service-card__price">{{ service.price }} €</span>
                                     </div>
                                     <p class="service-card__description">{{ service.description }}</p>
                                     <div class="service-card__meta">
                                         <span class="service-card__meta-pill">{{ service.durationMinutes }} min</span>
-                                        <span class="service-card__meta-pill">Demo availability</span>
+                                        <span class="service-card__meta-pill">Disponibilités</span>
                                     </div>
                                     <button
                                         class="service-card__book"
@@ -77,7 +77,7 @@
                                         data-service-id="{{ service.id }}"
                                         data-service-name="{{ service.name }}"
                                     >
-                                        Book this service
+                                        Réserver cette prestation
                                     </button>
                                     <div class="service-card__availability" hidden data-availability-panel>
                                         <p class="service-card__availability-title" data-availability-title></p>
@@ -110,11 +110,11 @@
 
                                             <div class="service-card__booking-fields">
                                                 <div class="service-card__booking-field">
-                                                    <label>Last name</label>
+                                                    <label>Nom</label>
                                                     <input name="lastName" type="text" autocomplete="family-name" maxlength="50" required>
                                                 </div>
                                                 <div class="service-card__booking-field">
-                                                    <label>First name</label>
+                                                    <label>Prénom</label>
                                                     <input name="firstName" type="text" autocomplete="given-name" maxlength="50" required>
                                                 </div>
                                                 <div class="service-card__booking-field">
@@ -122,13 +122,13 @@
                                                     <input name="email" type="email" autocomplete="email" required>
                                                 </div>
                                                 <div class="service-card__booking-field">
-                                                    <label>Phone</label>
-                                                    <input name="extraPhone" type="tel" autocomplete="tel" minlength="7" maxlength="30" required>
+                                                    <label>Téléphone</label>
+                                                    <input name="extraTéléphone" type="tel" autocomplete="tel" minlength="7" maxlength="30" required>
                                                 </div>
                                             </div>
 
                                             <button class="service-card__booking-submit" type="submit">
-                                                Confirm appointment
+                                                Confirmer le rendez-vous
                                             </button>
                                             <p class="service-card__booking-status" data-demo-booking-status></p>
                                         </form>
@@ -141,6 +141,12 @@
             </div>
             </section>
         {% endif %}
+
+        <footer class="demo-front-footer">
+            <button class="demo-front-footer__legal-link" type="button" data-legal-modal-open>
+                Mentions légales et CGV
+            </button>
+        </footer>
     </div>
 
     <div
@@ -153,18 +159,78 @@
     >
         <div class="booking-result-modal__backdrop" data-booking-result-close></div>
         <div class="booking-result-modal__dialog">
-            <button class="booking-result-modal__close" type="button" aria-label="Close" data-booking-result-close>x</button>
-            <p class="booking-result-modal__eyebrow">Appointment requested</p>
-            <h2 class="booking-result-modal__title" id="demoBookingResultTitle">Thank you, your appointment is requested</h2>
+            <button class="booking-result-modal__close" type="button" aria-label="Fermer" data-booking-result-close>x</button>
+            <p class="booking-result-modal__eyebrow">Rendez-vous demandé</p>
+            <h2 class="booking-result-modal__title" id="demoBookingResultTitle">Merci, votre demande de rendez-vous a bien été envoyée</h2>
             <p class="booking-result-modal__body">
-                We have sent you an email with the appointment details. The business has also been notified.
+                Nous vous avons envoyé un e-mail avec les détails du rendez-vous. La professionnelle a également été prévenue.
             </p>
-            <button class="booking-result-modal__action" type="button" data-booking-result-close>Close</button>
+            <button class="booking-result-modal__action" type="button" data-booking-result-close>Fermer</button>
         </div>
     </div>
 
+    <div
+        class="demo-welcome-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="demoWelcomeTitle"
+        aria-describedby="demoWelcomeBody"
+        data-demo-welcome-modal
+    >
+        <div class="demo-welcome-modal__backdrop"></div>
+        <div class="demo-welcome-modal__dialog">
+            <p class="demo-welcome-modal__eyebrow">Bienvenue dans la démo</p>
+            <h2 class="demo-welcome-modal__title" id="demoWelcomeTitle">Découvrez Glam4Style</h2>
+            <p class="demo-welcome-modal__body" id="demoWelcomeBody">
+                Profitez de notre offre en cours : seulement 40 € pour un an, soit 3,34 € par mois,
+                au lieu de 96 € par an.
+                <strong>Offre limitée jusqu’au 19 Août 2026</strong>
+            </p>
+            <button class="demo-welcome-modal__action" type="button" data-demo-welcome-close>
+                Fermer et essayer Glam4Style
+            </button>
+        </div>
+    </div>
+
+    <div class="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle" hidden data-legal-modal>
+        <div class="legal-modal__backdrop" data-legal-modal-close></div>
+        <section class="legal-modal__dialog">
+            <button class="legal-modal__close" type="button" aria-label="Fermer" data-legal-modal-close>x</button>
+            <p class="legal-modal__eyebrow">Informations juridiques</p>
+            <h2 class="legal-modal__title" id="legalModalTitle">Mentions légales et CGV</h2>
+
+            <div class="legal-modal__content">
+                <section aria-labelledby="legalNoticesTitle">
+                    <h3 id="legalNoticesTitle">Mentions légales</h3>
+                    <h4>Éditeur du site</h4>
+                    <p>Le site et la plateforme Glam4Style sont édités sous la marque Glam4Style. Contact : <a href="mailto:contact@glam4style.com">contact@glam4style.com</a>.</p>
+                    <h4>Données personnelles</h4>
+                    <p>Les formulaires de rendez-vous de cette démonstration demandent un nom, un prénom, une adresse e-mail et un numéro de téléphone uniquement pour illustrer le parcours. Aucune demande saisie dans la démo n’est enregistrée comme un véritable rendez-vous.</p>
+                    <h4>Propriété intellectuelle et responsabilité</h4>
+                    <p>Les contenus, textes, éléments graphiques et interfaces présentés sous la marque Glam4Style sont protégés. Toute reproduction non autorisée est interdite. Les données, disponibilités, prestations et tarifs affichés dans la démo sont fictifs et ne constituent pas une offre de service d’une professionnelle de beauté réelle.</p>
+                </section>
+
+                <section aria-labelledby="termsTitle">
+                    <h3 id="termsTitle">Conditions générales de vente</h3>
+                    <h4>Objet</h4>
+                    <p>Les présentes conditions encadrent l’accès des professionnelles de la beauté à Glam4Style, une plateforme proposant notamment une page de réservation cliente et un espace professionnel pour gérer les rendez-vous, prestations et horaires.</p>
+                    <h4>Accès et commande</h4>
+                    <p>Pour demander un accès, la professionnelle écrit <strong>INTERESSE</strong> en commentaire sous la dernière publication TikTok de Glam4Style. L’utilisation de cette démo et l’envoi de ce commentaire ne valent ni commande ni paiement. Les informations contractuelles définitives sont communiquées avant tout engagement.</p>
+                    <h4>Prix et durée</h4>
+                    <p>L’offre présentée dans cette démo est de 40 € pour un an, soit 3,34 € par mois, au lieu de 96 € par an, et est annoncée comme limitée jusqu’au 19 août 2026. Le prix, les taxes applicables, la durée et les modalités de paiement sont confirmés à la professionnelle avant la conclusion de la vente.</p>
+                    <h4>Mise à disposition du service</h4>
+                    <p>Après validation de la commande, Glam4Style communique les modalités d’accès et de configuration de la plateforme. La professionnelle reste responsable de l’exactitude de ses prestations, tarifs, horaires, disponibilités et informations destinées à ses clientes.</p>
+                    <h4>Réclamations, annulation et droit applicable</h4>
+                    <p>Toute question ou réclamation peut être adressée à <a href="mailto:contact@glam4style.com">contact@glam4style.com</a>. Les conditions d’annulation, de remboursement, de renouvellement, ainsi que les règles relatives au droit de rétractation et au règlement des litiges, seront précisées dans les conditions définitives remises avant la commande, selon le statut de la cliente professionnelle et la législation applicable.</p>
+                </section>
+            </div>
+
+            <button class="legal-modal__action" type="button" data-legal-modal-close>Fermer</button>
+        </section>
+    </div>
+
     <style>
-        /* ── TOKENS ── */
+        /* â”€â”€ TOKENS â”€â”€ */
         :root {
             --cream:       #FAF6F1;
             --blush:       #F2E0D6;
@@ -178,7 +244,7 @@
             --sans:  'DM Sans', system-ui, sans-serif;
         }
 
-        /* ── LAYOUT ── */
+        /* â”€â”€ LAYOUT â”€â”€ */
         .page-content {
             max-width: 1025px;
             margin: 0 auto;
@@ -203,7 +269,8 @@
             position: relative;
         }
 
-        /* ── TOOLBAR ── */
+
+        /* â”€â”€ TOOLBAR â”€â”€ */
         .demo-front-toolbar {
             display: flex;
             align-items: center;
@@ -227,8 +294,25 @@
             background: var(--rose-deep);
             color: var(--cream);
         }
+        .demo-front-footer {
+            border-top: 1px solid var(--soft-border);
+            padding: 22px 24px 86px;
+            text-align: center;
+        }
+        .demo-front-footer__legal-link {
+            background: none;
+            border: 0;
+            color: var(--warm-grey);
+            cursor: pointer;
+            font: 500 12px/1.4 var(--sans);
+            padding: 6px;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .demo-front-footer__legal-link:hover,
+        .demo-front-footer__legal-link:focus { color: var(--rose-deep); }
 
-        /* ── SECTION HEADER ── */
+        /* â”€â”€ SECTION HEADER â”€â”€ */
         .service-categories {
             padding: 48px 24px 60px;
         }
@@ -258,7 +342,7 @@
             line-height: 1.6;
         }
 
-        /* ── CATEGORY ── */
+        /* â”€â”€ CATEGORY â”€â”€ */
         .service-categories__list {
             display: grid;
             gap: 16px;
@@ -306,7 +390,7 @@
             color: var(--mid);
         }
 
-        /* ── SERVICE CARDS ── */
+        /* â”€â”€ SERVICE CARDS â”€â”€ */
         .service-category__services {
             background: var(--blush);
             display: grid;
@@ -367,7 +451,7 @@
             padding: 4px 10px;
         }
 
-        /* ── BOOK BUTTON ── */
+        /* â”€â”€ BOOK BUTTON â”€â”€ */
         .service-card__book {
             font-family: var(--sans);
             font-size: 11px;
@@ -386,7 +470,7 @@
             transform: translateY(-1px);
         }
 
-        /* ── AVAILABILITY PANEL ── */
+        /* â”€â”€ AVAILABILITY PANEL â”€â”€ */
         .service-card__availability {
             border-top: 1px solid var(--soft-border);
             margin-top: 20px;
@@ -492,7 +576,7 @@
             color: var(--cream);
         }
 
-        /* ── BOOKING FORM ── */
+        /* â”€â”€ BOOKING FORM â”€â”€ */
         .service-card__booking-form {
             border-top: 1px solid var(--soft-border);
             display: grid;
@@ -651,12 +735,175 @@
             transform: translateY(-1px);
         }
 
-        /* ── RESPONSIVE ── */
+        .demo-welcome-modal[hidden] { display: none; }
+        .demo-welcome-modal {
+            align-items: center;
+            display: flex;
+            inset: 0;
+            justify-content: center;
+            padding: 24px;
+            position: fixed;
+            z-index: 1100;
+        }
+        .demo-welcome-modal__backdrop {
+            background: rgba(28, 25, 22, .58);
+            inset: 0;
+            position: absolute;
+        }
+        .demo-welcome-modal__dialog {
+            background: var(--cream);
+            box-shadow: 0 24px 70px rgba(28, 25, 22, .28);
+            max-width: 440px;
+            padding: 42px 36px 36px;
+            position: relative;
+            text-align: center;
+            width: min(100%, 440px);
+        }
+        .demo-welcome-modal__eyebrow {
+            color: var(--rose-deep);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .18em;
+            margin: 0 0 12px;
+            text-transform: uppercase;
+        }
+        .demo-welcome-modal__title {
+            color: var(--charcoal);
+            font-family: var(--serif);
+            font-size: clamp(30px, 6vw, 38px);
+            font-weight: 300;
+            line-height: 1.12;
+            margin: 0 0 16px;
+        }
+        .demo-welcome-modal__body {
+            color: var(--warm-grey);
+            font-size: 15px;
+            line-height: 1.65;
+            margin: 0;
+        }
+        .demo-welcome-modal__body strong {
+            color: var(--charcoal);
+            display: block;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .demo-welcome-modal__action {
+            background: var(--charcoal);
+            border: 0;
+            color: var(--cream);
+            cursor: pointer;
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            margin-top: 28px;
+            padding: 14px 20px;
+            text-transform: uppercase;
+            transition: background .18s, transform .12s;
+        }
+        .demo-welcome-modal__action:hover,
+        .demo-welcome-modal__action:focus {
+            background: var(--rose-deep);
+            transform: translateY(-1px);
+        }
+
+        /* â”€â”€ RESPONSIVE â”€â”€ */
         @media (max-width: 600px) {
             .service-categories { padding: 36px 16px 48px; }
             .service-card { padding: 20px 16px; }
             .booking-result-modal__dialog { padding: 36px 24px 28px; }
+            .demo-welcome-modal__dialog { padding: 36px 24px 28px; }
             .service-card__name { font-size: 19px; }
+        }
+        .legal-modal[hidden] { display: none; }
+        .legal-modal {
+            align-items: center;
+            display: flex;
+            inset: 0;
+            justify-content: center;
+            padding: 24px;
+            position: fixed;
+            z-index: 1100;
+        }
+        .legal-modal__backdrop {
+            background: rgba(28, 25, 22, .62);
+            inset: 0;
+            position: absolute;
+        }
+        .legal-modal__dialog {
+            background: var(--cream);
+            color: var(--charcoal);
+            max-height: min(84vh, 760px);
+            max-width: 760px;
+            overflow-y: auto;
+            padding: 38px;
+            position: relative;
+            width: 100%;
+        }
+        .legal-modal__close {
+            background: none;
+            border: 0;
+            color: var(--mid);
+            cursor: pointer;
+            font-size: 22px;
+            padding: 8px;
+            position: absolute;
+            right: 14px;
+            top: 12px;
+        }
+        .legal-modal__eyebrow {
+            color: var(--rose-deep);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .16em;
+            margin: 0 30px 8px 0;
+            text-transform: uppercase;
+        }
+        .legal-modal__title {
+            font: 300 36px/1.1 var(--serif);
+            margin: 0 0 28px;
+        }
+        .legal-modal__content {
+            display: grid;
+            gap: 34px;
+        }
+        .legal-modal__content h3 {
+            border-bottom: 1px solid var(--soft-border);
+            font: 400 27px/1.2 var(--serif);
+            margin: 0 0 20px;
+            padding-bottom: 9px;
+        }
+        .legal-modal__content h4 {
+            font-size: 13px;
+            margin: 20px 0 6px;
+        }
+        .legal-modal__content p {
+            color: var(--warm-grey);
+            font-size: 13px;
+            line-height: 1.65;
+            margin: 0 0 12px;
+        }
+        .legal-modal__content a { color: var(--rose-deep); }
+        .legal-modal__notice {
+            background: var(--blush);
+            padding: 12px 14px;
+        }
+        .legal-modal__action {
+            background: var(--charcoal);
+            border: 0;
+            color: var(--cream);
+            cursor: pointer;
+            display: block;
+            font: 600 11px/1 var(--sans);
+            letter-spacing: .1em;
+            margin: 28px 0 0 auto;
+            padding: 13px 22px;
+            text-transform: uppercase;
+        }
+        @media (max-width: 600px) {
+            .legal-modal { padding: 14px; }
+            .legal-modal__dialog { max-height: 90vh; padding: 32px 22px 24px; }
+            .legal-modal__title { font-size: 31px; }
         }
     </style>
 
@@ -710,22 +957,18 @@
             const formatMonthLabel = (yearMonth) => {
                 const [year, month] = yearMonth.split('-').map(Number);
                 const date = new Date(year, month - 1, 1);
-                return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
+                const label = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(date);
+
+                return label.charAt(0).toUpperCase() + label.slice(1);
             };
             const formatBookableDay = (dateString) => {
                 const [year, month, day] = dateString.split('-').map(Number);
                 const date = new Date(year, month - 1, day);
-                return new Intl.DateTimeFormat('en-US', { day: 'numeric', weekday: 'short' }).format(date);
+                return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', weekday: 'short' }).format(date);
             };
-            const formatTimeWithMeridiem = (time) => {
-                const [hours, minutes] = time.split(':').map(Number);
-                const period = hours >= 12 ? 'PM' : 'AM';
-                const displayHours = hours % 12 || 12;
-                const displayMinutes = String(minutes).padStart(2, '0');
-                return `${displayHours}:${displayMinutes} ${period}`;
-            };
+            const formatTimeWithMeridiem = (time) => time.replace(':', ' h ');
             const formatSelectedAppointment = (localDate, startTime) => {
-                return `${formatBookableDay(localDate)} at ${formatTimeWithMeridiem(startTime)}`;
+                return `${formatBookableDay(localDate)} à ${formatTimeWithMeridiem(startTime)}`;
             };
             const buildLocalDate = (date) => {
                 const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -765,7 +1008,7 @@
                 status.textContent = '';
                 status.classList.remove('is-success');
             };
-            const resetAvailabilityPanel = (panel) => {
+            const resetDisponibilitésPanel = (panel) => {
                 const title = panel.querySelector('[data-availability-title]');
                 const daysList = panel.querySelector('[data-availability-days]');
                 const slotsPanel = panel.querySelector('[data-availability-slots]');
@@ -781,10 +1024,10 @@
                 slotList.replaceChildren();
                 resetBookingForm(panel);
             };
-            const closeOtherAvailabilityPanels = (currentPanel) => {
+            const closeOtherDisponibilitésPanels = (currentPanel) => {
                 document.querySelectorAll('[data-availability-panel]').forEach((panel) => {
                     if (panel !== currentPanel) {
-                        resetAvailabilityPanel(panel);
+                        resetDisponibilitésPanel(panel);
                     }
                 });
             };
@@ -797,7 +1040,7 @@
                 button.classList.add('is-selected');
                 form.hidden = false;
                 form.elements.startDateTimeLocal.value = `${localDate} ${startTime}:00`;
-                title.textContent = `Book ${serviceName} — ${formatSelectedAppointment(localDate, startTime)}`;
+                title.textContent = `Réserver ${serviceName} — ${formatSelectedAppointment(localDate, startTime)}`;
                 scrollToBookingStep(form);
             };
             const renderSlots = (panel, dayButton, serviceId, serviceName) => {
@@ -820,7 +1063,7 @@
                     button.classList.toggle('is-selected', button === dayButton);
                 });
                 resetBookingForm(panel);
-                slotsTitle.textContent = `Available slots — ${formatBookableDay(localDate)}`;
+                slotsTitle.textContent = `Créneaux disponibles — ${formatBookableDay(localDate)}`;
                 slotList.replaceChildren(...slotButtons);
                 slotsPanel.hidden = false;
                 scrollToBookingStep(slotsPanel);
@@ -835,10 +1078,10 @@
                 const days = resolveBookableDays(yearMonth);
                 panel.hidden = false;
                 panel.dataset.visibleMonth = yearMonth;
-                title.textContent = `Bookable days — ${formatMonthLabel(yearMonth)}`;
+                title.textContent = `Jours disponibles — ${formatMonthLabel(yearMonth)}`;
                 previousButton.hidden = previousYearMonth < getCurrentYearMonth();
-                previousButton.textContent = `← ${formatMonthLabel(previousYearMonth)}`;
-                nextButton.textContent = `${formatMonthLabel(nextYearMonth)} →`;
+                previousButton.textContent = formatMonthLabel(previousYearMonth);
+                nextButton.textContent = formatMonthLabel(nextYearMonth);
                 panel.querySelector('[data-availability-slots]').hidden = true;
                 resetBookingForm(panel);
                 daysList.replaceChildren(...days.map((localDate, index) => {
@@ -859,7 +1102,7 @@
                     const card = button.closest('.service-card');
                     const panel = card ? card.querySelector('[data-availability-panel]') : null;
                     if (!panel) return;
-                    closeOtherAvailabilityPanels(panel);
+                    closeOtherDisponibilitésPanels(panel);
                     renderBookableDays(
                         panel,
                         Number(button.dataset.serviceId),
@@ -888,7 +1131,7 @@
                 });
                 form.addEventListener('submit', (event) => {
                     event.preventDefault();
-                    status.textContent = 'Demo appointment booked. No real data was saved.';
+                    status.textContent = 'Rendez-vous réservé. Aucune donnée réelle n’a été enregistrée.';
                     status.classList.add('is-success');
                     openBookingResultModal();
                 });
@@ -896,9 +1139,67 @@
         })();
     </script>
 
-    {% include 'demo/_g4s_account_prompt.html.twig' with {
+    <script>
+        (() => {
+            const modal = document.querySelector('[data-demo-welcome-modal]');
+            const closeButton = modal?.querySelector('[data-demo-welcome-close]');
+
+            if (!modal || !closeButton) {
+                return;
+            }
+
+            const previousBodyOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            closeButton.focus();
+
+            closeButton.addEventListener('click', () => {
+                modal.hidden = true;
+                document.body.style.overflow = previousBodyOverflow;
+                window.dispatchEvent(new CustomEvent('g4s:offer-prompt-closed'));
+            });
+        })();
+    </script>
+
+    <script>
+        (() => {
+            const modal = document.querySelector('[data-legal-modal]');
+            const openButton = document.querySelector('[data-legal-modal-open]');
+            const closeButtons = modal?.querySelectorAll('[data-legal-modal-close]');
+            let previousBodyOverflow = '';
+
+            if (!modal || !openButton || !closeButtons) {
+                return;
+            }
+
+            const closeModal = () => {
+                modal.hidden = true;
+                document.body.style.overflow = previousBodyOverflow;
+                openButton.focus();
+            };
+
+            openButton.addEventListener('click', () => {
+                previousBodyOverflow = document.body.style.overflow;
+                modal.hidden = false;
+                document.body.style.overflow = 'hidden';
+                modal.querySelector('.legal-modal__close')?.focus();
+            });
+
+            closeButtons.forEach((button) => button.addEventListener('click', closeModal));
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !modal.hidden) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+
+    {% include 'demo/fr/_offer_bar.html.twig' %}
+    {% include 'demo/fr/_g4s_account_prompt.html.twig' with {
         admin_url: demo_admin_url,
-        demo_side: 'front'
+        demo_side: 'front',
+        wait_for_offer_close: true
     } %}
     {% include 'tracking/_track_page_visit.html.twig' %}
 {% endblock %}
+

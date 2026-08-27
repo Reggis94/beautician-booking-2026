@@ -33,6 +33,10 @@ The demo environment should have a life of its own:
   without requiring real authentication, real payments, or real data writes.
 - The demo public frontend lives at `/demo/pro`, uses fake presentation data,
   and links back to `/demo/pro/dashboard`.
+- The complete French equivalent lives under `/fr/demo/...`; navigation within
+  that localized demo must remain on French routes.
+- The weekly demo calendar is French-only and lives at
+  `/fr/demo/pro/dashboard/calendar`.
 - Demo frontend banners are stored in the `pro-banners/demo` folder and served
   through the demo-only `/demo/pro-banners/{bannerFile}` route. Numeric banner
   folders and `/pro-banners/{proId}/{bannerFile}` remain reserved for real

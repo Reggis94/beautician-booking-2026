@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendrier — Glam4Style</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── TOKENS (matches pro-admin dashboard) ── */
+  :root {
+    --cream:       #FAF6F1;
+    --blush:       #F2E0D6;
+    --rose:        #D4998A;
+    --rose-deep:   #B8765F;
+    --charcoal:    #1C1916;
+    --warm-grey:   #6B5F58;
+    --mid:         #A89890;
+    --soft-border: rgba(180,150,135,0.22);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans:  'DM Sans', system-ui, sans-serif;
+    --sidebar-w: 220px;
+    --hour-h: 64px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--charcoal);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 36px 0 32px;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 50;
+  }
+
+  .sidebar-logo {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--cream);
+    text-decoration: none;
+    padding: 0 28px 36px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: block;
+  }
+  .sidebar-logo span { color: var(--rose); }
+
+  .sidebar-nav { flex: 1; padding: 28px 0; display: flex; flex-direction: column; gap: 2px; }
+
+  .sidebar-nav a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 28px;
+    font-size: 13px; font-weight: 400; letter-spacing: 0.03em;
+    color: rgba(255,255,255,0.45);
+    text-decoration: none;
+    transition: color 0.18s, background 0.18s;
+    position: relative;
+  }
+  .sidebar-nav a:hover { color: var(--cream); background: rgba(255,255,255,0.05); }
+  .sidebar-nav a.active { color: var(--cream); }
+  .sidebar-nav a.active::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--rose);
+  }
+
+  .nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.6; }
+  .sidebar-nav a.active .nav-icon, .sidebar-nav a:hover .nav-icon { opacity: 1; }
+
+  .sidebar-footer { padding: 24px 28px 0; border-top: 1px solid rgba(255,255,255,0.07); }
+  .mobile-menu-toggle { display: none; }
+
+  .logout-btn {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--sans); font-size: 12px; font-weight: 400;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    background: none; border: none; cursor: pointer; padding: 0;
+    text-decoration: none; transition: color 0.18s;
+  }
+  .logout-btn:hover { color: var(--rose); }
+
+  /* ── MAIN ── */
+  .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+  .main-header { padding: 40px 52px 0; border-bottom: 1px solid var(--soft-border); }
+
+  .page-eyebrow {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--rose-deep); margin-bottom: 6px;
+  }
+  .page-title {
+    font-family: var(--serif); font-size: clamp(28px, 3.5vw, 44px); font-weight: 300;
+    line-height: 1.15; padding-bottom: 24px;
+  }
+  .page-title em { font-style: italic; color: var(--rose-deep); }
+
+  /* ── TOOLBAR ── */
+  .cal-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px;
+    padding-bottom: 22px;
+  }
+  .cal-toolbar-left { display: flex; align-items: center; gap: 14px; }
+  .cal-nav-btns { display: flex; gap: 4px; }
+  .cal-icon-btn {
+    background: none; border: 1px solid var(--soft-border);
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--warm-grey);
+    transition: border-color 0.18s, color 0.18s, background 0.18s;
+  }
+  .cal-icon-btn:hover { border-color: var(--rose); color: var(--rose-deep); background: var(--blush); }
+
+  .cal-today-btn {
+    font-family: var(--sans); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--warm-grey); background: none;
+    border: 1px solid var(--soft-border); padding: 8px 16px; cursor: pointer;
+    transition: border-color 0.18s, color 0.18s;
+  }
+  .cal-today-btn:hover { border-color: var(--rose); color: var(--rose-deep); }
+
+  .cal-range-label { font-family: var(--serif); font-size: 20px; font-weight: 400; color: var(--charcoal); }
+
+  .cal-view-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--cream); background: var(--charcoal); padding: 8px 16px;
+  }
+
+  .main-content { padding: 0 52px 60px; flex: 1; }
+
+  /* ── CALENDAR GRID ── */
+  .calendar-wrap { overflow-x: auto; border: 1px solid var(--soft-border); background: var(--cream); }
+
+  .cal-days-header {
+    display: grid;
+    grid-template-columns: 56px repeat(7, minmax(118px, 1fr));
+    border-bottom: 1px solid var(--soft-border);
+    position: sticky; top: 0; background: var(--cream); z-index: 5;
+  }
+  .cal-days-header .gutter-cell { border-right: 1px solid var(--soft-border); }
+  .day-head {
+    text-align: center;
+    padding: 14px 6px 12px;
+    border-right: 1px solid var(--soft-border);
+  }
+  .day-head:last-child { border-right: none; }
+  .day-head .dow {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 6px;
+  }
+  .day-head .dnum {
+    font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--charcoal);
+    width: 34px; height: 34px; line-height: 34px; margin: 0 auto; border-radius: 50%;
+  }
+  .day-head.is-today .dow { color: var(--rose-deep); }
+  .day-head.is-today .dnum { background: var(--rose-deep); color: var(--cream); }
+
+  .cal-body {
+    display: grid;
+    grid-template-columns: 56px repeat(7, minmax(118px, 1fr));
+  }
+
+  .time-col { position: relative; border-right: 1px solid var(--soft-border); }
+  .time-col .hour-label {
+    position: absolute; right: 8px; transform: translateY(-50%);
+    font-size: 10px; color: var(--mid); letter-spacing: 0.03em; white-space: nowrap;
+  }
+
+  .day-col {
+    position: relative;
+    border-right: 1px solid var(--soft-border);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--soft-border) 0, var(--soft-border) 1px,
+      transparent 1px, transparent var(--hour-h)
+    );
+  }
+  .day-col:last-child { border-right: none; }
+  .day-col.is-today { background-color: rgba(212,153,138,0.06); }
+
+  .event {
+    position: absolute;
+    left: 3px; right: 3px;
+    border-radius: 2px;
+    padding: 5px 8px;
+    overflow: hidden;
+    background: var(--blush);
+    border-left: 3px solid var(--rose);
+    cursor: default;
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .event:hover { box-shadow: 0 3px 10px rgba(28,25,22,0.14); transform: translateY(-1px); z-index: 3; }
+
+  .event .ev-client {
+    font-size: 12px; font-weight: 500; color: var(--charcoal);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .event .ev-time {
+    font-size: 11px; color: var(--warm-grey); margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* category colour cues */
+  .event.cat-coupe    { border-left-color: var(--rose); }
+  .event.cat-couleur  { border-left-color: var(--rose-deep); background: #F0DCCF; }
+  .event.cat-rapide   { border-left-color: var(--mid); background: #F1EAE4; }
+  .event.cat-premium  { border-left-color: var(--charcoal); background: #EDE3DA; }
+
+  .event.is-tiny .ev-time { display: none; }
+  .event.is-tiny .ev-client { font-size: 11px; }
+
+  /* legend */
+  .cal-legend {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    padding-top: 18px; font-size: 11px; color: var(--warm-grey);
+  }
+  .cal-legend .legend-item { display: flex; align-items: center; gap: 7px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-swatch.cat-coupe { background: var(--rose); }
+  .legend-swatch.cat-couleur { background: var(--rose-deep); }
+  .legend-swatch.cat-rapide { background: var(--mid); }
+  .legend-swatch.cat-premium { background: var(--charcoal); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    :root { --sidebar-w: 0px; --hour-h: 56px; }
+    body { display: block; padding-top: 58px; }
+
+    .sidebar {
+      bottom: auto; height: auto; width: 100%; min-height: auto;
+      flex-direction: column; position: fixed; top: 0; left: 0; right: 0;
+      padding: 0; z-index: 100; box-shadow: 0 8px 24px rgba(28,25,22,0.12);
+    }
+    .sidebar-header { align-items: center; display: flex; min-height: 58px; width: 100%; }
+    .mobile-menu-toggle {
+      align-items: center; background: none; border: 0; border-right: 1px solid rgba(255,255,255,0.07);
+      color: var(--cream); cursor: pointer; display: flex; height: 58px; justify-content: center;
+      padding: 0; width: 58px;
+    }
+    .mobile-menu-toggle svg { height: 22px; width: 22px; }
+    .sidebar-logo { border-bottom: none; flex: 1; padding: 16px 20px; }
+    .sidebar-nav, .sidebar-footer { display: none; width: 100%; }
+    .sidebar.is-open .sidebar-nav, .sidebar.is-open .sidebar-footer { display: flex; }
+    .sidebar-nav { border-top: 1px solid rgba(255,255,255,0.07); flex: none; flex-direction: column; gap: 0; padding: 8px 0; }
+    .sidebar-nav a { padding: 14px 20px; white-space: nowrap; }
+    .sidebar-footer { border-top: 1px solid rgba(255,255,255,0.07); padding: 16px 20px 18px; }
+
+    .main { margin-left: 0; }
+    .main-header { padding: 24px 18px 0; }
+    .main-content { padding: 0 18px 40px; }
+    .page-title { padding-bottom: 18px; }
+    .cal-toolbar { padding-bottom: 16px; }
+    .cal-range-label { font-size: 16px; }
+    .cal-days-header, .cal-body { grid-template-columns: 44px repeat(7, 104px); }
+    .day-head .dnum { width: 28px; height: 28px; line-height: 28px; font-size: 18px; }
+    .event .ev-client { font-size: 11px; }
+    .event .ev-time { font-size: 10px; }
+    .cal-legend { padding-top: 14px; gap: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" role="navigation" aria-label="Navigation principale">
+  <div class="sidebar-header">
+    <button class="mobile-menu-toggle" type="button" aria-label="Ouvrir la navigation" aria-controls="dashboardNav" aria-expanded="false" data-mobile-menu-toggle>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+    </button>
+    <a href="{{ dashboardUrl }}" class="sidebar-logo">Glam<span>4Style</span></a>
+  </div>
+
+  <nav class="sidebar-nav" id="dashboardNav">
+    <a href="{{ calendarUrl }}" class="active" aria-current="page">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="2.5" width="14" height="12" rx="1"/><path d="M1 6h14M5 1v3M11 1v3"/>
+      </svg>
+      Calendrier
+    </a>
+    <a href="{{ upcomingUrl }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="3" width="14" height="12" rx="1"/><path d="M5 1v4M11 1v4M1 7h14"/>
+      </svg>
+      À venir
+    </a>
+    <a href="{{ pastUrl }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="6.5"/><path d="M8 5v3.5l2.5 1.5"/>
+      </svg>
+      Passés
+    </a>
+    <a href="{{ servicesUrl }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M2 4h12M2 8h8M2 12h10"/>
+      </svg>
+      Services
+    </a>
+    <a href="{{ openingHoursUrl }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="6.5"/><path d="M8 3v5h4"/>
+      </svg>
+      Horaires d'ouverture
+    </a>
+    <a href="{{ frontUrl }}">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <path d="M2 8.5L8 3l6 5.5"/><path d="M4 7.5V14h8V7.5"/>
+      </svg>
+      Voir mon site
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="#" class="logout-btn" data-demo-logout>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
+      </svg>
+      Se déconnecter
+    </a>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="main-header">
+    <p class="page-eyebrow">Cette semaine</p>
+    <h1 class="page-title">Votre <em>calendrier</em></h1>
+
+    <div class="cal-toolbar">
+      <div class="cal-toolbar-left">
+        <div class="cal-nav-btns">
+          <button class="cal-icon-btn" type="button" aria-label="Semaine précédente" data-calendar-previous>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3L5 8l5 5"/></svg>
+          </button>
+          <button class="cal-icon-btn" type="button" aria-label="Semaine suivante" data-calendar-next>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3l5 5-5 5"/></svg>
+          </button>
+        </div>
+        <button class="cal-today-btn" type="button" data-calendar-today>Aujourd’hui</button>
+        <span class="cal-range-label" data-calendar-range></span>
+      </div>
+      <span class="cal-view-label">Semaine</span>
+    </div>
+  </header>
+
+  <div class="main-content">
+    <div class="calendar-wrap">
+      <div class="cal-days-header" id="calDaysHeader"></div>
+      <div class="cal-body" id="calBody"></div>
+    </div>
+
+    <div class="cal-legend">
+      <span class="legend-item"><span class="legend-swatch cat-coupe"></span>Coupe &amp; brushing</span>
+      <span class="legend-item"><span class="legend-swatch cat-couleur"></span>Coloration &amp; balayage</span>
+      <span class="legend-item"><span class="legend-swatch cat-rapide"></span>Manucure &amp; épilation</span>
+      <span class="legend-item"><span class="legend-swatch cat-premium"></span>Soin, cils &amp; maquillage</span>
+    </div>
+  </div>
+</main>
+
+<script>
+  /* ── Mobile menu (same behaviour as the dashboard) ── */
+  const sidebar = document.querySelector('.sidebar');
+  const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
+  const mainHeader = document.querySelector('.main-header');
+  const demoLogout = document.querySelector('[data-demo-logout]');
+
+  if (sidebar && mobileMenuToggle) {
+    mobileMenuToggle.addEventListener('click', () => {
+      const isOpen = sidebar.classList.toggle('is-open');
+      mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+      mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Fermer la navigation' : 'Ouvrir la navigation');
+    });
+    document.addEventListener('click', (event) => {
+      if (sidebar.classList.contains('is-open') && !sidebar.contains(event.target) && (!mainHeader || !mainHeader.contains(event.target))) {
+        sidebar.classList.remove('is-open');
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+        mobileMenuToggle.setAttribute('aria-label', 'Ouvrir la navigation');
+      }
+    });
+  }
+  if (demoLogout) demoLogout.addEventListener('click', e => e.preventDefault());
+
+  /* ── Calendar data ── */
+  const START_HOUR = 9;   // 09:00
+  const END_HOUR   = 18;  // 18:00
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const currentMonday = new Date(today);
+  currentMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  let visibleMonday = new Date(currentMonday);
+
+  const buildDays = () => Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(visibleMonday);
+    date.setDate(visibleMonday.getDate() + index);
+
+    return {
+      date,
+      dow: new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(date),
+      num: date.getDate(),
+    };
+  });
+
+  const isToday = (date) => date.getTime() === today.getTime();
+
+  const renderRange = (days) => {
+    const first = days[0].date;
+    const last = days[6].date;
+    const firstLabel = new Intl.DateTimeFormat('fr-FR', {
+      day: 'numeric',
+      month: first.getMonth() === last.getMonth() ? undefined : 'long',
+    }).format(first);
+    const lastLabel = new Intl.DateTimeFormat('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(last);
+
+    document.querySelector('[data-calendar-range]').textContent = `${firstLabel} – ${lastLabel}`;
+  };
+
+  function cat(service) {
+    if (/Coloration|Balayage/.test(service)) return 'cat-couleur';
+    if (/Manucure|Épilation/.test(service)) return 'cat-rapide';
+    if (/Soin|Extension|Maquillage/.test(service)) return 'cat-premium';
+    return 'cat-coupe';
+  }
+
+  // events[dayIndex] = [{ start:'09:00', duration: minutes, client, service }]
+  // Every booking is between 60 and 150 minutes (1h–2h30). Small gaps are left
+  // deliberately open around lunch (roughly midday) for realism.
+  const events = [
+    [ // lundi 10
+      { start:'09:00', duration:75,  client:'Camille', service:'Coupe & brushing' },
+      { start:'10:15', duration:105, client:'Amina', service:'Coloration' },
+      // pause déjeuner 12:00–13:00
+      { start:'13:00', duration:90,  client:'Sofia', service:'Balayage' },
+      { start:'14:30', duration:120, client:'Rania', service:'Extension de cils' },
+      { start:'16:30', duration:90,  client:'Emma', service:'Coupe & brushing' },
+    ],
+    [ // mardi 11
+      { start:'09:00', duration:90, client:'Jade', service:'Coloration' },
+      { start:'10:30', duration:90, client:'Lina', service:'Extension de cils' },
+      // pause déjeuner 12:00–12:30
+      { start:'12:30', duration:90, client:'Sabrina', service:'Soin du visage' },
+      { start:'14:00', duration:90, client:'Inès', service:'Extension de cils' },
+      { start:'15:30', duration:90, client:'Meriem', service:'Coupe & brushing' },
+      { start:'17:00', duration:60, client:'Assia', service:'Brushing' },
+    ],
+    [ // mercredi 12
+      { start:'09:00', duration:90,  client:'Léa', service:'Coloration' },
+      { start:'10:30', duration:90,  client:'Nadia', service:'Coloration' },
+      // pause déjeuner 12:00–13:00
+      { start:'13:00', duration:90,  client:'Lila', service:'Balayage' },
+      { start:'14:30', duration:120, client:'Malak', service:'Extension de cils' },
+      { start:'16:30', duration:90,  client:'Manon', service:'Maquillage' },
+    ],
+    [ // jeudi 13
+      { start:'09:00', duration:90,  client:'Dounia', service:'Balayage' },
+      { start:'10:30', duration:90,  client:'Imane', service:'Soin du visage' },
+      // pause déjeuner 12:00–12:45
+      { start:'12:45', duration:90,  client:'Zineb', service:'Coloration' },
+      { start:'14:15', duration:90,  client:'Sarah', service:'Extension de cils' },
+      { start:'15:45', duration:135, client:'Chloé', service:'Maquillage' },
+    ],
+    [ // vendredi 14 (aujourd'hui)
+      { start:'09:00', duration:90,  client:'Naïma', service:'Coupe & brushing' },
+      { start:'10:30', duration:90,  client:'Yasmine', service:'Extension de cils' },
+      // pause déjeuner 12:00–13:00
+      { start:'13:00', duration:90,  client:'Hind', service:'Coloration' },
+      { start:'14:30', duration:90,  client:'Salma', service:'Balayage' },
+      { start:'16:00', duration:120, client:'Karima', service:'Soin du visage' },
+    ],
+    [ // samedi 15
+      { start:'09:00', duration:90,  client:'Yasmina', service:'Coloration' },
+      { start:'10:30', duration:90,  client:'Khadija', service:'Balayage' },
+      // pause déjeuner 12:00–12:30
+      { start:'12:30', duration:90,  client:'Sana', service:'Extension de cils' },
+      { start:'14:00', duration:90,  client:'Zoé', service:'Soin du visage' },
+      { start:'15:30', duration:150, client:'Rym', service:'Balayage' },
+    ],
+    [ // dimanche 16
+      { start:'09:00', duration:90,  client:'Nour', service:'Coupe & brushing' },
+      { start:'10:30', duration:90,  client:'Amel', service:'Coloration' },
+      // pause déjeuner 12:00–13:00
+      { start:'13:00', duration:90,  client:'Farah', service:'Balayage' },
+      { start:'14:30', duration:90,  client:'Soraya', service:'Extension de cils' },
+      { start:'16:00', duration:120, client:'Nesrine', service:'Maquillage' },
+    ],
+  ];
+
+  function toMinutes(hhmm) {
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+  }
+  function fmtEnd(startHHMM, duration) {
+    const startMin = toMinutes(startHHMM);
+    const endMin = startMin + duration;
+    const h = String(Math.floor(endMin / 60)).padStart(2, '0');
+    const m = String(endMin % 60).padStart(2, '0');
+    return h + ':' + m;
+  }
+
+  function getHourPx() {
+    return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'));
+  }
+
+  function render() {
+    const days = buildDays();
+    const hourPx = getHourPx();
+    const totalHours = END_HOUR - START_HOUR;
+    const bodyHeight = totalHours * hourPx;
+
+    /* header row */
+    const header = document.getElementById('calDaysHeader');
+    header.innerHTML = '<div class="gutter-cell"></div>' + days.map((d, i) =>
+      `<div class="day-head${isToday(d.date) ? ' is-today' : ''}">
+         <div class="dow">${d.dow}</div>
+         <div class="dnum">${d.num}</div>
+       </div>`
+    ).join('');
+
+    /* body row */
+    const body = document.getElementById('calBody');
+    let html = `<div class="time-col" style="height:${bodyHeight}px">`;
+    for (let h = START_HOUR; h <= END_HOUR; h++) {
+      const top = (h - START_HOUR) * hourPx;
+      html += `<span class="hour-label" style="top:${top}px">${String(h).padStart(2,'0')}:00</span>`;
+    }
+    html += '</div>';
+
+    days.forEach((d, i) => {
+      html += `<div class="day-col${isToday(d.date) ? ' is-today' : ''}" style="height:${bodyHeight}px">`;
+      (events[i] || []).forEach(ev => {
+        const startMin = toMinutes(ev.start) - START_HOUR * 60;
+        const top = (startMin / 60) * hourPx;
+        const h = Math.max((ev.duration / 60) * hourPx - 2, 16);
+        const isTiny = h < 30;
+        html += `<div class="event ${cat(ev.service)}${isTiny ? ' is-tiny' : ''}"
+                       style="top:${top}px;height:${h}px;"
+                       title="${ev.client} — ${ev.service} — ${ev.start}–${fmtEnd(ev.start, ev.duration)}">
+                    <div class="ev-client">${ev.client}</div>
+                    <div class="ev-time">${ev.start}–${fmtEnd(ev.start, ev.duration)}</div>
+                  </div>`;
+      });
+      html += '</div>';
+    });
+    body.innerHTML = html;
+    renderRange(days);
+  }
+
+  render();
+  let viewportWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === viewportWidth) {
+      return;
+    }
+
+    viewportWidth = window.innerWidth;
+    render();
+  });
+
+  document.querySelector('[data-calendar-previous]').addEventListener('click', () => {
+    visibleMonday.setDate(visibleMonday.getDate() - 7);
+    render();
+  });
+  document.querySelector('[data-calendar-next]').addEventListener('click', () => {
+    visibleMonday.setDate(visibleMonday.getDate() + 7);
+    render();
+  });
+  document.querySelector('[data-calendar-today]').addEventListener('click', () => {
+    visibleMonday = new Date(currentMonday);
+    render();
+  });
+</script>
+{% include 'demo/fr/_offer_bar.html.twig' %}
+{% include 'demo/fr/_g4s_account_prompt.html.twig' with {
+  admin_url: dashboardUrl,
+  demo_side: 'admin',
+  front_url: frontUrl
+} %}
+{% include 'tracking/_track_page_visit.html.twig' %}
+</body>
+</html>

@@ -26,6 +26,18 @@ final class ProAdminDashboardController extends AbstractController
         return $this->renderDashboard('upcoming', $request);
     }
 
+    #[Route('/fr/demo/pro/dashboard', name: 'demo_pro_admin_dashboard_fr', methods: ['GET'], priority: 1)]
+    public function dashboardFr(Request $request): Response
+    {
+        return $this->renderDashboardFr('upcoming', $request);
+    }
+
+    #[Route('/fr/demo/pro/dashboard/calendrier', name: 'demo_pro_admin_calendar_fr', methods: ['GET'])]
+    public function calendarFr(Request $request): Response
+    {
+        return $this->render('pro_admin/fr/calendar.html.twig', $this->getDemoUrlsFr($request));
+    }
+
     /**
      * ProAdmin customer demo upcoming appointments page.
      *
@@ -40,6 +52,12 @@ final class ProAdminDashboardController extends AbstractController
     public function upcomingAppointments(Request $request): Response
     {
         return $this->renderDashboard('upcoming', $request);
+    }
+
+    #[Route('/fr/demo/pro/dashboard/upcoming', name: 'demo_pro_admin_appointments_upcoming_fr', methods: ['GET'])]
+    public function upcomingAppointmentsFr(Request $request): Response
+    {
+        return $this->renderDashboardFr('upcoming', $request);
     }
 
     /**
@@ -96,6 +114,12 @@ final class ProAdminDashboardController extends AbstractController
         return $this->renderDashboard('past', $request);
     }
 
+    #[Route('/fr/demo/pro/dashboard/past', name: 'demo_pro_admin_appointments_past_fr', methods: ['GET'])]
+    public function pastAppointmentsFr(Request $request): Response
+    {
+        return $this->renderDashboardFr('past', $request);
+    }
+
     /**
      * ProAdmin customer demo services page.
      *
@@ -109,6 +133,12 @@ final class ProAdminDashboardController extends AbstractController
     public function services(Request $request): Response
     {
         return $this->renderDashboard('services', $request);
+    }
+
+    #[Route('/fr/demo/pro/dashboard/services', name: 'demo_pro_admin_services_index_fr', methods: ['GET'])]
+    public function servicesFr(Request $request): Response
+    {
+        return $this->renderDashboardFr('services', $request);
     }
 
     /**
@@ -141,6 +171,25 @@ final class ProAdminDashboardController extends AbstractController
         ] + $demoUrls);
     }
 
+    #[Route('/fr/demo/pro/dashboard/opening-hours', name: 'demo_pro_admin_opening_hours_fr', methods: ['GET'])]
+    public function openingHoursFr(Request $request): Response
+    {
+        $demoUrls = $this->getDemoUrlsFr($request);
+        $currentMonth = $this->resolveCurrentMonth($request->query->get('month'));
+
+        return $this->render('pro_admin/fr/opening_hours.html.twig', [
+            'currentMonth' => $currentMonth,
+            'daysInMonth' => (int) $currentMonth->format('t'),
+            'firstWeekdayOffset' => ((int) $currentMonth->format('N')) - 1,
+            'nextMonth' => $currentMonth->modify('+1 month'),
+            'openingHours' => $this->fakeOpeningHours($currentMonth),
+            'openingHoursPath' => $demoUrls['openingHoursUrl'],
+            'prevMonth' => $currentMonth->modify('-1 month'),
+            'saveOpeningHoursUrlTemplate' => '/fr/demo/pro/dashboard/opening-hours/__date__',
+            'today' => (new DateTimeImmutable())->format('Y-m-d'),
+        ] + $demoUrls);
+    }
+
     private function renderDashboard(string $activeTab, Request $request): Response
     {
         return $this->render('pro_admin/dashboard.html.twig', [
@@ -149,6 +198,16 @@ final class ProAdminDashboardController extends AbstractController
             'services' => $this->fakeServices(),
             'upcomingAppointments' => $this->fakeUpcomingAppointments(),
         ] + $this->getDemoUrls($request));
+    }
+
+    private function renderDashboardFr(string $activeTab, Request $request): Response
+    {
+        return $this->render('pro_admin/fr/dashboard.html.twig', [
+            'activeTab' => $activeTab,
+            'pastAppointments' => $this->fakePastAppointmentsFr(),
+            'services' => $this->fakeServicesFr(),
+            'upcomingAppointments' => $this->fakeUpcomingAppointmentsFr(),
+        ] + $this->getDemoUrlsFr($request));
     }
 
     /**
@@ -177,6 +236,26 @@ final class ProAdminDashboardController extends AbstractController
             'pastUrl' => $this->generateUrl('demo_pro_admin_appointments_past', $adminParameters),
             'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index', $adminParameters),
             'upcomingUrl' => $this->generateUrl('demo_pro_admin_appointments_upcoming', $adminParameters),
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function getDemoUrlsFr(Request $request): array
+    {
+        $username = $request->query->getString('username');
+        $username = preg_match('/^[a-zA-Z0-9_-]+$/', $username) === 1 ? $username : '';
+        $adminParameters = $username === '' ? [] : ['username' => $username];
+        $frontRoute = $username === '' ? 'demo_front_pro_home_fr' : 'demo_front_pro_home_specific_user_fr';
+        $frontParameters = $username === '' ? [] : ['username' => $username];
+
+        return [
+            'calendarUrl' => $this->generateUrl('demo_pro_admin_calendar_fr', $adminParameters),
+            'dashboardUrl' => $this->generateUrl('demo_pro_admin_dashboard_fr', $adminParameters),
+            'frontUrl' => $this->generateUrl($frontRoute, $frontParameters),
+            'openingHoursUrl' => $this->generateUrl('demo_pro_admin_opening_hours_fr', $adminParameters),
+            'pastUrl' => $this->generateUrl('demo_pro_admin_appointments_past_fr', $adminParameters),
+            'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index_fr', $adminParameters),
+            'upcomingUrl' => $this->generateUrl('demo_pro_admin_appointments_upcoming_fr', $adminParameters),
         ];
     }
 
@@ -336,6 +415,82 @@ final class ProAdminDashboardController extends AbstractController
                 'durationMinutes' => 75,
                 'id' => 304,
                 'name' => 'Makeup session',
+                'price' => '120',
+            ],
+        ];
+    }
+
+    /**
+     * @return list<array{id: int, clientName: string, clientPhone: string, serviceName: string, date: DateTimeImmutable, durationMinutes: int}>
+     */
+    private function fakeUpcomingAppointmentsFr(): array
+    {
+        return $this->translateAppointments($this->fakeUpcomingAppointments());
+    }
+
+    /**
+     * @return list<array{id: int, clientName: string, clientPhone: string, serviceName: string, date: DateTimeImmutable, durationMinutes: int}>
+     */
+    private function fakePastAppointmentsFr(): array
+    {
+        return $this->translateAppointments($this->fakePastAppointments());
+    }
+
+    /**
+     * @param list<array{id: int, clientName: string, clientPhone: string, serviceName: string, date: DateTimeImmutable, durationMinutes: int}> $appointments
+     * @return list<array{id: int, clientName: string, clientPhone: string, serviceName: string, date: DateTimeImmutable, durationMinutes: int}>
+     */
+    private function translateAppointments(array $appointments): array
+    {
+        $serviceNames = [
+            'Bridal trial' => 'Essai maquillage de mariée',
+            'Brow shaping' => 'Restructuration des sourcils',
+            'Classic manicure' => 'Manucure classique',
+            'Hair gloss and styling' => 'Gloss et coiffage',
+            'Lash lift' => 'Rehaussement de cils',
+            'Makeup session' => 'Séance de maquillage',
+            'Signature facial' => 'Soin du visage signature',
+        ];
+
+        return array_map(static function (array $appointment) use ($serviceNames): array {
+            $appointment['serviceName'] = $serviceNames[$appointment['serviceName']] ?? $appointment['serviceName'];
+
+            return $appointment;
+        }, $appointments);
+    }
+
+    /**
+     * @return list<array{id: int, name: string, description: string, durationMinutes: int, price: string}>
+     */
+    private function fakeServicesFr(): array
+    {
+        return [
+            [
+                'description' => 'Un soin sur mesure avec nettoyage doux, exfoliation et finition hydratante pour un teint lumineux.',
+                'durationMinutes' => 60,
+                'id' => 301,
+                'name' => 'Soin du visage signature',
+                'price' => '95',
+            ],
+            [
+                'description' => 'Une mise en forme précise pour définir les sourcils tout en conservant un résultat naturel et soigné.',
+                'durationMinutes' => 45,
+                'id' => 302,
+                'name' => 'Restructuration des sourcils',
+                'price' => '42',
+            ],
+            [
+                'description' => 'Un soin gloss et un coiffage pour lisser les cheveux, renforcer leur brillance et parfaire le résultat.',
+                'durationMinutes' => 90,
+                'id' => 303,
+                'name' => 'Gloss et coiffage',
+                'price' => '135',
+            ],
+            [
+                'description' => 'Un maquillage personnalisé pour une finition élégante, adaptée à la cliente et à l’occasion.',
+                'durationMinutes' => 75,
+                'id' => 304,
+                'name' => 'Séance de maquillage',
                 'price' => '120',
             ],
         ];
