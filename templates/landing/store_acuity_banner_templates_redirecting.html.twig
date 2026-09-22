@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redirecting to checkout - Glam4Style</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#FAF6F1;--blush:#F2E0D6;--rose:#D4998A;--rose-deep:#B8765F;
+  --charcoal:#1C1916;--warm-grey:#6B5F58;--mid:#A89890;
+  --soft-border:rgba(180,150,135,0.22);
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+body{background:var(--cream);color:var(--charcoal);font-family:var(--sans);font-weight:300;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px}
+.redirecting{max-width:360px}
+.spinner{width:32px;height:32px;border:2px solid var(--soft-border);border-top-color:var(--rose-deep);border-radius:50%;margin:0 auto 20px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+p{font-size:14px;color:var(--warm-grey);line-height:1.6}
+a{color:var(--rose-deep)}
+</style>
+</head>
+<body>
+<div class="redirecting">
+  <div class="spinner"></div>
+  <p>Redirecting you to secure checkout&hellip;<br>
+  If nothing happens, <a href="{{ stripe_url }}">click here</a>.</p>
+</div>
+
+{% include 'tracking/_track_page_visit.html.twig' %}
+
+<script>
+  window.addEventListener('load', () => {
+    window.location.replace({{ stripe_url|json_encode|raw }});
+  }, { once: true });
+</script>
+</body>
+</html>

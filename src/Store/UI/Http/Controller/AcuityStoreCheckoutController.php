@@ -2,10 +2,12 @@
 
 namespace App\Store\UI\Http\Controller;
 
+use App\Store\Application\Dao\BannerPackDaoInterface;
+use App\Store\Application\Exception\BannerDirectoryNotConfiguredException;
 use Stripe\StripeClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -16,12 +18,23 @@ final class AcuityStoreCheckoutController extends AbstractController
 
     public function __construct(
         private readonly StripeClient $stripeClient,
+        private readonly BannerPackDaoInterface $bannerPackDao,
     ) {
     }
 
-    public function __invoke(Request $request): RedirectResponse
+    public function __invoke(Request $request): Response
     {
         $templateId = (string) $request->request->get('template_id');
+
+        try {
+            $templateExists = $this->bannerPackDao->exists($templateId);
+        } catch (BannerDirectoryNotConfiguredException $exception) {
+            throw $this->createNotFoundException($exception->getMessage());
+        }
+
+        if (!$templateExists) {
+            throw $this->createNotFoundException('Template not found');
+        }
 
         $session = $this->stripeClient->checkout->sessions->create([
             'mode' => 'payment',
@@ -47,6 +60,8 @@ final class AcuityStoreCheckoutController extends AbstractController
             ),
         ]);
 
-        return new RedirectResponse($session->url, RedirectResponse::HTTP_SEE_OTHER);
+        return $this->render('landing/store_acuity_banner_templates_redirecting.html.twig', [
+            'stripe_url' => $session->url,
+        ]);
     }
 }
