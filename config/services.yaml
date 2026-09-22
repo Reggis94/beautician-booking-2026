@@ -8,8 +8,7 @@ parameters:
     tracking.visitor_id_length: 20
     tracking.demo_and_marketing_max_age: 15552000
 
-    store.acuity_banner_packs_directory: '../pro-banners'
-    store.acuity_banner_packs_excluded_folders: ['demo']
+    store.acuity_banner_packs_directory: '../pro-banners/store'
 
 services:
     # default configuration for services in *this* file

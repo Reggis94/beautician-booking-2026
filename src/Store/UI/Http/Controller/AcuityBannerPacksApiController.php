@@ -3,7 +3,6 @@
 namespace App\Store\UI\Http\Controller;
 
 use App\Store\Application\Dao\BannerPackDaoInterface;
-use App\Store\Application\Dto\BannerPackDto;
 use App\Store\Application\Exception\BannerDirectoryNotConfiguredException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -29,21 +28,23 @@ final class AcuityBannerPacksApiController
             );
         }
 
-        return new JsonResponse([
-            'packs' => array_map(
-                fn (BannerPackDto $pack): array => [
-                    'id' => $pack->id,
-                    'name' => sprintf('Template %s', $pack->id),
-                    'banners' => array_map(
-                        fn (string $bannerFile): string => $this->urlGenerator->generate(
-                            'store_acuity_banner_file',
-                            ['packId' => $pack->id, 'bannerFile' => $bannerFile]
-                        ),
-                        $pack->banners
-                    ),
-                ],
-                $packs
-            ),
-        ]);
+        $packsData = [];
+        foreach ($packs as $pack) {
+            $bannerUrls = [];
+            foreach ($pack->banners as $bannerFile) {
+                $bannerUrls[] = $this->urlGenerator->generate(
+                    'store_acuity_banner_file',
+                    ['packId' => $pack->id, 'bannerFile' => $bannerFile]
+                );
+            }
+
+            $packsData[] = [
+                'id' => $pack->id,
+                'name' => sprintf('Template %s', $pack->id),
+                'banners' => $bannerUrls,
+            ];
+        }
+
+        return new JsonResponse(['packs' => $packsData]);
     }
 }

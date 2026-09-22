@@ -15,9 +15,7 @@ final class BannerPackDao implements BannerPackDaoInterface
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
         #[Autowire('%store.acuity_banner_packs_directory%')]
-        private readonly string $bannerPacksDirectory,
-        #[Autowire('%store.acuity_banner_packs_excluded_folders%')]
-        private readonly array $excludedFolders,
+        private readonly string $bannerPacksDirectory
     ) {
     }
 
@@ -31,7 +29,7 @@ final class BannerPackDao implements BannerPackDaoInterface
 
         $packs = [];
         foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..' || in_array($entry, $this->excludedFolders, true)) {
+            if ($entry === '.' || $entry === '..') {
                 continue;
             }
 
@@ -48,7 +46,9 @@ final class BannerPackDao implements BannerPackDaoInterface
             $packs[] = new BannerPackDto($entry, $banners);
         }
 
-        usort($packs, static fn (BannerPackDto $first, BannerPackDto $second): int => strnatcmp($first->id, $second->id));
+        usort($packs, static function (BannerPackDto $first, BannerPackDto $second): int {
+            return strnatcmp($first->id, $second->id);
+        });
 
         return $packs;
     }
@@ -65,17 +65,23 @@ final class BannerPackDao implements BannerPackDaoInterface
     {
         $entries = scandir($folderPath) ?: [];
 
-        $banners = array_values(array_filter(
-            $entries,
-            static fn (string $filename): bool => is_file($folderPath . DIRECTORY_SEPARATOR . $filename)
+        $banners = [];
+        foreach ($entries as $filename) {
+            $isImageFile = is_file($folderPath . DIRECTORY_SEPARATOR . $filename)
                 && in_array(
                     strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
                     self::IMAGE_EXTENSIONS,
                     true
-                )
-        ));
+                );
 
-        usort($banners, static fn (string $first, string $second): int => strnatcmp($first, $second));
+            if ($isImageFile) {
+                $banners[] = $filename;
+            }
+        }
+
+        usort($banners, static function (string $first, string $second): int {
+            return strnatcmp($first, $second);
+        });
 
         return $banners;
     }
