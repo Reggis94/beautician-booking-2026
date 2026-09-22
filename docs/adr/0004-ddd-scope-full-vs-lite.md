@@ -8,7 +8,7 @@ Use full DDD only where invariants are heavy (entities, repositories, explicit d
 
 Current scope:
 - Full DDD: `Availability`
-- DDD-lite: `ProfilePro`, `Services`, `Booking`
+- DDD-lite: `ProfilePro`, `Services`, `Booking`, `Store`
 
 Service category behavior is part of the `Services` DDD-lite domain; see ADR 0012.
 

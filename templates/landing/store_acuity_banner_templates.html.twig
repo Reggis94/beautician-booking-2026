@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acuity Banner Templates - Glam4Style</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --cream:#FAF6F1;--blush:#F2E0D6;--rose:#D4998A;--rose-deep:#B8765F;
+  --charcoal:#1C1916;--warm-grey:#6B5F58;--mid:#A89890;
+  --soft-border:rgba(180,150,135,0.22);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+body{background:var(--cream);color:var(--charcoal);font-family:var(--sans);font-weight:300;line-height:1.6;overflow-x:hidden}
+
+.page{max-width:1080px;margin:0 auto}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--soft-border);background:rgba(250,246,241,.92);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--charcoal);letter-spacing:.04em;text-decoration:none}
+.logo span{color:var(--rose-deep)}
+.nav-cta{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--cream);background:var(--rose-deep);border:none;padding:10px 20px;cursor:pointer;text-decoration:none;transition:background .18s;white-space:nowrap}
+.nav-cta:hover{background:#A86550}
+
+.hero{padding:52px 28px 36px;text-align:center;max-width:720px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--blush);border:1px solid var(--soft-border);padding:7px 16px;margin-bottom:24px;font-size:12px;color:var(--warm-grey);letter-spacing:.04em}
+.hero-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--rose-deep);flex-shrink:0}
+.hero h1{font-family:var(--serif);font-size:clamp(32px,6vw,52px);font-weight:300;line-height:1.12;margin-bottom:16px}
+.hero h1 em{font-style:italic;color:var(--rose-deep)}
+.hero-sub{font-size:15px;color:var(--warm-grey);max-width:520px;margin:0 auto;line-height:1.7}
+
+.section-eyebrow{font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--rose-deep);margin-bottom:14px;text-align:center}
+
+.catalog{padding:12px 28px 60px}
+.status-message{text-align:center;color:var(--warm-grey);font-size:14px;padding:40px 20px}
+.status-message.error{color:var(--rose-deep)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:28px}
+
+.card{background:#fff;border:1px solid var(--soft-border);display:flex;flex-direction:column;min-width:0;max-width:100%;transition:transform .18s,box-shadow .18s}
+.card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(28,25,22,.08)}
+
+.collage{position:relative;background:var(--blush);display:flex;column-gap:3px;overflow:hidden}
+.collage-col{display:flex;flex-direction:column;flex:1;gap:0}
+.collage-col img{width:100%;aspect-ratio:2/1;object-fit:cover;display:block;background:var(--blush)}
+
+.card-body{padding:20px 20px 22px;display:flex;flex-direction:column;gap:14px;flex:1}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.card-title{font-family:var(--serif);font-size:22px;font-weight:400}
+.card-price{font-family:var(--serif);font-size:20px;color:var(--rose-deep);white-space:nowrap}
+.card-price span{font-size:11px;color:var(--mid);font-family:var(--sans)}
+
+.gallery{display:flex;flex-wrap:wrap;gap:6px;max-width:100%;min-width:0;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.gallery img{width:110px;height:55px;max-width:100%;flex:0 0 auto;object-fit:contain;border:1px solid var(--soft-border);background:var(--blush)}
+
+.card-actions{display:flex;gap:10px;margin-top:auto;flex-wrap:wrap}
+.btn-primary{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);background:var(--charcoal);border:none;padding:12px 18px;cursor:pointer;text-decoration:none;transition:background .18s;flex:1;text-align:center}
+.btn-primary:hover{background:var(--rose-deep)}
+.btn-ghost{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--warm-grey);background:none;border:1px solid var(--soft-border);padding:11px 16px;cursor:pointer;text-decoration:none;transition:border-color .18s,color .18s;flex:1;text-align:center}
+.btn-ghost:hover{border-color:var(--rose);color:var(--rose-deep)}
+
+footer{padding:22px 24px;border-top:1px solid var(--soft-border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mid);text-align:center}
+
+@media (max-width: 480px) {
+  nav{padding:16px 20px;flex-wrap:wrap;gap:10px}
+  .logo{font-size:18px}
+  .nav-cta{font-size:10px;padding:9px 14px}
+  .hero,.catalog{padding-left:20px;padding-right:20px}
+  .grid{grid-template-columns:1fr}
+  .collage-col:nth-child(2){display:none}
+  .gallery{overflow-x:visible}
+  .gallery img{width:calc(50% - 3px);height:auto;aspect-ratio:2/1}
+  .card-head{flex-wrap:wrap}
+  .card-actions{flex-direction:column}
+  footer{align-items:center;flex-direction:column;gap:6px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav>
+  <div class="logo">Glam<span>4Style</span></div>
+  <a class="nav-cta" href="{{ path('demo_front_pro_home') }}">Try the demo</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge"><span class="hero-badge-dot"></span>Acuity Scheduling banner templates</div>
+  <h1>A template your clients will <em>love to book from</em></h1>
+  <p class="hero-sub">Every pack below is a ready-made Acuity banner set, already wired for booking. Pick the one that fits your brand, and we'll get your clients booking in no time.</p>
+</div>
+
+<div class="catalog">
+  <div class="section-eyebrow">The collection</div>
+  <div id="catalog-status" class="status-message">Loading templates&hellip;</div>
+  <div id="catalog-grid" class="grid" hidden></div>
+</div>
+
+<footer>
+  <div class="logo" style="font-size:16px">Glam<span>4Style</span></div>
+  <span>Built for beauty professionals.</span>
+  <span>contact@glam4style.com</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var apiUrl = {{ banner_packs_api_url|json_encode|raw }};
+  var demoUrl = {{ path('demo_front_pro_home')|json_encode|raw }};
+  var statusEl = document.getElementById('catalog-status');
+  var gridEl = document.getElementById('catalog-grid');
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+    });
+  }
+
+  function renderCard(pack) {
+    var banners = pack.banners || [];
+    function collageColumn(columnBanners) {
+      var imgs = columnBanners.map(function (url) {
+        return '<img src="' + escapeHtml(url) + '" alt="" loading="lazy">';
+      }).join('');
+      return imgs ? '<div class="collage-col">' + imgs + '</div>' : '';
+    }
+    var collageImgs = collageColumn(banners.slice(0, 2)) + collageColumn(banners.slice(2, 4));
+    var galleryImgs = banners.map(function (url) {
+      return '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(pack.name) + ' banner" loading="lazy">';
+    }).join('');
+
+    var card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML =
+      '<div class="collage">' + collageImgs + '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-head">' +
+          '<div class="card-title">' + escapeHtml(pack.name) + '</div>' +
+          '<div class="card-price">$19<span> / one-time</span></div>' +
+        '</div>' +
+        '<div class="gallery">' + galleryImgs + '</div>' +
+        '<div class="card-actions">' +
+          '<a class="btn-primary" href="#" data-buy-template>Buy this template</a>' +
+          '<a class="btn-ghost" href="' + escapeHtml(demoUrl) + '">See demo</a>' +
+        '</div>' +
+      '</div>';
+
+    return card;
+  }
+
+  fetch(apiUrl, { headers: { Accept: 'application/json' } })
+    .then(function (response) {
+      if (!response.ok) {
+        return response.json().catch(function () {
+          return {};
+        }).then(function (body) {
+          throw new Error(body.error || 'The template catalog could not be loaded.');
+        });
+      }
+      return response.json();
+    })
+    .then(function (data) {
+      var packs = data.packs || [];
+      if (packs.length === 0) {
+        statusEl.textContent = 'No templates are available right now.';
+        return;
+      }
+
+      packs.forEach(function (pack) {
+        gridEl.appendChild(renderCard(pack));
+      });
+
+      statusEl.hidden = true;
+      gridEl.hidden = false;
+    })
+    .catch(function (error) {
+      statusEl.textContent = error.message || 'The template catalog could not be loaded.';
+      statusEl.classList.add('error');
+    });
+
+  document.addEventListener('click', function (event) {
+    var target = event.target.closest('[data-buy-template]');
+    if (target) {
+      event.preventDefault();
+    }
+  });
+})();
+</script>
+</body>
+</html>
