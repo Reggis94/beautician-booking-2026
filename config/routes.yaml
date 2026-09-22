@@ -5,9 +5,15 @@ controllers:
     type: attribute
 
 tracking_controllers:
-    resource: 
+    resource:
         path: ../src/Tracking/UI/Http/Controller
         namespace: App\Tracking\UI\Http\Controller
+    type: attribute
+
+store_controllers:
+    resource:
+        path: ../src/Store/UI/Http/Controller
+        namespace: App\Store\UI\Http\Controller
     type: attribute
 
 when@dev:

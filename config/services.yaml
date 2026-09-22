@@ -8,6 +8,8 @@ parameters:
     tracking.visitor_id_length: 20
     tracking.demo_and_marketing_max_age: 15552000
 
+    store.acuity_banner_packs_directory: '../pro-banners/store'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -31,6 +33,10 @@ services:
         resource: '../src/Services/UI/Http/Controller/'
         tags: ['controller.service_arguments']
 
+    App\Store\UI\Http\Controller\:
+        resource: '../src/Store/UI/Http/Controller/'
+        tags: ['controller.service_arguments']
+
     App\Dao\ProDaoInterface: '@App\Dao\ProDao'
     App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface: '@App\Services\Infrastructure\Dao\ServiceCategoryDao'
     App\Services\Application\Service\Dao\ServiceDaoInterface: '@App\Services\Infrastructure\Dao\ServiceDao'
@@ -40,6 +46,7 @@ services:
     App\Availability\Domain\Repository\AvailabilityRepositoryInterface: '@App\Availability\Infrastructure\Repository\AvailabilityRepository'
     App\ProfilePro\Application\Timezone\Port\TimezoneResolverPortInterface: '@App\ProfilePro\Infrastructure\Api\TimezoneDb\Adapter\TimezoneDbAdapter'
     App\Tracking\Application\Dao\VisitorTrackingDaoInterface: '@App\Tracking\Infrastructure\Dao\VisitorTrackingDao'
+    App\Store\Application\Dao\BannerPackDaoInterface: '@App\Store\Infrastructure\Dao\BannerPackDao'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
