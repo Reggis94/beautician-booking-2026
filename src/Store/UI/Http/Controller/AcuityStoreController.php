@@ -13,6 +13,7 @@ final class AcuityStoreController extends AbstractController
     {
         return $this->render('landing/store_acuity_banner_templates.html.twig', [
             'banner_packs_api_url' => $this->generateUrl('api_store_acuity_banner_packs'),
+            'checkout_url' => $this->generateUrl('store_acuity_banner_templates_checkout'),
         ]);
     }
 }

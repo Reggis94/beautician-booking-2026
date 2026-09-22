@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thank you - Glam4Style</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --cream:#FAF6F1;--blush:#F2E0D6;--rose:#D4998A;--rose-deep:#B8765F;
+  --charcoal:#1C1916;--warm-grey:#6B5F58;--mid:#A89890;
+  --soft-border:rgba(180,150,135,0.22);
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+}
+body{background:var(--cream);color:var(--charcoal);font-family:var(--sans);font-weight:300;line-height:1.6;min-height:100vh;display:flex;flex-direction:column}
+
+.page{max-width:1080px;margin:0 auto;width:100%;flex:1;display:flex;flex-direction:column}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--soft-border)}
+.logo{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--charcoal);letter-spacing:.04em;text-decoration:none}
+.logo span{color:var(--rose-deep)}
+
+.confirm{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:64px 28px;max-width:560px;margin:0 auto}
+.confirm-icon{width:56px;height:56px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;margin-bottom:24px;color:var(--rose-deep)}
+.confirm h1{font-family:var(--serif);font-size:clamp(28px,5vw,44px);font-weight:300;line-height:1.15;margin-bottom:16px}
+.confirm h1 em{font-style:italic;color:var(--rose-deep)}
+.confirm p{font-size:15px;color:var(--warm-grey);max-width:440px;margin:0 auto 12px;line-height:1.7}
+.confirm .note{font-size:12px;color:var(--mid);margin-top:20px}
+
+.btn-ghost{display:inline-block;margin-top:28px;font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--warm-grey);background:none;border:1px solid var(--soft-border);padding:12px 22px;cursor:pointer;text-decoration:none;transition:border-color .18s,color .18s}
+.btn-ghost:hover{border-color:var(--rose);color:var(--rose-deep)}
+
+footer{padding:22px 24px;border-top:1px solid var(--soft-border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mid);text-align:center}
+
+@media (max-width: 480px) {
+  nav{padding:16px 20px}
+  .confirm{padding:48px 20px}
+  footer{align-items:center;flex-direction:column;gap:6px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav>
+  <div class="logo">Glam<span>4Style</span></div>
+</nav>
+
+<div class="confirm">
+  <div class="confirm-icon">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M20 6L9 17l-5-5"/>
+    </svg>
+  </div>
+  <h1>Thank you for <em>your purchase</em></h1>
+  <p>Your payment was successful. You'll soon receive an email with instructions on how to set up and use your template.</p>
+  <p class="note">Nothing to do on your end right now — check your inbox shortly.</p>
+  <a class="btn-ghost" href="{{ store_url }}">Back to templates</a>
+</div>
+
+<footer>
+  <div class="logo" style="font-size:16px">Glam<span>4Style</span></div>
+  <span>Built for beauty professionals.</span>
+  <span>contact@glam4style.com</span>
+</footer>
+
+</div>
+</body>
+</html>
