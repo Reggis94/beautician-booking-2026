@@ -11,5 +11,7 @@ interface BannerPackDaoInterface
      */
     public function findAll(): array;
 
+    public function exists(string $packId): bool;
+
     public function getBannerFilePath(string $packId, string $bannerFile): string;
 }

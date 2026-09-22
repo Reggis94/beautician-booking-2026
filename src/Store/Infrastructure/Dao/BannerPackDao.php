@@ -53,6 +53,21 @@ final class BannerPackDao implements BannerPackDaoInterface
         return $packs;
     }
 
+    public function exists(string $packId): bool
+    {
+        if ($packId === '' || $packId !== basename($packId)) {
+            return false;
+        }
+
+        $folderPath = $this->resolveBaseDirectory() . DIRECTORY_SEPARATOR . $packId;
+
+        if (!is_dir($folderPath)) {
+            return false;
+        }
+
+        return $this->listBannerFilenames($folderPath) !== [];
+    }
+
     public function getBannerFilePath(string $packId, string $bannerFile): string
     {
         return $this->resolveBaseDirectory() . DIRECTORY_SEPARATOR . $packId . DIRECTORY_SEPARATOR . $bannerFile;
