@@ -24,6 +24,7 @@ DDD-lite:
 - `Services`
 - `Booking`
 - `Tracking`
+- `Store`
 
 Service categories are modeled inside the `Services` domain under `ServiceCategory`.
 DDD-lite persistence prefers narrow application DAO contracts implemented with
@@ -54,3 +55,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0013: Datetime Timezone Policy
 - 0014: Account for Environment Differences
 - 0015: Prefer SQL DAOs for DDD-lite Data Access
+- 0016: Avoid Arrow Functions for Readability
