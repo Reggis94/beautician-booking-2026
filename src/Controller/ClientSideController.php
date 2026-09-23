@@ -107,7 +107,6 @@ class ClientSideController extends AbstractController
         ]);
     }
 
-    #[Route('/', name: 'glam4style_home', methods: ['GET'])]
     #[Route('/glam4style', name: 'glam4style_landing_page', methods: ['GET'])]
     public function glam4StyleLandingPage(): Response
     {

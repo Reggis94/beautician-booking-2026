@@ -62,8 +62,8 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:20px 2
 .btn-primary{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);background:var(--charcoal);border:none;padding:12px 18px;cursor:pointer;text-decoration:none;transition:background .18s;flex:1;text-align:center;width:100%}
 .btn-primary:hover{background:var(--rose-deep)}
 .buy-form{display:flex;flex:1}
-.btn-ghost{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--warm-grey);background:none;border:1px solid var(--soft-border);padding:11px 16px;cursor:pointer;text-decoration:none;transition:border-color .18s,color .18s;flex:1;text-align:center}
-.btn-ghost:hover{border-color:var(--rose);color:var(--rose-deep)}
+.btn-ghost{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--cream);background:var(--rose-deep);border:none;padding:11px 16px;cursor:pointer;text-decoration:none;transition:background .18s;flex:1;text-align:center}
+.btn-ghost:hover{background:#A86550}
 
 footer{padding:22px 24px;border-top:1px solid var(--soft-border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mid);text-align:center}
 
@@ -114,7 +114,8 @@ footer{padding:22px 24px;border-top:1px solid var(--soft-border);display:flex;ju
 (function () {
   var apiUrl = {{ banner_packs_api_url|json_encode|raw }};
   var checkoutUrl = {{ checkout_url|json_encode|raw }};
-  var demoUrl = {{ path('demo_front_pro_home')|json_encode|raw }};
+  var demoUrlTemplate = {{ demo_url_template|json_encode|raw }};
+  var demoUrlTemplatePlaceholder = {{ demo_url_template_placeholder|json_encode|raw }};
   var statusEl = document.getElementById('catalog-status');
   var gridEl = document.getElementById('catalog-grid');
 
@@ -122,6 +123,10 @@ footer{padding:22px 24px;border-top:1px solid var(--soft-border);display:flex;ju
     return String(value).replace(/[&<>"']/g, function (char) {
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
     });
+  }
+
+  function demoUrlFor(packId) {
+    return demoUrlTemplate.replace(demoUrlTemplatePlaceholder, encodeURIComponent(packId));
   }
 
   function renderCard(pack) {
@@ -152,7 +157,7 @@ footer{padding:22px 24px;border-top:1px solid var(--soft-border);display:flex;ju
             '<input type="hidden" name="template_id" value="' + escapeHtml(pack.id) + '">' +
             '<button type="submit" class="btn-primary">Buy this template</button>' +
           '</form>' +
-          '<a class="btn-ghost" href="' + escapeHtml(demoUrl) + '">See demo</a>' +
+          '<a class="btn-ghost" href="' + escapeHtml(demoUrlFor(pack.id)) + '">See demo</a>' +
         '</div>' +
       '</div>';
 

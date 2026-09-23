@@ -23,9 +23,11 @@
             {% endfor %}
         {% endif %}
 
-        <div class="demo-front-toolbar">
-            <a href="{{ demo_admin_url }}" class="demo-front-toolbar__admin-link">Back to admin</a>
-        </div>
+        {% block demo_front_toolbar %}
+            <div class="demo-front-toolbar">
+                <a href="{{ demo_admin_url }}" class="demo-front-toolbar__admin-link">Back to admin</a>
+            </div>
+        {% endblock %}
 
         {% if is_nyebah_demo|default(false) %}
             <iframe
@@ -896,9 +898,12 @@
         })();
     </script>
 
-    {% include 'demo/_g4s_account_prompt.html.twig' with {
-        admin_url: demo_admin_url,
-        demo_side: 'front'
-    } %}
+    {% block demo_account_prompt %}
+        {% include 'demo/_g4s_account_prompt.html.twig' with {
+            admin_url: demo_admin_url,
+            demo_side: 'front'
+        } %}
+    {% endblock %}
     {% include 'tracking/_track_page_visit.html.twig' %}
+    {% block demo_bottom_actions %}{% endblock %}
 {% endblock %}
