@@ -16,6 +16,7 @@ final class AcuityStoreCheckoutController extends AbstractController
 {
     private const TEMPLATE_PRICE_USD_CENTS = 1900;
 
+    // See docs/future-improvements/store/store-0001-acuity-checkout-port-adapter-and-cqrs.md.
     public function __construct(
         private readonly StripeClient $stripeClient,
         private readonly BannerPackDaoInterface $bannerPackDao,
@@ -36,6 +37,7 @@ final class AcuityStoreCheckoutController extends AbstractController
             throw $this->createNotFoundException('Template not found');
         }
 
+        // See docs/future-improvements/store/store-0001-acuity-checkout-port-adapter-and-cqrs.md.
         $session = $this->stripeClient->checkout->sessions->create([
             'mode' => 'payment',
             'line_items' => [[
