@@ -141,3 +141,28 @@ CREATE TABLE IF NOT EXISTS tracking_page_visit (
   user_agent      TEXT,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- AUTH-55-passwordless-email-authentication --
+-- Tokens and session identifiers are stored as SHA-256 hashes, never in clear.
+CREATE TABLE IF NOT EXISTS pro_login_token (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id       BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  token_hash   CHAR(64) NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  consumed_at  TIMESTAMPTZ,
+  -- Set when the login email could not be sent: the token is unusable but the attempt still counts in the limits.
+  delivery_failed_at  TIMESTAMPTZ,
+  CONSTRAINT uq_pro_login_token_hash UNIQUE (token_hash)
+);
+
+-- Login link cooldown and rate limit count a beautician's recent tokens.
+CREATE INDEX IF NOT EXISTS idx_pro_login_token_pro_created ON pro_login_token (pro_id, created_at);
+
+CREATE TABLE IF NOT EXISTS pro_session (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pro_id        BIGINT NOT NULL REFERENCES pro(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  session_hash  CHAR(64) NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  revoked_at    TIMESTAMPTZ,
+  CONSTRAINT uq_pro_session_hash UNIQUE (session_hash)
+);

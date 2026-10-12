@@ -2,19 +2,18 @@
 
 namespace App\Services\UI\Http\Controller\ProAdmin\Service;
 
+use App\ProAuth\Public\AuthenticatedPro;
 use App\Services\Application\Service\Query\ListProAdminServicesQuery;
 use App\Services\Application\Service\QueryHandler\ListProAdminServicesQueryHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
  * GET /api/pro-admin/services
  *
- * Returns services managed by the requested professional.
- *
- * Query parameters:
- * - proId: required positive integer professional ID.
+ * Returns services managed by the authenticated professional (session cookie required, HTTP 401 otherwise).
+ * The professional is taken from the session, never from request input.
  *
  * This route is database-backed but is not called by the dashboard frontend yet.
  */
@@ -22,9 +21,9 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ListProAdminServicesController
 {
     public function __invoke(
-        #[MapQueryString] ListProAdminServicesQuery $query,
+        #[CurrentUser] AuthenticatedPro $authenticatedPro,
         ListProAdminServicesQueryHandler $handler
     ): JsonResponse {
-        return new JsonResponse($handler($query));
+        return new JsonResponse($handler(new ListProAdminServicesQuery($authenticatedPro->getId())));
     }
 }

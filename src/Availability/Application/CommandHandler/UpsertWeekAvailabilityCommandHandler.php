@@ -29,7 +29,6 @@ final class UpsertWeekAvailabilityCommandHandler
 
         foreach ($newAvailabilities as $newAvailability) {
             if ($newAvailability->getProId() !== $proId) {
-                // Duplicated proId consistency check in UpsertWeekAvailabilityController.
                 throw new \LogicException('All availabilities must share the same proId.');
             }
 

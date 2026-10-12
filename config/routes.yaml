@@ -29,6 +29,12 @@ when@dev:
             namespace: App\Booking\UI\Http\Controller
         type: attribute
 
+    proauth_controllers:
+        resource:
+            path: ../src/ProAuth/UI/Http/Controller/
+            namespace: App\ProAuth\UI\Http\Controller
+        type: attribute
+
     service_controller:
         resource:
             path: ../src/Services/UI/Http/Controller/

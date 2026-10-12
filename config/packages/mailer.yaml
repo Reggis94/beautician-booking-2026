@@ -1,0 +1,10 @@
+framework:
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
+
+when@dev:
+    framework:
+        mailer:
+            envelope:
+                # In dev, every email is delivered to this single address instead of the real customer or pro.
+                recipients: ['%env(MAILER_DEV_RECIPIENT)%']

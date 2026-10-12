@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use DateTimeImmutable;
-use LogicException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -257,12 +256,6 @@ final class ProAdminDashboardController extends AbstractController
             'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index_fr', $adminParameters),
             'upcomingUrl' => $this->generateUrl('demo_pro_admin_appointments_upcoming_fr', $adminParameters),
         ];
-    }
-
-    #[Route('/pro/logout', name: 'app_logout', methods: ['GET'], env: 'dev')]
-    public function logout(): void
-    {
-        throw new LogicException('This route is intercepted by the security firewall logout handler.');
     }
 
     private function resolveCurrentMonth(?string $month): DateTimeImmutable

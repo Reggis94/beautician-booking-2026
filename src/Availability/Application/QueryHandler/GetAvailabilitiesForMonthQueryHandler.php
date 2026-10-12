@@ -25,7 +25,7 @@ final class GetAvailabilitiesForMonthQueryHandler
         }
 
         $availabilities = $this->repository->getAvailabilitiesForMonth(
-            $query->proId,
+            $query->getProId(),
             $requestedMonth
         );
 
