@@ -2,22 +2,26 @@
 
 namespace App\Services\UI\Http\Controller\Pro\ServiceCategory;
 
+use App\ProAuth\Public\AuthenticatedPro;
 use App\Services\Application\ServiceCategory\Command\DeleteServiceCategoryCommand;
 use App\Services\Application\ServiceCategory\CommandHandler\DeleteServiceCategoryCommandHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
-// See docs/future-improvements/verify-authenticated-user-owns-service-resources.md.
 #[Route('/api/pro/service/category/delete', name: 'api_pro_delete_service_category', methods: ['DELETE'])]
 final class DeleteServiceCategoryController extends AbstractController
 {
-    public function __invoke(Request $request, DeleteServiceCategoryCommandHandler $handler): JsonResponse
-    {
+    public function __invoke(
+        Request $request,
+        DeleteServiceCategoryCommandHandler $handler,
+        #[CurrentUser] AuthenticatedPro $authenticatedPro
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $serviceCategoryId = (int) ($data['service_category_id']);
-        $proId = (int) ($data['pro_id']);
+        $proId = $authenticatedPro->getId();
         $command = new DeleteServiceCategoryCommand($serviceCategoryId, $proId);
         try {
             $handler($command);

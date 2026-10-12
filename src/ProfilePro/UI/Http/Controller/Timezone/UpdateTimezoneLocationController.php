@@ -2,6 +2,7 @@
 
 namespace App\ProfilePro\UI\Http\Controller\Timezone;
 
+use App\ProAuth\Public\AuthenticatedPro;
 use App\ProfilePro\Application\Command\UpdateTimezoneCommand;
 use App\ProfilePro\Application\CommandHandler\UpdateTimezoneCommandHandler;
 use App\ProfilePro\Application\Timezone\Dto\TimezoneDto;
@@ -9,15 +10,19 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 #[Route('/api/pro/timezone-location/update', name: 'api_pro_update_timezone_location', methods: ['PUT'])]
 final class UpdateTimezoneLocationController extends AbstractController
 {
-    public function __invoke(Request $request, UpdateTimezoneCommandHandler $handler): JsonResponse
-    {
+    public function __invoke(
+        Request $request,
+        UpdateTimezoneCommandHandler $handler,
+        #[CurrentUser] AuthenticatedPro $authenticatedPro
+    ): JsonResponse {
         $payload = json_decode($request->getContent(), true) ?? [];
         try {
-            $proId = $payload['pro_id'] ?? $payload['proId'] ?? '';
+            $proId = $authenticatedPro->getId();
             $fullAddress = $payload['full_address'] ?? $payload['fullAddress'] ?? '';
             $lat = $payload['lat'] ?? '';
             $lng = $payload['lng'] ?? '';

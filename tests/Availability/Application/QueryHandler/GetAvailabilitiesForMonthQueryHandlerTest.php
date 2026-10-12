@@ -18,7 +18,10 @@ final class GetAvailabilitiesForMonthQueryHandlerTest extends TestCase
         $repository = new FixedMonthAvailabilityRepository();
         $handler = new GetAvailabilitiesForMonthQueryHandler($repository);
 
-        $response = $handler(new GetAvailabilitiesForMonthQuery(42, '2099-06'));
+        $query = new GetAvailabilitiesForMonthQuery('2099-06');
+        $query->setProId(42);
+
+        $response = $handler($query);
 
         self::assertSame(42, $repository->proId);
         self::assertSame('2099-06-01', $repository->monthStart?->format('Y-m-d'));
@@ -45,7 +48,10 @@ final class GetAvailabilitiesForMonthQueryHandlerTest extends TestCase
         $this->expectException(PastMonthAvailabilityRequestException::class);
         $this->expectExceptionMessage('The month must be the current month or a future month.');
 
-        $handler(new GetAvailabilitiesForMonthQuery(42, '2000-01'));
+        $query = new GetAvailabilitiesForMonthQuery('2000-01');
+        $query->setProId(42);
+
+        $handler($query);
     }
 }
 

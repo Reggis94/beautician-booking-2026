@@ -2,6 +2,7 @@
 
 namespace App\Services\UI\Http\Controller\Pro\Service;
 
+use App\ProAuth\Public\AuthenticatedPro;
 use App\Services\Application\Service\Command\UpdateServiceCommand;
 use App\Services\Application\Service\CommandHandler\UpdateServiceCommandHandler;
 use App\Services\Application\Service\Dto\ServiceDto;
@@ -9,21 +10,22 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-// See docs/future-improvements/verify-authenticated-user-owns-service-resources.md.
 #[Route('/api/pro/service/edit', name: 'api_pro_update_service', methods: ['PUT'])]
 final class UpdateServiceController extends AbstractController
 {
     public function __invoke(
         Request $request,
         UpdateServiceCommandHandler $updateServiceCommandHandler,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        #[CurrentUser] AuthenticatedPro $authenticatedPro
     ): JsonResponse {
         $data = json_decode($request->getContent(), true) ?? [];
         $serviceId = (int) ($data['service_id'] ?? 0);
         $name = $data['name'] ?? '';
-        $proId = (int) $request->query->get('pro_id', $data['pro_id'] ?? 0);
+        $proId = $authenticatedPro->getId();
         $categoryId = array_key_exists('category_id', $data) && $data['category_id'] !== null
             ? (int) $data['category_id']
             : null;

@@ -5,16 +5,26 @@ namespace App\Availability\UI\Http\Controller;
 use App\Availability\Application\CommandHandler\UpsertWeekAvailabilityCommandHandler;
 use App\Availability\Application\Command\UpsertWeekAvailabilityCommand;
 use App\Availability\Domain\ValueObject\WeekAvailability;
+use App\ProAuth\Public\AuthenticatedPro;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
+/**
+ * POST /api/upsert-week-availability
+ *
+ * Upserts the week availabilities of the authenticated professional (session cookie required, HTTP 401 otherwise).
+ * The professional is taken from the session: a proId sent in payload items is ignored.
+ */
 #[Route(path: '/api/upsert-week-availability', name: 'upsertWeekAvailability', methods: ['POST'])]
 class UpsertWeekAvailabilityController
 {
-    public function __invoke(Request $request, UpsertWeekAvailabilityCommandHandler $handler): JsonResponse
-    {
-        // TODO: Authentication/authorization for this endpoint will be handled in a follow-up ticket.
+    public function __invoke(
+        Request $request,
+        UpsertWeekAvailabilityCommandHandler $handler,
+        #[CurrentUser] AuthenticatedPro $authenticatedPro
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true) ?? [];
         try {
             // Future improvement: add a one-day upsert that rebuilds the target week from existing storage
@@ -25,7 +35,6 @@ class UpsertWeekAvailabilityController
             }
 
             $newAvailabilities = [];
-            $proId = null;
             $weekRange = null;
 
             foreach ($data as $item) {
@@ -34,20 +43,13 @@ class UpsertWeekAvailabilityController
                 }
 
                 $weekAvailability = new WeekAvailability(
-                    isset($item['proId']) ? (int) $item['proId'] : 0,
+                    $authenticatedPro->getId(),
                     new \DateTimeImmutable($item['startDateTime'] ?? ''),
                     new \DateTimeImmutable($item['endDateTime'] ?? ''),
                     isset($item['dayOfWeek']) ? (int) $item['dayOfWeek'] : 0,
                     (string) ($item['startTime'] ?? ''),
                     (string) ($item['endTime'] ?? '')
                 );
-
-                if ($proId === null) {
-                    $proId = $weekAvailability->getProId();
-                } elseif ($proId !== $weekAvailability->getProId()) {
-                    // Duplicated proId consistency check in UpsertWeekAvailabilityCommandHandler.
-                    throw new \LogicException('All availabilities must share the same proId.');
-                }
 
                 $startTs = $weekAvailability->getStartDateTime()->getTimestamp();
                 $endTs = $weekAvailability->getEndDateTime()->getTimestamp();

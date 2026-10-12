@@ -1,20 +1,19 @@
 security:
-    providers: 
-        app_user_provider:
-            entity:
-                class: App\Entity\User
-                property: email
     firewalls:
+        # Beautician (pro) authentication: an opaque session identifier in an HTTP-only cookie, validated against
+        # the pro_session table on every request. No PHP session is used. See ADR 0019.
         pro:
-            login_link:
-                check_route: login_check
-                signature_properties: ['id']
-            pattern:
-                - ^/pro
-                - ^/login
-            logout:
-                path: /pro/logout
-                target: /pro
+            pattern: ^/(api|pro)/
+            stateless: true
+            custom_authenticators:
+                - App\ProAuth\UI\Http\Security\SessionAuthenticator
+            entry_point: App\ProAuth\UI\Http\Security\SessionAuthenticator
 
+    # Routes not listed here are public (public booking, pro presentation, tracking, login endpoints).
     access_control:
-    - { path: ^/pro/, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/auth/me$, roles: ROLE_PRO }
+        - { path: ^/api/pro/, roles: ROLE_PRO }
+        - { path: ^/api/pro-admin/, roles: ROLE_PRO }
+        - { path: ^/api/availabilities$, roles: ROLE_PRO }
+        - { path: ^/api/upsert-week-availability$, roles: ROLE_PRO }
+        - { path: ^/pro/, roles: ROLE_PRO }
