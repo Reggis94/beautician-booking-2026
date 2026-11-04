@@ -19,7 +19,7 @@ opaque session identifier, stored hashed in `pro_session` and sent to the browse
 - Public endpoints (pro presentation, public booking, tracking, login) stay out of `access_control`. A stale or
   invalid cookie never blocks them.
 - State-changing requests carrying the session cookie, and all state-changing `/api/auth/*` requests, must come
-  from the application itself or an origin listed in `AUTH_ALLOWED_ORIGINS` (CSRF protection), on top of the
+  from the application itself (CSRF protection), on top of the
   `SameSite` cookie.
 
 ## Consequences

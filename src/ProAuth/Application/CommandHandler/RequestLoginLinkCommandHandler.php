@@ -5,8 +5,7 @@ namespace App\ProAuth\Application\CommandHandler;
 use App\ProAuth\Application\Command\RequestLoginLinkCommand;
 use App\ProAuth\Application\Dao\LoginTokenDaoInterface;
 use App\ProAuth\Application\Mailer\LoginLinkMailerInterface;
-use App\ProAuth\Application\Throttling\LoginLinkCooldown;
-use App\ProAuth\Application\Throttling\LoginLinkRateLimit;
+use App\ProAuth\Application\Throttling\LoginLinkThrottle;
 use App\ProAuth\Application\Token\OpaqueToken;
 use Psr\Log\LoggerInterface;
 
@@ -20,8 +19,7 @@ final class RequestLoginLinkCommandHandler
 {
     public function __construct(
         private readonly LoginTokenDaoInterface $loginTokenDao,
-        private readonly LoginLinkCooldown $loginLinkCooldown,
-        private readonly LoginLinkRateLimit $loginLinkRateLimit,
+        private readonly LoginLinkThrottle $loginLinkThrottle,
         private readonly LoginLinkMailerInterface $loginLinkMailer,
         private readonly LoggerInterface $logger
     ) {
@@ -36,19 +34,17 @@ final class RequestLoginLinkCommandHandler
             return;
         }
 
-        $loginToken = OpaqueToken::generate();
-        $loginTokenHash = OpaqueToken::hash($loginToken);
-
         $this->loginTokenDao->beginTransaction();
 
         try {
             // Serializes concurrent requests of the same beautician, so parallel requests cannot bypass the limits.
             $this->loginTokenDao->lockPro($proId);
-            $isAllowed = !$this->loginLinkCooldown->isActive($proId)
-                && !$this->loginLinkRateLimit->isReached($proId);
+            $isAllowed = $this->loginLinkThrottle->isAllowed($proId);
 
             // A refused request stores nothing.
             if ($isAllowed) {
+                $loginToken = OpaqueToken::generate();
+                $loginTokenHash = OpaqueToken::hash($loginToken);
                 $this->loginTokenDao->create($proId, $loginTokenHash);
             }
 
@@ -70,11 +66,14 @@ final class RequestLoginLinkCommandHandler
             // beautician, so its token must not stay usable. Never log the token or the exception trace, whose
             // arguments may contain it.
             $this->loginTokenDao->markDeliveryFailed($loginTokenHash);
-            $this->logger->error('Login link email delivery failed.', [
-                'pro_id' => $proId,
-                'exception_class' => $exception::class,
-                'exception_message' => $exception->getMessage(),
-            ]);
+            $this->logger->error(
+                'Login link email delivery failed.',
+                [
+                    'pro_id' => $proId,
+                    'exception_class' => $exception::class,
+                    'exception_message' => $exception->getMessage(),
+                ]
+            );
         }
     }
 }

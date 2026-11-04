@@ -46,11 +46,13 @@ architecture for email delivery (`LoginLinkMailerInterface` port, Symfony Mailer
 - Every beautician endpoint takes the tenant pro ID from the session, never from the request (see ADR 0019).
 - Login responses never reveal whether an email exists. Unknown emails are ignored and not stored.
 - Login link requests per beautician have a 60-second cooldown and a limit of 24 per sliding hour, counted from
-  `pro_login_token` rows. Both are separate application classes (`LoginLinkCooldown`, `LoginLinkRateLimit`);
+  `pro_login_token` rows. Both are separate application classes (`LoginLinkCooldown`, `LoginLinkRateLimit`),
+  combined by `LoginLinkThrottle::isAllowed()`;
   refused requests store nothing and still answer `202`. When the email fails to send, for any reason, the row is
   kept and counted but marked `delivery_failed_at`, which makes its token unusable.
-- Environment: `AUTH_LOGIN_CONFIRM_URL` (frontend confirmation page, required), `AUTH_ALLOWED_ORIGINS`
-  (comma-separated frontend origins for CORS and CSRF checks), `AUTH_SESSION_COOKIE_SECURE` (true),
+- The API is same-origin only: no CORS, and state-changing requests are checked against the API's own origin
+  (CSRF, see `FrontendOriginSubscriber`).
+- Environment: `AUTH_LOGIN_CONFIRM_URL` (frontend confirmation page, required), `AUTH_SESSION_COOKIE_SECURE` (true),
   `AUTH_SESSION_COOKIE_SAMESITE` (lax), `AUTH_SESSION_COOKIE_MAX_AGE_SECONDS`, `MAILER_FROM_EMAIL` (required),
   `MAILER_FROM_NAME`, and in dev `MAILER_DEV_RECIPIENT`, which receives every email.
 - Like the other API domains, ProAuth routes are only loaded in `dev` for now.
@@ -79,3 +81,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0015: Prefer SQL DAOs for DDD-lite Data Access
 - 0016: Avoid Arrow Functions for Readability
 - 0019: Tenant Identity From the Authenticated Session
+- 0020: ProAuth Tests as Executable Requirements

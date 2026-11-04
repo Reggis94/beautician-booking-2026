@@ -10,7 +10,7 @@ namespace App\ProAuth\Application\Token;
  */
 final class OpaqueToken
 {
-    public const PATTERN = '/^[0-9a-f]{64}$/';
+    public const PATTERN = '/^[0-9a-f]{64}$/D';
     private const RANDOM_BYTES = 32;
 
     public static function generate(): string

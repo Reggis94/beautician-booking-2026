@@ -99,19 +99,15 @@ Backend environment values the frontend depends on:
 | Variable | Purpose |
 | --- | --- |
 | `AUTH_LOGIN_CONFIRM_URL` | Full URL of the frontend confirmation page, for example `https://app.example.com/login/confirm`. The backend appends `#token=...`. |
-| `AUTH_ALLOWED_ORIGINS` | Comma-separated frontend origins allowed to call the API from the browser, for example `https://app.example.com`. No trailing slash. |
 | `AUTH_SESSION_COOKIE_SECURE` | `true` in production (HTTPS). Set `false` only for local HTTP development. |
 | `AUTH_SESSION_COOKIE_SAMESITE` | `lax` by default. |
 
 Requirements:
 
-- **Same site.** The frontend and the API must share the same registrable domain (for example
-  `app.example.com` and `api.example.com`), or be served from the same origin. With `SameSite=Lax`, browsers
-  do not send the cookie from a different site.
-- **CORS.** Requests from an origin in `AUTH_ALLOWED_ORIGINS` receive `Access-Control-Allow-Origin` (that
-  origin) and `Access-Control-Allow-Credentials: true`. Preflight requests are answered for `GET`, `POST`,
-  `PUT`, `DELETE` with the `Content-Type` header. Other origins are refused.
+- **Same origin.** The frontend and the API must be served from the same origin (for example the frontend at
+  `https://app.example.com` and the API under `https://app.example.com/api/`, behind a reverse proxy if needed).
+  The API sends no CORS headers, so browsers block cross-origin calls.
 - **CSRF.** State-changing requests that carry the session cookie, and every `POST /api/auth/*`, must come from
-  the API's own origin or an allowed origin (browsers send the `Origin` header automatically). Nothing extra
-  is needed in the frontend: no CSRF token.
+  the API's own origin (browsers send the `Origin` header automatically). Nothing extra is needed in the
+  frontend: no CSRF token.
 - In local development, all emails go to `MAILER_DEV_RECIPIENT`.
