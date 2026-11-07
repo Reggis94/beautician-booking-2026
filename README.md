@@ -55,7 +55,7 @@ architecture for email delivery (`LoginLinkMailerInterface` port, Symfony Mailer
 - Environment: `AUTH_LOGIN_CONFIRM_URL` (frontend confirmation page, required), `AUTH_SESSION_COOKIE_SECURE` (true),
   `AUTH_SESSION_COOKIE_SAMESITE` (lax), `AUTH_SESSION_COOKIE_MAX_AGE_SECONDS`, `MAILER_FROM_EMAIL` (required),
   `MAILER_FROM_NAME`, and in dev `MAILER_DEV_RECIPIENT`, which receives every email.
-- Like the other API domains, ProAuth routes are only loaded in `dev` for now.
+- ProAuth routes are loaded in every environment; the `Availability`, `ProfilePro`, `Booking` and `Services` API routes are still `dev`-only.
 - Frontend integration: `docs/pro-auth-frontend-integration.md`.
 
 ## ProAdmin Demo Environment
