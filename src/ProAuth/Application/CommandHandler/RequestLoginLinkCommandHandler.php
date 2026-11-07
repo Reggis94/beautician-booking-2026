@@ -66,14 +66,34 @@ final class RequestLoginLinkCommandHandler
             // beautician, so its token must not stay usable. Never log the token or the exception trace, whose
             // arguments may contain it.
             $this->loginTokenDao->markDeliveryFailed($loginTokenHash);
+            // The exception is the original one thrown by the mailer (e.g. IncompleteDsnException,
+            // HttpTransportException), so its class tells exactly what failed.
             $this->logger->error(
                 'Login link email delivery failed.',
                 [
                     'pro_id' => $proId,
                     'exception_class' => $exception::class,
                     'exception_message' => $exception->getMessage(),
+                    'previous_exception_classes' => $this->previousExceptionClasses($exception),
                 ]
             );
         }
+    }
+
+    /**
+     * Lists the class of each exception nested in the given one, outermost first, e.g. the HTTP client exception
+     * behind a Mailer TransportException. Messages are left out: only the outermost one is logged.
+     *
+     * @return list<class-string<\Throwable>>
+     */
+    private function previousExceptionClasses(\Throwable $exception): array
+    {
+        $classes = [];
+
+        for ($previous = $exception->getPrevious(); $previous !== null; $previous = $previous->getPrevious()) {
+            $classes[] = $previous::class;
+        }
+
+        return $classes;
     }
 }
