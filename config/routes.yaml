@@ -16,6 +16,12 @@ store_controllers:
         namespace: App\Store\UI\Http\Controller
     type: attribute
 
+proauth_controllers:
+    resource:
+        path: ../src/ProAuth/UI/Http/Controller/
+        namespace: App\ProAuth\UI\Http\Controller
+    type: attribute
+
 when@dev:
     availability_controllers:
         resource:
@@ -33,12 +39,6 @@ when@dev:
         resource:
             path: ../src/Booking/UI/Http/Controller/
             namespace: App\Booking\UI\Http\Controller
-        type: attribute
-
-    proauth_controllers:
-        resource:
-            path: ../src/ProAuth/UI/Http/Controller/
-            namespace: App\ProAuth\UI\Http\Controller
         type: attribute
 
     service_controller:
