@@ -2,12 +2,13 @@
 
 namespace App\Controller;
 
+use App\ProAuth\Public\AuthenticatedPro;
 use DateTimeImmutable;
-use LogicException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 final class ProAdminDashboardController extends AbstractController
 {
@@ -64,38 +65,54 @@ final class ProAdminDashboardController extends AbstractController
      * Backend-connected upcoming appointments page.
      *
      * This real ProAdmin page keeps the demo layout but loads appointment data
-     * through the ProAdmin appointments API.
+     * through the ProAdmin appointments API. It requires the beautician session
+     * (signed-out visitors are redirected to the login page) and acts on the
+     * logged-in beautician only (see ADR 0019). Served in French; the English
+     * template supports the same connected mode but is not served yet.
      */
     #[Route(
-        '/pro/dashboard/upcoming',
-        name: 'pro_admin_appointments_upcoming',
+        '/fr/pro/dashboard/upcoming',
+        name: 'pro_admin_appointments_upcoming_fr',
         methods: ['GET'],
         env: 'dev'
     )]
-    public function connectedUpcomingAppointments(Request $request): Response
+    public function connectedUpcomingAppointments(#[CurrentUser] AuthenticatedPro $authenticatedPro): Response
     {
-        $proId = (int) $request->query->get('proId', 0);
-        $upcomingUrlParameters = $proId > 0 ? ['proId' => $proId] : [];
-
-        return $this->render('pro_admin/dashboard.html.twig', [
+        $response = $this->render('pro_admin/fr/dashboard.html.twig', [
             'activeTab' => 'upcoming',
-            'dashboardUrl' => $this->generateUrl('pro_admin_appointments_upcoming', $upcomingUrlParameters),
-            'frontUrl' => $this->generateUrl('demo_front_pro_home'),
+            'calendarUrl' => $this->generateUrl('demo_pro_admin_calendar_fr'),
+            'dashboardUrl' => $this->generateUrl('pro_admin_appointments_upcoming_fr'),
+            'frontUrl' => $this->generateUrl('front_pro_home', [
+                'proLinkSlug' => $authenticatedPro->getLinkSlug(),
+            ]),
             'isDemoDashboard' => false,
-            'openingHoursUrl' => $this->generateUrl('demo_pro_admin_opening_hours'),
+            'loginUrl' => $this->generateUrl('pro_auth_login_page_fr'),
+            'logoutApiUrl' => $this->generateUrl('api_auth_logout'),
+            'openingHoursUrl' => $this->generateUrl('demo_pro_admin_opening_hours_fr'),
             'pastAppointments' => [],
-            'pastUrl' => $this->generateUrl('demo_pro_admin_appointments_past'),
+            'pastUrl' => $this->generateUrl('demo_pro_admin_appointments_past_fr'),
+            'proName' => $this->proName($authenticatedPro),
             'services' => [],
-            'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index'),
+            'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index_fr'),
             'upcomingAppointments' => [],
-            'upcomingAppointmentsApiUrl' => $proId > 0
-                ? $this->generateUrl('api_pro_admin_appointments_upcoming', ['proId' => $proId])
-                : null,
-            'upcomingAppointmentsLoadError' => $proId <= 0
-                ? 'Add a positive proId query parameter to load appointments.'
-                : null,
-            'upcomingUrl' => $this->generateUrl('pro_admin_appointments_upcoming', $upcomingUrlParameters),
+            'upcomingAppointmentsApiUrl' => $this->generateUrl('api_pro_admin_appointments_upcoming'),
+            'upcomingUrl' => $this->generateUrl('pro_admin_appointments_upcoming_fr'),
         ]);
+        $response->headers->set('Cache-Control', 'no-store');
+
+        return $response;
+    }
+
+    private function proName(AuthenticatedPro $authenticatedPro): string
+    {
+        $displayName = trim((string) $authenticatedPro->getDisplayName());
+        if ($displayName !== '') {
+            return $displayName;
+        }
+
+        $fullName = trim($authenticatedPro->getFirstname() . ' ' . $authenticatedPro->getLastname());
+
+        return $fullName !== '' ? $fullName : $authenticatedPro->getEmail();
     }
 
     /**
@@ -257,12 +274,6 @@ final class ProAdminDashboardController extends AbstractController
             'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index_fr', $adminParameters),
             'upcomingUrl' => $this->generateUrl('demo_pro_admin_appointments_upcoming_fr', $adminParameters),
         ];
-    }
-
-    #[Route('/pro/logout', name: 'app_logout', methods: ['GET'], env: 'dev')]
-    public function logout(): void
-    {
-        throw new LogicException('This route is intercepted by the security firewall logout handler.');
     }
 
     private function resolveCurrentMonth(?string $month): DateTimeImmutable

@@ -1,0 +1,255 @@
+{#
+  templates/pro_auth/login.html.twig
+
+  Beautician login page: requests a single-use login link by email (POST /api/auth/login-link).
+
+  Variables:
+    - dashboardUrl: where an already logged-in beautician is sent.
+    - loggedOut:    true right after a logout, to confirm it.
+#}
+{% extends 'pro_auth/_layout.html.twig' %}
+
+{% block title %}Sign in{% endblock %}
+
+{% block brand %}
+<p class="left-eyebrow hide-on-mobile">Booking for beauty professionals</p>
+<p class="left-headline">Your clients,<br><em>beautifully</em><br>organised.</p>
+<p class="left-sub">Manage your appointments and services from one simple place.</p>
+{% endblock %}
+
+{% block content %}
+<div
+  class="panel"
+  data-login
+  data-login-link-url="{{ path('api_auth_request_login_link') }}"
+  data-me-url="{{ path('api_auth_me') }}"
+  data-dashboard-url="{{ dashboardUrl }}"
+>
+
+  {# ── LOGIN FORM ── #}
+  <div data-step="form">
+    <p class="form-eyebrow">Welcome back</p>
+    <h1 class="form-title">Sign <em>in</em></h1>
+    <p class="form-desc">Enter your email and we'll send you a link to sign in — no password needed.</p>
+
+    {% if loggedOut %}
+    <div class="banner banner-info" role="status" data-logged-out-banner>
+      You have been signed out.
+    </div>
+    {% endif %}
+
+    <div class="banner banner-error" role="alert" data-form-error hidden></div>
+
+    <form novalidate data-login-form>
+      <div class="form-field">
+        <label class="form-label" for="email">Email address</label>
+        <input
+          class="form-input"
+          type="email"
+          id="email"
+          name="email"
+          maxlength="255"
+          placeholder="you@example.com"
+          autocomplete="email"
+          aria-describedby="email-error"
+          autofocus
+          required>
+        <p class="field-error" id="email-error" data-email-error hidden>Please enter a valid email address.</p>
+      </div>
+
+      <button type="submit" class="btn-primary" data-submit>Send sign-in link</button>
+
+      <p class="form-note">Your account is created by the Glam4Style team.<br>Use the email address you gave us.</p>
+    </form>
+  </div>
+
+  {# ── LINK SENT ── #}
+  <div class="centered" data-step="sent" role="status" aria-live="polite" hidden>
+    <span class="status-mark" aria-hidden="true">✦</span>
+    <h1 class="status-title">Check your <em>inbox</em></h1>
+    <p class="status-desc">
+      If <span class="status-email" data-sent-email></span> belongs to a Glam4Style account,
+      you will receive a sign-in link in a few moments.<br>
+      Open it on this device to access your dashboard.
+    </p>
+
+    <div class="banner banner-error" role="alert" data-resend-error hidden></div>
+
+    <div class="divider"></div>
+
+    <p class="form-note" style="margin:0 0 16px">Didn't receive it? Check your spam folder, then send the link again.</p>
+    <button type="button" class="btn-primary" data-resend disabled>Send the link again</button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var COOLDOWN_SECONDS = 60;
+    var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var GENERIC_ERROR = 'Something went wrong. Please try again in a moment.';
+    var NETWORK_ERROR = 'We could not reach Glam4Style. Check your connection and try again.';
+    var SUBMIT_LABEL = 'Send sign-in link';
+    var RESEND_LABEL = 'Send the link again';
+    var SENDING_LABEL = 'Sending…';
+
+    var root = document.querySelector('[data-login]');
+    var formStep = root.querySelector('[data-step="form"]');
+    var sentStep = root.querySelector('[data-step="sent"]');
+    var form = root.querySelector('[data-login-form]');
+    var input = root.querySelector('#email');
+    var emailError = root.querySelector('[data-email-error]');
+    var formError = root.querySelector('[data-form-error]');
+    var submitButton = root.querySelector('[data-submit]');
+    var sentEmail = root.querySelector('[data-sent-email]');
+    var resendButton = root.querySelector('[data-resend]');
+    var resendError = root.querySelector('[data-resend-error]');
+    var loggedOutBanner = root.querySelector('[data-logged-out-banner]');
+
+    var currentEmail = '';
+    var cooldownTimer = null;
+    var cooldownEndsAt = 0;
+
+    // Already signed in: go straight to the dashboard.
+    fetch(root.dataset.meUrl, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (response) {
+        if (response.ok) {
+          window.location.replace(root.dataset.dashboardUrl);
+        }
+      })
+      .catch(function () {});
+
+    // Drop ?logged_out=1 so a refresh does not show the message again.
+    if (loggedOutBanner && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
+    function show(element, message) {
+      if (message !== undefined) {
+        element.textContent = message;
+      }
+      element.hidden = false;
+    }
+
+    function hide(element) {
+      element.hidden = true;
+    }
+
+    function markEmailInvalid() {
+      input.classList.add('invalid');
+      input.setAttribute('aria-invalid', 'true');
+      show(emailError);
+      input.focus();
+    }
+
+    function clearEmailInvalid() {
+      input.classList.remove('invalid');
+      input.removeAttribute('aria-invalid');
+      hide(emailError);
+    }
+
+    function requestLoginLink(email) {
+      return fetch(root.dataset.loginLinkUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email: email })
+      }).then(function (response) {
+        return response.status;
+      });
+    }
+
+    function renderCountdown() {
+      var remaining = Math.max(0, Math.ceil((cooldownEndsAt - Date.now()) / 1000));
+
+      if (remaining === 0) {
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+        resendButton.disabled = false;
+        resendButton.textContent = RESEND_LABEL;
+        return;
+      }
+
+      resendButton.disabled = true;
+      resendButton.textContent = RESEND_LABEL + ' (' + remaining + ' s)';
+    }
+
+    function startCooldown() {
+      cooldownEndsAt = Date.now() + COOLDOWN_SECONDS * 1000;
+      clearInterval(cooldownTimer);
+      cooldownTimer = setInterval(renderCountdown, 1000);
+      renderCountdown();
+    }
+
+    function showSentStep(email) {
+      currentEmail = email;
+      sentEmail.textContent = email;
+      hide(resendError);
+      hide(formStep);
+      show(sentStep);
+      startCooldown();
+    }
+
+    input.addEventListener('input', function () {
+      clearEmailInvalid();
+      hide(formError);
+    });
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      hide(formError);
+
+      var email = input.value.trim();
+      if (!EMAIL_PATTERN.test(email)) {
+        markEmailInvalid();
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.textContent = SENDING_LABEL;
+
+      requestLoginLink(email)
+        .then(function (status) {
+          if (status === 202) {
+            showSentStep(email);
+          } else if (status === 422) {
+            markEmailInvalid();
+          } else {
+            show(formError, GENERIC_ERROR);
+          }
+        })
+        .catch(function () {
+          show(formError, NETWORK_ERROR);
+        })
+        .then(function () {
+          submitButton.disabled = false;
+          submitButton.textContent = SUBMIT_LABEL;
+        });
+    });
+
+    resendButton.addEventListener('click', function () {
+      hide(resendError);
+      resendButton.disabled = true;
+      resendButton.textContent = SENDING_LABEL;
+
+      requestLoginLink(currentEmail)
+        .then(function (status) {
+          if (status === 202) {
+            startCooldown();
+          } else {
+            show(resendError, GENERIC_ERROR);
+            resendButton.disabled = false;
+            resendButton.textContent = RESEND_LABEL;
+          }
+        })
+        .catch(function () {
+          show(resendError, NETWORK_ERROR);
+          resendButton.disabled = false;
+          resendButton.textContent = RESEND_LABEL;
+        });
+    });
+  })();
+</script>
+{% endblock %}

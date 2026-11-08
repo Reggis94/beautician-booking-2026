@@ -12,8 +12,12 @@
 #}
 {% set dashboardUrl = dashboardUrl|default(path('demo_pro_admin_dashboard')) %}
 {% set frontUrl = frontUrl|default(path('demo_front_pro_home')) %}
-{% set isDemoDashboard = isDemoDashboard|default(true) %}
+{# default() would turn an explicit false into true #}
+{% set isDemoDashboard = isDemoDashboard is defined ? isDemoDashboard : true %}
+{% set loginUrl = loginUrl|default(null) %}
+{% set logoutApiUrl = logoutApiUrl|default(null) %}
 {% set logoutUrl = logoutUrl|default(null) %}
+{% set proName = proName|default(null) %}
 {% set openingHoursUrl = openingHoursUrl|default(path('demo_pro_admin_opening_hours')) %}
 {% set pastUrl = pastUrl|default(path('demo_pro_admin_appointments_past')) %}
 {% set servicesUrl = servicesUrl|default(path('demo_pro_admin_services_index')) %}
@@ -27,13 +31,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard â€” Glam4Style</title>
+  <title>Dashboard — Glam4Style</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
   <style>
-    /* â”€â”€ TOKENS â”€â”€ */
+    /* ── TOKENS ── */
     :root {
       --cream:       #FAF6F1;
       --blush:       #F2E0D6;
@@ -60,7 +64,7 @@
       display: flex;
     }
 
-    /* â”€â”€ SIDEBAR â”€â”€ */
+    /* ── SIDEBAR ── */
     .sidebar {
       width: var(--sidebar-w);
       flex-shrink: 0;
@@ -159,8 +163,19 @@
       transition: color 0.18s;
     }
     .logout-btn:hover { color: var(--rose); }
+    .logout-btn:disabled { opacity: 0.5; cursor: wait; }
 
-    /* â”€â”€ MAIN â”€â”€ */
+    .signed-in-as {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      word-break: break-word;
+    }
+    .signed-in-as span { color: var(--cream); }
+
+    /* ── MAIN ── */
     .main {
       margin-left: var(--sidebar-w);
       flex: 1;
@@ -198,7 +213,7 @@
       flex: 1;
     }
 
-    /* â”€â”€ APPOINTMENT LIST â”€â”€ */
+    /* ── APPOINTMENT LIST ── */
     .day-group { margin-bottom: 40px; }
 
     .day-label {
@@ -284,12 +299,12 @@
     .icon-btn:hover { border-color: var(--rose); color: var(--rose-deep); background: var(--blush); }
     .icon-btn.danger:hover { border-color: #c0392b; color: #c0392b; background: #fff5f5; }
 
-    /* â”€â”€ PAST APPOINTMENTS â”€â”€ */
+    /* ── PAST APPOINTMENTS ── */
     .appt-row.past .appt-time { color: var(--mid); }
     .appt-row.past .appt-client { color: var(--warm-grey); }
     .appt-row.past .appt-dot { background: var(--soft-border); }
 
-    /* â”€â”€ SERVICES LIST â”€â”€ */
+    /* ── SERVICES LIST ── */
     .services-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -331,7 +346,7 @@
       margin-top: 14px;
     }
 
-    /* â”€â”€ EMPTY STATES â”€â”€ */
+    /* ── EMPTY STATES ── */
     .empty {
       padding: 64px 0;
       text-align: center;
@@ -347,7 +362,7 @@
     }
     .empty p { font-size: 14px; }
 
-    /* â”€â”€ EDIT MODAL â”€â”€ */
+    /* ── EDIT MODAL ── */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(28,25,22,0.55);
@@ -451,7 +466,7 @@
     }
     .btn-ghost:hover { border-color: var(--rose); color: var(--rose-deep); }
 
-    /* â”€â”€ CONFIRM DELETE MODAL â”€â”€ */
+    /* ── CONFIRM DELETE MODAL ── */
     #deleteModal .modal { max-width: 380px; padding: 44px 40px; }
     .delete-warning {
       font-size: 13px; color: var(--warm-grey);
@@ -468,7 +483,7 @@
     }
     .btn-danger:hover { background: #8c1f1f; }
 
-    /* â”€â”€ MOBILE â”€â”€ */
+    /* ── MOBILE ── */
     @media (max-width: 768px) {
       :root { --sidebar-w: 0px; }
       body {
@@ -571,7 +586,7 @@
 </head>
 <body>
 
-{# â”€â”€ SIDEBAR â”€â”€ #}
+{# ── SIDEBAR ── #}
 <aside class="sidebar" role="navigation" aria-label="Navigation principale">
   <div class="sidebar-header">
     <button
@@ -637,19 +652,31 @@
   </nav>
 
   <div class="sidebar-footer">
+    {% if not isDemoDashboard and proName %}
+    <p class="signed-in-as">Votre compte<br><span data-pro-name>{{ proName }}</span></p>
+    {% endif %}
+    {% if not isDemoDashboard and logoutApiUrl %}
+    <button type="button" class="logout-btn" data-logout data-logout-api-url="{{ logoutApiUrl }}">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
+      </svg>
+      Se déconnecter
+    </button>
+    {% else %}
     <a href="{{ isDemoDashboard ? '#' : (logoutUrl ?? '#') }}" class="logout-btn"{% if isDemoDashboard %} data-demo-logout{% endif %}>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
       </svg>
       Se déconnecter
     </a>
+    {% endif %}
   </div>
 </aside>
 
-{# â”€â”€ MAIN â”€â”€ #}
+{# ── MAIN ── #}
 <main class="main">
 
-  {# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• UPCOMING TAB â•â•â•â• #}
+  {# ════════════════════════════════════ UPCOMING TAB ════ #}
   {% if activeTab == 'upcoming' %}
 
   <header class="main-header">
@@ -664,13 +691,13 @@
   >
     {% if upcomingAppointments is empty %}
       <div class="empty">
-        <span class="empty-mark">âœ¦</span>
+        <span class="empty-mark">✦</span>
         <p data-upcoming-appointments-empty-message>
           {{ upcomingAppointmentsLoadError ?? (upcomingAppointmentsApiUrl ? 'Chargement des rendez-vous…' : 'Aucun rendez-vous planifié.') }}
         </p>
       </div>
     {% else %}
-      {# Group by date â€” in a real app, group in the controller or with a macro #}
+      {# Group by date — in a real app, group in the controller or with a macro #}
       {% set currentDay = null %}
       {% for appt in upcomingAppointments %}
         {% set apptDay = appt.date|date('Y-m-d') %}
@@ -718,7 +745,7 @@
     {% endif %}
   </div>
 
-  {# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PAST TAB â•â•â•â• #}
+  {# ════════════════════════════════════ PAST TAB ════ #}
   {% elseif activeTab == 'past' %}
 
   <header class="main-header">
@@ -729,7 +756,7 @@
   <div class="main-content">
     {% if pastAppointments is empty %}
       <div class="empty">
-        <span class="empty-mark">âœ¦</span>
+        <span class="empty-mark">✦</span>
         <p>Aucun rendez-vous passé.</p>
       </div>
     {% else %}
@@ -753,14 +780,14 @@
             </p>
           </div>
           <span class="appt-duration-pill">{{ appt.durationMinutes }} min</span>
-          <div class="appt-actions">{# read-only â€” no edit/delete #}</div>
+          <div class="appt-actions">{# read-only — no edit/delete #}</div>
         </div>
       {% endfor %}
       {% if currentDay is not null %}</div>{% endif %}
     {% endif %}
   </div>
 
-  {# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SERVICES TAB â•â•â•â• #}
+  {# ════════════════════════════════════ SERVICES TAB ════ #}
   {% elseif activeTab == 'services' %}
 
   <header class="main-header">
@@ -771,7 +798,7 @@
   <div class="main-content">
     {% if services is empty %}
       <div class="empty">
-        <span class="empty-mark">âœ¦</span>
+        <span class="empty-mark">✦</span>
         <p>Aucune prestation ajoutée.</p>
       </div>
     {% else %}
@@ -795,10 +822,10 @@
 </main>{# /main #}
 
 
-{# â”€â”€ EDIT MODAL â”€â”€ #}
+{# ── EDIT MODAL ── #}
 <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
   <div class="modal">
-    <button class="modal-close" onclick="closeEditModal()" aria-label="Fermer">Ã—</button>
+    <button class="modal-close" onclick="closeEditModal()" aria-label="Fermer">×</button>
 
     <p class="modal-eyebrow">Modifier le rendez-vous</p>
     <h2 class="modal-title" id="editModalTitle">Modifier les informations</h2>
@@ -830,10 +857,10 @@
   </div>
 </div>
 
-{# â”€â”€ DELETE CONFIRM MODAL â”€â”€ #}
+{# ── DELETE CONFIRM MODAL ── #}
 <div class="modal-overlay" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
   <div class="modal">
-    <button class="modal-close" onclick="closeDeleteModal()" aria-label="Fermer">Ã—</button>
+    <button class="modal-close" onclick="closeDeleteModal()" aria-label="Fermer">×</button>
 
     <p class="modal-eyebrow">Supprimer le rendez-vous</p>
     <h2 class="modal-title" id="deleteModalTitle">Supprimer ce rendez-vous ?</h2>
@@ -859,6 +886,45 @@
   const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
   const mainHeader = document.querySelector('.main-header');
   const demoLogout = document.querySelector('[data-demo-logout]');
+
+  /* ── SESSION (backend-connected dashboard only) ── */
+  const loginUrl = {{ loginUrl|json_encode|raw }};
+  const logoutButton = document.querySelector('[data-logout]');
+
+  const redirectToLogin = (query) => {
+    if (loginUrl) {
+      window.location.replace(loginUrl + (query || ''));
+    }
+  };
+
+  if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+      logoutButton.disabled = true;
+
+      fetch(logoutButton.dataset.logoutApiUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+        .then((response) => {
+          if (response.status !== 204) {
+            throw new Error('Logout failed.');
+          }
+
+          redirectToLogin('?deconnexion=1');
+        })
+        .catch(() => {
+          logoutButton.disabled = false;
+          window.alert('La déconnexion a échoué. Veuillez réessayer.');
+        });
+    });
+  }
+
+  /* The page may come from the back/forward cache after a logout: check the session again. */
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted && logoutButton) {
+      window.location.reload();
+    }
+  });
 
   if (sidebar && mobileMenuToggle) {
     const closeMobileMenu = () => {
@@ -934,7 +1000,7 @@
 
     const mark = document.createElement('span');
     mark.className = 'empty-mark';
-    mark.textContent = 'âœ¦';
+    mark.textContent = '✦';
 
     const text = document.createElement('p');
     text.textContent = message;
@@ -1058,6 +1124,11 @@
       },
     })
       .then((response) => {
+        if (response.status === 401 && loginUrl) {
+          redirectToLogin();
+          throw new Error('Votre session a pris fin.');
+        }
+
         if (!response.ok) {
           throw new Error('Impossible de charger les rendez-vous.');
         }
@@ -1072,7 +1143,7 @@
       });
   }
 
-  /* â”€â”€ EDIT MODAL â”€â”€ */
+  /* ── EDIT MODAL ── */
   const editModal   = document.getElementById('editModal');
   const editForm    = document.getElementById('editForm');
   const editTitle   = document.getElementById('editModalTitle');
@@ -1093,7 +1164,7 @@
     document.body.style.overflow = '';
   }
 
-  /* â”€â”€ DELETE MODAL â”€â”€ */
+  /* ── DELETE MODAL ── */
   const deleteModal    = document.getElementById('deleteModal');
   const deleteForm     = document.getElementById('deleteForm');
   const deleteWarning  = document.getElementById('deleteWarningText');
@@ -1140,12 +1211,12 @@
     closeDeleteModal();
   });
 </script>
-{% include 'demo/fr/_offer_bar.html.twig' %}
-{% include 'demo/fr/_g4s_account_prompt.html.twig' with {
-  demo_side: 'admin',
-  front_url: frontUrl
-} %}
 {% if isDemoDashboard %}
+  {% include 'demo/fr/_offer_bar.html.twig' %}
+  {% include 'demo/fr/_g4s_account_prompt.html.twig' with {
+    demo_side: 'admin',
+    front_url: frontUrl
+  } %}
   {% include 'tracking/_track_page_visit.html.twig' %}
 {% endif %}
 </body>

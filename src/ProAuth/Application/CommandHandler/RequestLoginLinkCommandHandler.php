@@ -1,0 +1,99 @@
+<?php
+
+namespace App\ProAuth\Application\CommandHandler;
+
+use App\ProAuth\Application\Command\RequestLoginLinkCommand;
+use App\ProAuth\Application\Dao\LoginTokenDaoInterface;
+use App\ProAuth\Application\Mailer\LoginLinkMailerInterface;
+use App\ProAuth\Application\Throttling\LoginLinkThrottle;
+use App\ProAuth\Application\Token\OpaqueToken;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Sends a single-use login link to an existing beautician, unless the cooldown or the rate limit refuses it.
+ *
+ * The outcome is never returned: the caller answers the same way whether the email exists, the request was
+ * refused, or the email could not be delivered.
+ */
+final class RequestLoginLinkCommandHandler
+{
+    public function __construct(
+        private readonly LoginTokenDaoInterface $loginTokenDao,
+        private readonly LoginLinkThrottle $loginLinkThrottle,
+        private readonly LoginLinkMailerInterface $loginLinkMailer,
+        private readonly LoggerInterface $logger
+    ) {
+    }
+
+    public function __invoke(RequestLoginLinkCommand $command): void
+    {
+        $email = mb_strtolower(trim($command->email));
+        $proId = $this->loginTokenDao->findActiveProIdByEmail($email);
+
+        if ($proId === null) {
+            return;
+        }
+
+        $this->loginTokenDao->beginTransaction();
+
+        try {
+            // Serializes concurrent requests of the same beautician, so parallel requests cannot bypass the limits.
+            $this->loginTokenDao->lockPro($proId);
+            $isAllowed = $this->loginLinkThrottle->isAllowed($proId);
+
+            // A refused request stores nothing.
+            if ($isAllowed) {
+                $loginToken = OpaqueToken::generate();
+                $loginTokenHash = OpaqueToken::hash($loginToken);
+                $this->loginTokenDao->create($proId, $loginTokenHash);
+            }
+
+            $this->loginTokenDao->commit();
+        } catch (\Throwable $exception) {
+            $this->loginTokenDao->rollBack();
+            throw $exception;
+        }
+
+        if (!$isAllowed) {
+            return;
+        }
+
+        try {
+            $this->loginLinkMailer->sendLoginLink($email, $loginToken);
+        } catch (\Throwable $exception) {
+            // Any failure, not only a transport one: the response must stay the same as a sent link.
+            // The attempt is kept so it counts in the cooldown and the rate limit, but the link never reached the
+            // beautician, so its token must not stay usable. Never log the token or the exception trace, whose
+            // arguments may contain it.
+            $this->loginTokenDao->markDeliveryFailed($loginTokenHash);
+            // The exception is the original one thrown by the mailer (e.g. IncompleteDsnException,
+            // HttpTransportException), so its class tells exactly what failed.
+            $this->logger->error(
+                'Login link email delivery failed.',
+                [
+                    'pro_id' => $proId,
+                    'exception_class' => $exception::class,
+                    'exception_message' => $exception->getMessage(),
+                    'previous_exception_classes' => $this->previousExceptionClasses($exception),
+                ]
+            );
+        }
+    }
+
+    /**
+     * Lists the class of each exception nested in the given one, outermost first, e.g. the HTTP client exception
+     * behind a Mailer TransportException. Messages are left out: only the outermost one is logged.
+     *
+     * @return list<class-string<\Throwable>>
+     */
+    private function previousExceptionClasses(\Throwable $exception): array
+    {
+        $classes = [];
+
+        for ($previous = $exception->getPrevious(); $previous !== null; $previous = $previous->getPrevious()) {
+            $classes[] = $previous::class;
+        }
+
+        return $classes;
+    }
+}

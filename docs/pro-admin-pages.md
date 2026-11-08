@@ -29,16 +29,15 @@ possible and load backend data through the ProAdmin API routes.
 | `demo_pro_admin_opening_hours_fr` | `GET` | `/fr/demo/pro/dashboard/opening-hours` | French demo opening hours page. |
 | `demo_front_pro_home_fr` | `GET` | `/fr/demo/pro` | French demo public frontend page. |
 | `g4s_checkout` | `GET` | `/checkout` | Public checkout entry point for professionals creating a G4S account. |
-| `pro_admin_appointments_upcoming` | `GET` | `/pro/dashboard/upcoming?proId={proId}` | Backend-connected upcoming appointments page. |
+| `pro_admin_appointments_upcoming_fr` | `GET` | `/fr/pro/dashboard/upcoming` | Backend-connected upcoming appointments page (French). Requires the beautician session; signed-out visitors are redirected to `/fr/connexion`. |
 
 ## API routes
 
 These API routes are for ProAdmin frontend data calls. They read real database
 data for the requested professional through DDD-lite application queries and
-infrastructure read methods. Authentication and deriving the professional ID
-from the connected user are intentionally deferred to a later ticket. For now,
-the professional ID is received as `proId` in the query string because these
-are `GET` endpoints.
+infrastructure read methods. They require the beautician session cookie and act
+on the logged-in professional only: the professional ID comes from the session,
+never from the request (see ADR 0019).
 
 The backend-connected upcoming appointments page calls the upcoming
 appointments API from the browser. The remaining API routes are available for
@@ -47,9 +46,9 @@ layer; service routes live in the Services UI HTTP layer.
 
 | Route name | Method | Path | Purpose |
 | --- | --- | --- | --- |
-| `api_pro_admin_appointments_upcoming` | `GET` | `/api/pro-admin/appointments/upcoming?proId={proId}` | Returns upcoming appointments for the professional. |
-| `api_pro_admin_appointments_past` | `GET` | `/api/pro-admin/appointments/past?proId={proId}` | Returns past appointments for the professional. |
-| `api_pro_admin_services_index` | `GET` | `/api/pro-admin/services?proId={proId}` | Returns services managed by the professional. |
+| `api_pro_admin_appointments_upcoming` | `GET` | `/api/pro-admin/appointments/upcoming` | Returns upcoming appointments for the professional. |
+| `api_pro_admin_appointments_past` | `GET` | `/api/pro-admin/appointments/past` | Returns past appointments for the professional. |
+| `api_pro_admin_services_index` | `GET` | `/api/pro-admin/services` | Returns services managed by the professional. |
 
 Appointment API response fields:
 - `id`: appointment identifier.

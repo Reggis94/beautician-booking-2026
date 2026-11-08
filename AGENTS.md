@@ -9,6 +9,13 @@ When a future improvement in `docs/future-improvements` is implemented, delete i
 
 All PHP code must be PSR-12 compliant.
 
+## Changing Existing Tests
+
+Existing tests document the expected behavior (see ADR 0020). Do not change a test just because the code changed:
+a failing test is a signal that the change may break a requirement, so let it fail and report it.
+Never modify, weaken, skip or delete an existing test without first asking the user for permission and explaining
+why the test should change.
+
 ## ADR Usage
 
 Follow the ADRs in `docs/adr` as much as possible.

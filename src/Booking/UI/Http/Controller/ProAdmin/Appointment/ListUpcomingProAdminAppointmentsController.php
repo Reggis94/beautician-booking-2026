@@ -4,17 +4,16 @@ namespace App\Booking\UI\Http\Controller\ProAdmin\Appointment;
 
 use App\Booking\Application\Query\ListUpcomingProAdminAppointmentsQuery;
 use App\Booking\Application\QueryHandler\ListUpcomingProAdminAppointmentsQueryHandler;
+use App\ProAuth\Public\AuthenticatedPro;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
  * GET /api/pro-admin/appointments/upcoming
  *
- * Returns upcoming appointments for the requested professional.
- *
- * Query parameters:
- * - proId: required positive integer professional ID.
+ * Returns upcoming appointments of the authenticated professional (session cookie required, HTTP 401 otherwise).
+ * The professional is taken from the session, never from request input.
  *
  * This route is database-backed but is not called by the dashboard frontend yet.
  */
@@ -26,9 +25,9 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ListUpcomingProAdminAppointmentsController
 {
     public function __invoke(
-        #[MapQueryString] ListUpcomingProAdminAppointmentsQuery $query,
+        #[CurrentUser] AuthenticatedPro $authenticatedPro,
         ListUpcomingProAdminAppointmentsQueryHandler $handler
     ): JsonResponse {
-        return new JsonResponse($handler($query));
+        return new JsonResponse($handler(new ListUpcomingProAdminAppointmentsQuery($authenticatedPro->getId())));
     }
 }

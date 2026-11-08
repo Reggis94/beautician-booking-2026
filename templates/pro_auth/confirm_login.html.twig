@@ -1,0 +1,130 @@
+{#
+  templates/pro_auth/confirm_login.html.twig
+
+  Login link confirmation page (AUTH_LOGIN_CONFIRM_URL). The emailed link carries the token in the URL fragment
+  (#token=...). Opening the page does not log in: the beautician confirms with a button, which sends
+  POST /api/auth/login. The token is removed from the address bar as soon as it is read and is never stored.
+
+  Variables:
+    - dashboardUrl: where the beautician is sent once logged in.
+#}
+{% extends 'pro_auth/_layout.html.twig' %}
+
+{% block title %}Confirm sign in{% endblock %}
+
+{% block brand %}
+<p class="left-eyebrow hide-on-mobile">Booking for beauty professionals</p>
+<p class="left-headline">Your clients,<br><em>beautifully</em><br>organised.</p>
+<p class="left-sub">Manage your appointments and services from one simple place.</p>
+{% endblock %}
+
+{% block content %}
+<div
+  class="panel centered"
+  data-confirm
+  data-login-url="{{ path('api_auth_confirm_login') }}"
+  data-dashboard-url="{{ dashboardUrl }}"
+>
+
+  {# ── READY TO CONFIRM ── #}
+  <div data-step="ready" hidden>
+    <span class="status-mark" aria-hidden="true">✦</span>
+    <p class="form-eyebrow">One last step</p>
+    <h1 class="status-title">Welcome <em>back</em></h1>
+    <p class="status-desc">Confirm to sign in to your Glam4Style dashboard on this device.</p>
+
+    <div class="banner banner-error" role="alert" data-confirm-error hidden></div>
+
+    <button type="button" class="btn-primary" data-continue>Continue to login</button>
+  </div>
+
+  {# ── SIGNED IN ── #}
+  <div data-step="success" role="status" aria-live="polite" hidden>
+    <span class="status-mark" aria-hidden="true">✦</span>
+    <h1 class="status-title">You're <em>signed in</em></h1>
+    <p class="status-desc">Taking you to your dashboard…</p>
+  </div>
+
+  {# ── INVALID LINK ── #}
+  <div data-step="invalid" role="alert" hidden>
+    <span class="status-mark" aria-hidden="true">✧</span>
+    <h1 class="status-title">This link is <em>no longer valid</em></h1>
+    <p class="status-desc">
+      Each sign-in link works only once. It may have already been used, or it was not copied in full.<br>
+      Request a new link to sign in.
+    </p>
+    <a href="{{ path('pro_auth_login_page') }}" class="btn-primary">Request a new link</a>
+  </div>
+
+</div>
+
+<noscript>
+  <p class="form-note">Please enable JavaScript to sign in.</p>
+</noscript>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var root = document.querySelector('[data-confirm]');
+    var steps = root.querySelectorAll('[data-step]');
+    var continueButton = root.querySelector('[data-continue]');
+    var confirmError = root.querySelector('[data-confirm-error]');
+
+    function showStep(name) {
+      steps.forEach(function (step) {
+        step.hidden = step.dataset.step !== name;
+      });
+    }
+
+    // Read the token from the fragment, then remove it from the address bar and history.
+    var token = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token') || '';
+    if (window.location.hash && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    if (token === '') {
+      showStep('invalid');
+      return;
+    }
+
+    showStep('ready');
+    continueButton.focus();
+
+    continueButton.addEventListener('click', function () {
+      confirmError.hidden = true;
+      continueButton.disabled = true;
+      continueButton.textContent = 'Signing in…';
+
+      fetch(root.dataset.loginUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ token: token })
+      })
+        .then(function (response) {
+          if (response.status === 204) {
+            token = '';
+            showStep('success');
+            window.location.replace(root.dataset.dashboardUrl);
+            return;
+          }
+
+          if (response.status === 401 || response.status === 422) {
+            token = '';
+            showStep('invalid');
+            return;
+          }
+
+          throw new Error('Unexpected response');
+        })
+        .catch(function () {
+          confirmError.textContent = 'Something went wrong. Please try again in a moment.';
+          confirmError.hidden = false;
+          continueButton.disabled = false;
+          continueButton.textContent = 'Continue to login';
+        });
+    });
+  })();
+</script>
+{% endblock %}
