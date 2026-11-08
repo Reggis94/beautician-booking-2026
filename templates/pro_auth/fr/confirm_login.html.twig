@@ -1,0 +1,138 @@
+{#
+  templates/pro_auth/fr/confirm_login.html.twig
+
+  Login link confirmation page (AUTH_LOGIN_CONFIRM_URL), French version. Must stay aligned with the English
+  version (templates/pro_auth/confirm_login.html.twig).
+
+  The emailed link carries the token in the URL fragment (#token=...). Opening the page does not log in: the
+  beautician confirms with a button, which sends POST /api/auth/login. The token is removed from the address bar
+  as soon as it is read and is never stored.
+
+  Variables:
+    - dashboardUrl: where the beautician is sent once logged in.
+#}
+{% extends 'pro_auth/_layout.html.twig' %}
+
+{% block lang %}fr{% endblock %}
+
+{% block title %}Confirmer la connexion{% endblock %}
+
+{% block brand %}
+<p class="left-eyebrow hide-on-mobile">La réservation pour les professionnelles de la beauté</p>
+<p class="left-headline">Vos rendez-vous,<br><em>professionnellement</em><br>organisés.</p>
+<p class="left-sub">Gérez vos rendez-vous et vos prestations depuis un seul endroit, en toute simplicité.</p>
+{% endblock %}
+
+{% block content %}
+<div
+  class="panel centered"
+  data-confirm
+  data-login-url="{{ path('api_auth_confirm_login') }}"
+  data-dashboard-url="{{ dashboardUrl }}"
+>
+
+  {# ── READY TO CONFIRM ── #}
+  <div data-step="ready" hidden>
+    <span class="status-mark" aria-hidden="true">✦</span>
+    <p class="form-eyebrow">Dernière étape</p>
+    <h1 class="status-title">Bienvenue dans votre <em>espace</em></h1>
+    <p class="status-desc">Confirmez pour vous connecter à votre tableau de bord Glam4Style sur cet appareil.</p>
+
+    <div class="banner banner-error" role="alert" data-confirm-error hidden></div>
+
+    <button type="button" class="btn-primary" data-continue>Continuer vers la connexion</button>
+  </div>
+
+  {# ── SIGNED IN ── #}
+  <div data-step="success" role="status" aria-live="polite" hidden>
+    <span class="status-mark" aria-hidden="true">✦</span>
+    <h1 class="status-title">Connexion <em>réussie</em></h1>
+    <p class="status-desc">Redirection vers votre tableau de bord…</p>
+  </div>
+
+  {# ── INVALID LINK ── #}
+  <div data-step="invalid" role="alert" hidden>
+    <span class="status-mark" aria-hidden="true">✧</span>
+    <h1 class="status-title">Ce lien n'est <em>plus valide</em></h1>
+    <p class="status-desc">
+      Chaque lien de connexion ne fonctionne qu'une seule fois. Il a peut-être déjà été utilisé, ou n'a pas été
+      copié en entier.<br>
+      Demandez un nouveau lien pour vous connecter.
+    </p>
+    <a href="{{ path('pro_auth_login_page_fr') }}" class="btn-primary">Demander un nouveau lien</a>
+  </div>
+
+</div>
+
+<noscript>
+  <p class="form-note">Veuillez activer JavaScript pour vous connecter.</p>
+</noscript>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var CONTINUE_LABEL = 'Continuer vers la connexion';
+
+    var root = document.querySelector('[data-confirm]');
+    var steps = root.querySelectorAll('[data-step]');
+    var continueButton = root.querySelector('[data-continue]');
+    var confirmError = root.querySelector('[data-confirm-error]');
+
+    function showStep(name) {
+      steps.forEach(function (step) {
+        step.hidden = step.dataset.step !== name;
+      });
+    }
+
+    // Read the token from the fragment, then remove it from the address bar and history.
+    var token = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token') || '';
+    if (window.location.hash && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    if (token === '') {
+      showStep('invalid');
+      return;
+    }
+
+    showStep('ready');
+    continueButton.focus();
+
+    continueButton.addEventListener('click', function () {
+      confirmError.hidden = true;
+      continueButton.disabled = true;
+      continueButton.textContent = 'Connexion en cours…';
+
+      fetch(root.dataset.loginUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ token: token })
+      })
+        .then(function (response) {
+          if (response.status === 204) {
+            token = '';
+            showStep('success');
+            window.location.replace(root.dataset.dashboardUrl);
+            return;
+          }
+
+          if (response.status === 401 || response.status === 422) {
+            token = '';
+            showStep('invalid');
+            return;
+          }
+
+          throw new Error('Unexpected response');
+        })
+        .catch(function () {
+          confirmError.textContent = 'Une erreur est survenue. Veuillez réessayer dans un instant.';
+          confirmError.hidden = false;
+          continueButton.disabled = false;
+          continueButton.textContent = CONTINUE_LABEL;
+        });
+    });
+  })();
+</script>
+{% endblock %}

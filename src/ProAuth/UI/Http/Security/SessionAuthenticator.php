@@ -5,8 +5,10 @@ namespace App\ProAuth\UI\Http\Security;
 use App\ProAuth\Application\Query\GetAuthenticatedProQuery;
 use App\ProAuth\Application\QueryHandler\GetAuthenticatedProQueryHandler;
 use App\ProAuth\Public\AuthenticatedPro;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
@@ -21,9 +23,13 @@ use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface
  */
 final class SessionAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
+    private const API_PATH_PREFIX = '/api/';
+    private const LOGIN_PAGE_ROUTE = 'pro_auth_login_page_fr';
+
     public function __construct(
         private readonly SessionCookie $sessionCookie,
-        private readonly GetAuthenticatedProQueryHandler $getAuthenticatedProQueryHandler
+        private readonly GetAuthenticatedProQueryHandler $getAuthenticatedProQueryHandler,
+        private readonly UrlGeneratorInterface $urlGenerator
     ) {
     }
 
@@ -66,8 +72,15 @@ final class SessionAuthenticator extends AbstractAuthenticator implements Authen
         return null;
     }
 
+    /**
+     * API requests get an empty 401. Protected pages (/pro/..., /fr/pro/...) redirect a signed-out visitor to the login page.
+     */
     public function start(Request $request, ?AuthenticationException $authException = null): Response
     {
+        if (!str_starts_with($request->getPathInfo(), self::API_PATH_PREFIX)) {
+            return new RedirectResponse($this->urlGenerator->generate(self::LOGIN_PAGE_ROUTE));
+        }
+
         return new Response('', Response::HTTP_UNAUTHORIZED);
     }
 }

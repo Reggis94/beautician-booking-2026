@@ -98,7 +98,7 @@ Backend environment values the frontend depends on:
 
 | Variable | Purpose |
 | --- | --- |
-| `AUTH_LOGIN_CONFIRM_URL` | Full URL of the frontend confirmation page, for example `https://app.example.com/login/confirm`. The backend appends `#token=...`. |
+| `AUTH_LOGIN_CONFIRM_URL` | Full URL of the frontend confirmation page, for example `https://app.example.com/fr/connexion/confirmation` (French page, see ADR 0021). The backend appends `#token=...`. |
 | `AUTH_SESSION_COOKIE_SECURE` | `true` in production (HTTPS). Set `false` only for local HTTP development. |
 | `AUTH_SESSION_COOKIE_SAMESITE` | `lax` by default. |
 

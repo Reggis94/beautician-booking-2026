@@ -12,8 +12,12 @@
 #}
 {% set dashboardUrl = dashboardUrl|default(path('demo_pro_admin_dashboard')) %}
 {% set frontUrl = frontUrl|default(path('demo_front_pro_home')) %}
-{% set isDemoDashboard = isDemoDashboard|default(true) %}
+{# default() would turn an explicit false into true #}
+{% set isDemoDashboard = isDemoDashboard is defined ? isDemoDashboard : true %}
+{% set loginUrl = loginUrl|default(null) %}
+{% set logoutApiUrl = logoutApiUrl|default(null) %}
 {% set logoutUrl = logoutUrl|default(null) %}
+{% set proName = proName|default(null) %}
 {% set openingHoursUrl = openingHoursUrl|default(path('demo_pro_admin_opening_hours')) %}
 {% set pastUrl = pastUrl|default(path('demo_pro_admin_appointments_past')) %}
 {% set servicesUrl = servicesUrl|default(path('demo_pro_admin_services_index')) %}
@@ -157,6 +161,17 @@
       transition: color 0.18s;
     }
     .logout-btn:hover { color: var(--rose); }
+    .logout-btn:disabled { opacity: 0.5; cursor: wait; }
+
+    .signed-in-as {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      word-break: break-word;
+    }
+    .signed-in-as span { color: var(--cream); }
 
     /* ── MAIN ── */
     .main {
@@ -629,12 +644,24 @@
   </nav>
 
   <div class="sidebar-footer">
+    {% if not isDemoDashboard and proName %}
+    <p class="signed-in-as">Signed in as<br><span data-pro-name>{{ proName }}</span></p>
+    {% endif %}
+    {% if not isDemoDashboard and logoutApiUrl %}
+    <button type="button" class="logout-btn" data-logout data-logout-api-url="{{ logoutApiUrl }}">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
+      </svg>
+      Log out
+    </button>
+    {% else %}
     <a href="{{ isDemoDashboard ? '#' : (logoutUrl ?? '#') }}" class="logout-btn"{% if isDemoDashboard %} data-demo-logout{% endif %}>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M6 2H2v12h4M11 5l3 3-3 3M5 8h9"/>
       </svg>
       Log out
     </a>
+    {% endif %}
   </div>
 </aside>
 
@@ -883,6 +910,45 @@
     });
   }
 
+  /* ── SESSION (backend-connected dashboard only) ── */
+  const loginUrl = {{ loginUrl|json_encode|raw }};
+  const logoutButton = document.querySelector('[data-logout]');
+
+  const redirectToLogin = (query) => {
+    if (loginUrl) {
+      window.location.replace(loginUrl + (query || ''));
+    }
+  };
+
+  if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+      logoutButton.disabled = true;
+
+      fetch(logoutButton.dataset.logoutApiUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+        .then((response) => {
+          if (response.status !== 204) {
+            throw new Error('Logout failed.');
+          }
+
+          redirectToLogin('?logged_out=1');
+        })
+        .catch(() => {
+          logoutButton.disabled = false;
+          window.alert('We could not sign you out. Please try again.');
+        });
+    });
+  }
+
+  /* The page may come from the back/forward cache after a logout: check the session again. */
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted && logoutButton) {
+      window.location.reload();
+    }
+  });
+
   const upcomingAppointmentsRoot = document.querySelector('[data-upcoming-appointments-root]');
   const upcomingAppointmentsApiUrl = upcomingAppointmentsRoot
     ? upcomingAppointmentsRoot.dataset.upcomingAppointmentsApiUrl
@@ -1050,6 +1116,11 @@
       },
     })
       .then((response) => {
+        if (response.status === 401 && loginUrl) {
+          redirectToLogin();
+          throw new Error('Your session has ended.');
+        }
+
         if (!response.ok) {
           throw new Error('Appointments could not be loaded.');
         }

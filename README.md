@@ -56,6 +56,10 @@ architecture for email delivery (`LoginLinkMailerInterface` port, Symfony Mailer
   `AUTH_SESSION_COOKIE_SAMESITE` (lax), `AUTH_SESSION_COOKIE_MAX_AGE_SECONDS`, `MAILER_FROM_EMAIL` (required),
   `MAILER_FROM_NAME`, and in dev `MAILER_DEV_RECIPIENT`, which receives every email.
 - ProAuth routes are loaded in every environment; the `Availability`, `ProfilePro`, `Booking` and `Services` API routes are still `dev`-only.
+- Pages: `/fr/connexion` (request a link) and `/fr/connexion/confirmation` (the emailed link) are Twig pages in the ProAuth UI layer
+  that call the API from the browser. French pages use French URLs under `/fr` (ADR 0021); English templates are
+  kept aligned but not served yet.
+  Signed-out visits to protected `/pro/` and `/fr/pro/` pages redirect to `/fr/connexion`.
 - Frontend integration: `docs/pro-auth-frontend-integration.md`.
 
 ## ProAdmin Demo Environment
@@ -82,3 +86,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0016: Avoid Arrow Functions for Readability
 - 0019: Tenant Identity From the Authenticated Session
 - 0020: ProAuth Tests as Executable Requirements
+- 0021: French Pages Use French URLs
