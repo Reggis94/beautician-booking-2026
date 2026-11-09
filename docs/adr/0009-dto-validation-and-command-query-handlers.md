@@ -8,7 +8,8 @@ That extra DTO layer made simple command and query creation more verbose, duplic
 ## Decision
 For endpoints that accept input, prefer automatic request mapping directly to commands and queries:
 - Use Symfony request mapping attributes such as `MapRequestPayload` and `MapQueryString` when they fit the endpoint.
-- Put request validation constraints on the mapped command or query object.
+- Put request validation constraints on the mapped command or query object. Keep request validation in these constraints as much as possible rather than in controllers or handlers.
+- Map uploaded files with `MapUploadedFile` and declare their constraints (type, size) on that attribute. For an array of files, the constraints apply to each file.
 - Name mapped input objects as commands or queries, not as payloads, DTOs, or request objects, when they are used directly by request mapping attributes.
 - Place mapped command and query objects in the appropriate domain `Application` command or query folder, not in UI HTTP controller folders.
 - Pass the validated command or query to a handler that executes the action.

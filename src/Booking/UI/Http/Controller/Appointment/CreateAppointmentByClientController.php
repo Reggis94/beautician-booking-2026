@@ -43,7 +43,8 @@ use Symfony\Component\Routing\Annotation\Route;
  * - HTTP 409 when the requested datetime is in the past.
  * - HTTP 409 when the service would be outside the professional's business hours.
  * - HTTP 409 when another appointment overlaps the requested service time.
- * - HTTP 400 when the service does not belong to the professional.
+ * - HTTP 400 when the service does not belong to the professional, or cannot be booked because it is a draft,
+ *   deleted or replaced by a newer version.
  */
 #[Route('/api/pro-presentation/booking/appointment/create', name: 'api_booking_client_create_appointment', methods: ['POST'])]
 final class CreateAppointmentByClientController

@@ -9,6 +9,10 @@ parameters:
     tracking.demo_and_marketing_max_age: 15552000
 
     store.acuity_banner_packs_directory: '../pro-banners/store'
+    # Service images live in the same external upload storage, under services/<pro-id>/ (see LocalServiceImageStorage).
+    # Relative to the project directory, or absolute.
+    env(SERVICE_IMAGE_STORAGE_DIRECTORY): '../pro-banners'
+    services.image_storage_directory: '%env(SERVICE_IMAGE_STORAGE_DIRECTORY)%'
     # ProAuth: passwordless email authentication for beauticians.
     # AUTH_LOGIN_CONFIRM_URL and MAILER_FROM_EMAIL have no default and must be set.
     env(AUTH_SESSION_COOKIE_SECURE): 'true'
@@ -55,8 +59,9 @@ services:
         tags: ['controller.service_arguments']
 
     App\Dao\ProDaoInterface: '@App\Dao\ProDao'
-    App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface: '@App\Services\Infrastructure\Dao\ServiceCategoryDao'
-    App\Services\Application\Service\Dao\ServiceDaoInterface: '@App\Services\Infrastructure\Dao\ServiceDao'
+    App\Services\Domain\Repository\ServiceCategoryRepositoryInterface: '@App\Services\Infrastructure\Repository\ServiceCategoryRepository'
+    App\Services\Domain\Repository\ServiceRepositoryInterface: '@App\Services\Infrastructure\Repository\ServiceRepository'
+    App\Services\Application\Port\ServiceImageStorageInterface: '@App\Services\Infrastructure\Storage\LocalServiceImageStorage'
     App\Booking\Application\Repository\Appointment\OverlapRepositoryInterface: '@App\Booking\Infrastructure\Repository\Appointment\OverlapRepository'
     App\Booking\Application\Repository\Appointment\AppointmentRepositoryInterface: '@App\Booking\Infrastructure\Repository\Appointment\AppointmentRepository'
     App\Availability\Public\Query\ServiceIsWithinProBusinessTimeQueryInterface: '@App\Availability\Public\Query\ServiceIsWithinProBusinessTime'

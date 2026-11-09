@@ -13,6 +13,7 @@
                 class="service-categories"
                 data-category-list-url="{{ path('category_pro_presentation', { id: pro_id }) }}"
                 data-service-list-url="{{ path('service_list_per_category') }}"
+                data-uncategorized-service-list-url="{{ path('service_list_uncategorized', { id: pro_id }) }}"
                 data-bookable-days-url="{{ path('get_bookable_days_for_service') }}"
                 data-bookable-ranges-url="{{ path('get_bookable_free_ranges_for_service_and_day') }}"
                 data-create-appointment-url="{{ path('api_booking_client_create_appointment') }}"
@@ -167,6 +168,18 @@
             transition: background .18s;
         }
         .service-card:hover { background: #FEFCF9; }
+        .service-card__images {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: repeat(2, minmax(0, 160px));
+            margin-bottom: 14px;
+        }
+        .service-card__images img {
+            aspect-ratio: 3 / 2;
+            display: block;
+            object-fit: cover;
+            width: 100%;
+        }
         .service-card__header {
             align-items: flex-start;
             display: flex;
@@ -533,6 +546,7 @@
             const modalCloseButtons = bookingModal.querySelectorAll('[data-booking-modal-close]');
             const categoryListUrl = section.dataset.categoryListUrl;
             const serviceListUrl = section.dataset.serviceListUrl;
+            const uncategorizedServiceListUrl = section.dataset.uncategorizedServiceListUrl;
             const bookableDaysUrl = section.dataset.bookableDaysUrl;
             const bookableRangesUrl = section.dataset.bookableRangesUrl;
             const createAppointmentUrl = section.dataset.createAppointmentUrl;
@@ -1378,6 +1392,23 @@
                     );
                 });
 
+                const images = Array.isArray(service.images) ? service.images : [];
+
+                if (images.length > 0) {
+                    const gallery = document.createElement('div');
+                    gallery.className = 'service-card__images';
+
+                    images.forEach((image) => {
+                        const picture = document.createElement('img');
+                        picture.src = image.url;
+                        picture.alt = service.name;
+                        picture.loading = 'lazy';
+                        gallery.append(picture);
+                    });
+
+                    card.append(gallery);
+                }
+
                 card.append(header, description, meta, bookButton, availabilityPanel);
 
                 return card;
@@ -1385,7 +1416,10 @@
             const loadServices = (category, servicesPanel) => {
                 servicesPanel.textContent = 'Loading services...';
 
-                return fetch(`${serviceListUrl}?id=${encodeURIComponent(category.id)}`, {
+                const url = category.listUrl
+                    || `${serviceListUrl}?id=${encodeURIComponent(category.id)}&proId=${encodeURIComponent(proId)}`;
+
+                return fetch(url, {
                     headers: {
                         'Accept': 'application/json',
                     },
@@ -1495,20 +1529,33 @@
                     list.replaceChildren();
                 }
 
-                return fetch(categoryListUrl, {
+                const fetchList = (url) => fetch(url, {
                     headers: {
                         'Accept': 'application/json',
                     },
-                })
-                    .then((response) => {
-                        if (!response.ok) {
-                            throw new Error('Category list request failed.');
+                }).then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Category list request failed.');
+                    }
+
+                    return response.json();
+                });
+
+                // Categories only list published services; services without a category come last.
+                return Promise.all([fetchList(categoryListUrl), fetchList(uncategorizedServiceListUrl)])
+                    .then(([categories, uncategorizedServices]) => {
+                        const items = Array.isArray(categories) ? categories.slice() : [];
+
+                        if (Array.isArray(uncategorizedServices) && uncategorizedServices.length > 0) {
+                            items.push({
+                                id: null,
+                                listUrl: uncategorizedServiceListUrl,
+                                name: 'Other services',
+                                services_count: uncategorizedServices.length,
+                            });
                         }
 
-                        return response.json();
-                    })
-                    .then((categories) => {
-                        if (!Array.isArray(categories) || categories.length === 0) {
+                        if (items.length === 0) {
                             list.textContent = 'No category list available';
                             setStatus('No category list available');
                             return;
@@ -1518,7 +1565,7 @@
                             status.remove();
                         }
 
-                        list.replaceChildren(...categories.map(createCategoryItem));
+                        list.replaceChildren(...items.map(createCategoryItem));
                     })
                     .catch(() => {
                         list.textContent = 'Cannot load categories';

@@ -11,13 +11,13 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * GET /api/pro-presentation/category/list?id={proId}
  *
- * Returns the non-deleted service categories for the given professional profile,
- * ordered by category ID ascending.
+ * Public list of the categories of a not deleted professional that contain at least one published, not deleted service,
+ * in French alphabetical order. services_count counts those published services.
  *
  * Query parameters:
- * - id: required integer professional profile ID.
+ * - id: required professional id.
  *
- * Successful response: array<int, array{id: int, name: string, services_count: int}>
+ * Successful response: list<{ id: int, name: string, services_count: int }>
  */
 #[Route('api/pro-presentation/category/list', name: 'category_pro_presentation', methods: ['GET'])]
 final class ListProPresentationPage
@@ -26,8 +26,6 @@ final class ListProPresentationPage
         ServiceCategoryListQueryHandler $serviceCategoryListQueryHandler,
         #[MapQueryString] ServiceCategoryListQuery $serviceCategoryListQuery
     ): JsonResponse {
-        $categories = $serviceCategoryListQueryHandler($serviceCategoryListQuery);
-
-        return new JsonResponse($categories);
+        return new JsonResponse($serviceCategoryListQueryHandler($serviceCategoryListQuery));
     }
 }

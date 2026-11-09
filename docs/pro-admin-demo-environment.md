@@ -45,6 +45,30 @@ The demo environment should have a life of its own:
   the real ProAdmin navigation, but it should be a no-op. It must not call the
   real logout route, clear authentication, or send the customer out of the demo.
 
+## French Prestations demo
+
+The French Prestations page (`/fr/demo/pro/dashboard/services`) manages services
+and categories on one page, with fake data only. The rules live in the browser,
+in `templates/demo/fr/_prestations_store.html.twig`, and the state is kept in
+`localStorage` so that the Prestations page and the public page
+(`/fr/demo/pro`) stay consistent. Nothing is sent to the server.
+"Réinitialiser la démo" restores the seed data.
+
+The demo simulates drafts and publication, versioning of services and
+categories referenced by appointments (cancelled and soft-deleted ones
+included), explicit deletion versus replacement, category deletion with or
+without its services, and service images (2 per
+service, 5 MB each, soft-deleted records, files reused across versions and
+moved to `deleted/` when no active image uses them). The calendar keeps its own
+independent fake data.
+
+The demo and the backend-connected page (`/fr/pro/tableau-de-bord/prestations`)
+share one template, `templates/pro_admin/fr/_prestations.html.twig`. The demo
+store exposes its catalog in the shape of `GET /api/pro/service/catalog`
+and reports errors with the same HTTP statuses as the backend, so both pages use
+the same rendering and error handling. When the backend contract changes, update
+the demo store to match it.
+
 ## Relationship to real templates
 
 Demo templates and real templates must stay visually and behaviorally aligned.

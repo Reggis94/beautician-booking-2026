@@ -3,12 +3,11 @@
   Variables expected from controller:
     - upcomingAppointments: Appointment[]  (date >= today, ordered ASC)
     - pastAppointments:     Appointment[]  (date < today,  ordered DESC)
-    - services:             Service[]
-    - activeTab:            string  ('upcoming'|'past'|'services'|'opening_hours')  default 'upcoming'
+    - activeTab:           string  ('upcoming'|'past'|'services'|'opening_hours')  default 'upcoming'
+    - prestationsApi:      backend URLs of the Prestations tab (see pro_admin/fr/_prestations.html.twig);
+                           ignored by the demo, which uses the browser demo store
   Each Appointment has:
     - id, clientName, clientTéléphone, serviceName, date (DateTime), durationMinutes
-  Each Service has:
-    - id, name, description, durationMinutes, price
 #}
 {% set dashboardUrl = dashboardUrl|default(path('demo_pro_admin_dashboard')) %}
 {% set frontUrl = frontUrl|default(path('demo_front_pro_home')) %}
@@ -303,47 +302,19 @@
     .appt-row.past .appt-time { color: var(--mid); }
     .appt-row.past .appt-client { color: var(--warm-grey); }
     .appt-row.past .appt-dot { background: var(--soft-border); }
-
-    /* ── SERVICES LIST ── */
-    .services-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1px;
-      background: var(--soft-border);
-      border: 1px solid var(--soft-border);
-    }
-
-    .service-card {
+    .appt-row.cancelled .appt-time { text-decoration: line-through; }
+    .status-badge {
       background: var(--cream);
-      padding: 28px 32px;
-      transition: background 0.18s;
-    }
-    .service-card:hover { background: var(--blush); }
-
-    .service-name {
-      font-family: var(--serif);
-      font-size: 20px;
-      font-weight: 400;
-      margin-bottom: 6px;
-    }
-    .service-meta {
-      font-size: 12px;
-      color: var(--mid);
-      display: flex;
-      gap: 14px;
-    }
-    .service-description {
+      border: 1px solid var(--soft-border);
       color: var(--warm-grey);
-      font-size: 13px;
-      line-height: 1.55;
-      margin-top: 10px;
-    }
-    .service-price {
-      font-family: var(--serif);
-      font-size: 26px;
-      font-weight: 300;
-      color: var(--charcoal);
-      margin-top: 14px;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      margin-left: 6px;
+      padding: 2px 6px;
+      text-transform: uppercase;
+      vertical-align: middle;
+      white-space: nowrap;
     }
 
     /* ── EMPTY STATES ── */
@@ -633,7 +604,7 @@
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
         <path d="M2 4h12M2 8h8M2 12h10"/>
       </svg>
-      Services
+      Prestations
     </a>
     <a href="{{ openingHoursUrl }}"
        class="{{ activeTab == 'opening_hours' ? 'active' : '' }}"
@@ -770,10 +741,13 @@
           {% set currentDay = apptDay %}
         {% endif %}
 
-        <div class="appt-row past">
+        <div class="appt-row past{{ appt.status|default('confirmed') == 'cancelled' ? ' cancelled' : '' }}">
           <span class="appt-time">{{ appt.date|date('H:i') }}</span>
           <div class="appt-info">
-            <p class="appt-client">{{ appt.clientName }}</p>
+            <p class="appt-client">
+              {{ appt.clientName }}
+              {% if appt.status|default('confirmed') == 'cancelled' %}<span class="status-badge">Annulé</span>{% endif %}
+            </p>
             <p class="appt-meta">
               <span class="appt-dot"></span>
               {{ appt.serviceName }}
@@ -795,27 +769,12 @@
     <h1 class="page-title">Vos <em>prestations</em></h1>
   </header>
 
-  <div class="main-content">
-    {% if services is empty %}
-      <div class="empty">
-        <span class="empty-mark">✦</span>
-        <p>Aucune prestation ajoutée.</p>
-      </div>
-    {% else %}
-      <div class="services-grid">
-        {% for service in services %}
-        <div class="service-card">
-          <p class="service-name">{{ service.name }}</p>
-          <p class="service-meta">
-            <span>{{ service.durationMinutes }} min</span>
-          </p>
-          <p class="service-description">{{ service.description }}</p>
-          <p class="service-price">{{ service.price }} €</p>
-        </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  </div>
+  {% if isDemoDashboard %}
+    {% include 'demo/fr/_prestations_store.html.twig' %}
+  {% endif %}
+  {% include 'pro_admin/fr/_prestations.html.twig' with {
+    prestationsApi: isDemoDashboard ? null : prestationsApi|default(null)
+  } %}
 
   {% endif %}
 

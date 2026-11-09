@@ -79,8 +79,7 @@ These require the session cookie and return `401` without it. They act on the lo
 not send `proId` / `pro_id`, which is ignored if present.
 
 - `GET /api/auth/me`
-- `GET /api/pro-admin/services`
-- `GET /api/pro-admin/appointments/upcoming`, `GET /api/pro-admin/appointments/past`
+- `GET /api/pro/appointment/upcoming`, `GET /api/pro/appointment/past`
 - `GET /api/availabilities?month=YYYY-MM`
 - `POST /api/upsert-week-availability`
 - `GET /api/pro/timezone-location/geocode-address`, `PUT /api/pro/timezone-location/update`

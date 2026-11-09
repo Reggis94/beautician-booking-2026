@@ -46,7 +46,6 @@ class ClientSideController extends AbstractController
         return $this->render('front_pro/fr/demo_home.html.twig', [
             'banner_urls' => $this->getDemoBannerUrls(),
             'demo_admin_url' => $this->generateUrl('demo_pro_admin_calendar_fr'),
-            'demo_service_categories' => $this->fakeDemoServiceCategoriesFr(),
             'page_locale' => 'fr',
         ]);
     }
@@ -66,7 +65,6 @@ class ClientSideController extends AbstractController
             'demo_admin_url' => $this->generateUrl('demo_pro_admin_calendar_fr', [
                 'username' => $username,
             ]),
-            'demo_service_categories' => $this->fakeDemoServiceCategoriesFr(),
             'demo_video_url' => $isNyebahDemo ? $this->generateUrl('demo_front_pro_video', [
                 'username' => 'nyebah',
             ]) : null,
@@ -337,54 +335,6 @@ class ClientSideController extends AbstractController
                         'durationMinutes' => 75,
                         'id' => 304,
                         'name' => 'Makeup session',
-                        'price' => '120',
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @return list<array{name: string, services: list<array{id: int, name: string, description: string, durationMinutes: int, price: string}>}>
-     */
-    private function fakeDemoServiceCategoriesFr(): array
-    {
-        return [
-            [
-                'name' => 'Soins du visage',
-                'services' => [[
-                    'description' => 'Un soin sur mesure avec nettoyage doux, exfoliation et finition hydratante pour un teint lumineux.',
-                    'durationMinutes' => 60,
-                    'id' => 301,
-                    'name' => 'Soin du visage signature',
-                    'price' => '95',
-                ]],
-            ],
-            [
-                'name' => 'Sourcils et cils',
-                'services' => [[
-                    'description' => 'Une mise en forme précise pour définir les sourcils tout en conservant un résultat naturel et soigné.',
-                    'durationMinutes' => 45,
-                    'id' => 302,
-                    'name' => 'Restructuration des sourcils',
-                    'price' => '42',
-                ]],
-            ],
-            [
-                'name' => 'Coiffure et maquillage',
-                'services' => [
-                    [
-                        'description' => 'Un soin gloss et un coiffage conçus pour lisser les cheveux, renforcer leur brillance et parfaire le résultat.',
-                        'durationMinutes' => 90,
-                        'id' => 303,
-                        'name' => 'Gloss et coiffage',
-                        'price' => '135',
-                    ],
-                    [
-                        'description' => 'Un maquillage personnalisé pour une finition élégante, adaptée à la cliente et à l’occasion.',
-                        'durationMinutes' => 75,
-                        'id' => 304,
-                        'name' => 'Séance de maquillage',
                         'price' => '120',
                     ],
                 ],

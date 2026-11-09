@@ -3,33 +3,41 @@
 namespace App\Services\UI\Http\Controller\Pro\Service;
 
 use App\ProAuth\Public\AuthenticatedPro;
+use App\Services\Application\Exception\ServiceNotFoundException;
 use App\Services\Application\Service\Command\DeleteServiceCommand;
 use App\Services\Application\Service\CommandHandler\DeleteServiceCommandHandler;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
+/**
+ * DELETE /api/pro/service/delete
+ *
+ * Explicitly deletes (soft delete) a service of the authenticated professional (session cookie required,
+ * HTTP 401 otherwise). Appointments are neither cancelled nor changed.
+ *
+ * JSON body: serviceId (required).
+ *
+ * Responses (error bodies are empty, ADR 0008):
+ * - 204 deleted.
+ * - 404 when the service is unknown, already deleted or replaced, or belongs to another professional.
+ * - 422 when serviceId is missing or invalid.
+ */
 #[Route('/api/pro/service/delete', name: 'api_pro_delete_service', methods: ['DELETE'])]
-final class DeleteServiceController extends AbstractController
+final class DeleteServiceController
 {
     public function __invoke(
-        Request $request,
         DeleteServiceCommandHandler $handler,
-        #[CurrentUser] AuthenticatedPro $authenticatedPro
+        #[CurrentUser] AuthenticatedPro $authenticatedPro,
+        #[MapRequestPayload] DeleteServiceCommand $command
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true) ?? [];
-        $serviceId = (int) ($data['service_id'] ?? 0);
-        $proId = $authenticatedPro->getId();
-        $command = new DeleteServiceCommand($serviceId, $proId);
-
         try {
-            $handler($command);
-        } catch (\Exception $e) {
-            return $this->json(['errors' => [$e->getMessage()]], 403);
+            $handler($command, $authenticatedPro->getId());
+        } catch (ServiceNotFoundException) {
+            return new JsonResponse(null, JsonResponse::HTTP_NOT_FOUND);
         }
 
-        return $this->json(null, 204);
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
 }

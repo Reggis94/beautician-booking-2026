@@ -1,0 +1,1450 @@
+{#
+  ProAdmin Prestations page: services and categories managed on one page (French only).
+
+  Variables:
+    - prestationsApi: null for the customer demo, which uses the browser demo store
+      (demo/fr/_prestations_store.html.twig, included by the caller); otherwise the backend URLs:
+      catalogUrl, createCategoryUrl, renameCategoryUrl, deleteCategoryUrl, createServiceUrl,
+      updateServiceUrl, deleteServiceUrl, loginUrl.
+
+  Both modes share the markup, the wording and the rendering code. The data comes in the shape of
+  GET /api/pro/service/catalog and errors are handled by HTTP status, so the demo stays aligned
+  with the real page.
+#}
+{% set prestationsApi = prestationsApi|default(null) %}
+<style>
+  .prestations-toolbar {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .prestations-toolbar .btn-primary,
+  .prestations-toolbar .btn-ghost { padding: 11px 22px; }
+  .link-btn {
+    background: none;
+    border: 0;
+    color: var(--mid);
+    cursor: pointer;
+    font: 400 12px/1.4 var(--sans);
+    margin-left: auto;
+    padding: 6px 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .link-btn:hover { color: var(--rose-deep); }
+  .prestations-intro {
+    color: var(--warm-grey);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 720px;
+  }
+
+  .cat-block {
+    border: 1px solid var(--soft-border);
+    margin-bottom: 22px;
+  }
+  .cat-head {
+    align-items: center;
+    background: var(--blush);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: space-between;
+    padding: 16px 20px;
+  }
+  .cat-block.is-inactive .cat-head { background: #F6EEE8; }
+  .cat-title {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .cat-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  .cat-block.is-inactive .cat-name { color: var(--warm-grey); }
+  .cat-count {
+    color: var(--mid);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .cat-actions {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+  .btn-small {
+    background: var(--cream);
+    border: 1px solid var(--soft-border);
+    color: var(--charcoal);
+    cursor: pointer;
+    font: 500 11px/1 var(--sans);
+    height: 34px;
+    letter-spacing: 0.08em;
+    padding: 0 14px;
+    text-transform: uppercase;
+    transition: border-color 0.18s, color 0.18s;
+  }
+  .btn-small:hover { border-color: var(--rose); color: var(--rose-deep); }
+  .btn-primary:disabled, .btn-danger:disabled { cursor: wait; opacity: 0.6; transform: none; }
+  .cat-hint {
+    border-top: 1px solid var(--soft-border);
+    color: var(--mid);
+    font-size: 12px;
+    padding: 10px 20px;
+  }
+
+  .state-pill {
+    border: 1px solid var(--soft-border);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    padding: 3px 8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .state-pill.is-active,
+  .state-pill.is-published { background: #EEF4EC; border-color: #CFE0CB; color: #3F6B3A; }
+  .state-pill.is-inactive,
+  .state-pill.is-draft { background: var(--cream); color: var(--warm-grey); }
+
+  .svc-list { list-style: none; }
+  .svc-row {
+    align-items: center;
+    border-top: 1px solid var(--soft-border);
+    display: grid;
+    gap: 18px;
+    grid-template-columns: 64px 1fr auto;
+    padding: 14px 20px;
+  }
+  .svc-thumb {
+    align-items: center;
+    background: var(--blush);
+    color: var(--rose);
+    display: flex;
+    height: 48px;
+    justify-content: center;
+    overflow: hidden;
+    width: 64px;
+  }
+  .svc-thumb img { height: 100%; object-fit: cover; width: 100%; }
+  .svc-row.is-draft .svc-thumb { opacity: 0.6; }
+  .svc-name {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 15px;
+    font-weight: 400;
+    gap: 10px;
+  }
+  .svc-row.is-draft .svc-name-text { color: var(--warm-grey); }
+  .svc-meta {
+    color: var(--mid);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .svc-empty {
+    border-top: 1px solid var(--soft-border);
+    color: var(--mid);
+    font-size: 13px;
+    padding: 16px 20px;
+  }
+
+  .modal.modal--wide {
+    max-height: calc(100vh - 48px);
+    max-width: 600px;
+    overflow-y: auto;
+  }
+  textarea.form-input { min-height: 96px; resize: vertical; }
+  select.form-input { cursor: pointer; }
+  .form-row {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-hint {
+    color: var(--mid);
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  .field-error {
+    color: #b83232;
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  .field-error:empty { display: none; }
+  .form-error {
+    background: #fff1f0;
+    border-left: 2px solid #b83232;
+    color: #8c1f1f;
+    font-size: 13px;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+  }
+  .form-error:empty { display: none; }
+
+  .choice-group {
+    display: grid;
+    gap: 8px;
+  }
+  .choice {
+    align-items: flex-start;
+    border: 1px solid var(--soft-border);
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+  .choice:has(input:checked) { background: var(--blush); border-color: var(--rose); }
+  .choice input { accent-color: var(--rose-deep); margin-top: 4px; }
+  .choice strong { display: block; font-size: 13px; font-weight: 500; }
+  .choice span { color: var(--warm-grey); display: block; font-size: 12px; }
+  .choice-group--inline { grid-template-columns: 1fr 1fr; }
+
+  .img-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .img-tile {
+    aspect-ratio: 3 / 2;
+    background: var(--blush);
+    border: 1px solid var(--soft-border);
+    overflow: hidden;
+    position: relative;
+  }
+  .img-tile img { height: 100%; object-fit: cover; width: 100%; }
+  .img-tile.is-pending {
+    align-items: center;
+    color: var(--warm-grey);
+    display: flex;
+    font-size: 12px;
+    justify-content: center;
+  }
+  .img-remove {
+    background: rgba(28,25,22,0.72);
+    border: 0;
+    color: var(--cream);
+    cursor: pointer;
+    font: 500 11px/1 var(--sans);
+    letter-spacing: 0.06em;
+    padding: 7px 10px;
+    position: absolute;
+    right: 6px;
+    top: 6px;
+  }
+  .img-remove:hover { background: #b83232; }
+  .img-add {
+    align-items: center;
+    aspect-ratio: 3 / 2;
+    border: 1px dashed var(--rose);
+    color: var(--rose-deep);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    font-weight: 500;
+    gap: 4px;
+    justify-content: center;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  .img-add:hover { background: var(--blush); }
+  .img-add input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+  .img-add:focus-within { outline: 2px solid var(--rose); outline-offset: 2px; }
+
+  .notice-banner[hidden] { display: none; }
+  .notice-banner.is-strong { background: #fdf3e1; border-left-color: #b9822a; }
+
+  .demo-toast {
+    background: var(--charcoal);
+    bottom: 96px;
+    color: var(--cream);
+    font-size: 13px;
+    left: 50%;
+    line-height: 1.5;
+    max-width: min(560px, calc(100vw - 32px));
+    opacity: 0;
+    padding: 14px 20px;
+    pointer-events: none;
+    position: fixed;
+    transform: translate(-50%, 12px);
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 300;
+  }
+  .demo-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 768px) {
+    .link-btn { margin-left: 0; }
+    .cat-head { align-items: flex-start; flex-direction: column; }
+    .svc-row { grid-template-columns: 48px 1fr auto; gap: 12px; padding: 12px 14px; }
+    .svc-thumb { height: 40px; width: 48px; }
+    .form-row, .choice-group--inline { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div
+  class="main-content"
+  data-prestations-root
+  data-prestations-source="{{ prestationsApi ? 'api' : 'demo' }}"
+  {% if prestationsApi %}
+  data-catalog-url="{{ prestationsApi.catalogUrl }}"
+  data-create-category-url="{{ prestationsApi.createCategoryUrl }}"
+  data-rename-category-url="{{ prestationsApi.renameCategoryUrl }}"
+  data-delete-category-url="{{ prestationsApi.deleteCategoryUrl }}"
+  data-create-service-url="{{ prestationsApi.createServiceUrl }}"
+  data-update-service-url="{{ prestationsApi.updateServiceUrl }}"
+  data-delete-service-url="{{ prestationsApi.deleteServiceUrl }}"
+  data-login-url="{{ prestationsApi.loginUrl }}"
+  {% endif %}
+>
+  <div class="prestations-toolbar">
+    <button type="button" class="btn-primary" data-add-category>Nouvelle catégorie</button>
+    <button type="button" class="btn-ghost" data-add-service>Nouvelle prestation</button>
+    {% if not prestationsApi %}
+    <button type="button" class="link-btn" data-reset-demo>Réinitialiser la démo</button>
+    {% endif %}
+  </div>
+  <p class="prestations-intro">
+    Une catégorie est <strong>active</strong> dès qu’elle contient au moins une prestation publiée : elle apparaît
+    alors sur votre site. Les brouillons restent visibles ici uniquement. Les catégories et les prestations sont
+    classées par ordre alphabétique.
+  </p>
+  <div data-prestations-list>
+    <div class="empty">
+      <span class="empty-mark">✦</span>
+      <p data-prestations-status>Chargement des prestations…</p>
+    </div>
+    <noscript><p class="empty">Activez JavaScript pour gérer vos prestations.</p></noscript>
+  </div>
+</div>
+
+<div class="demo-toast" role="status" aria-live="polite" data-demo-toast></div>
+
+{# ── CATEGORY FORM ── #}
+<div class="modal-overlay" id="categoryModal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle" data-prestations-modal>
+  <div class="modal">
+    <button type="button" class="modal-close" aria-label="Fermer" data-modal-close>×</button>
+    <p class="modal-eyebrow">Catégorie</p>
+    <h2 class="modal-title" id="categoryModalTitle">Nouvelle catégorie</h2>
+
+    <div class="notice-banner" hidden data-category-version-notice></div>
+
+    <form novalidate data-category-form>
+      <p class="form-error" data-error-for="form"></p>
+      <div class="form-field">
+        <label class="form-label" for="category-name">Nom de la catégorie</label>
+        <input class="form-input" type="text" id="category-name" name="name" maxlength="100" required>
+        <p class="field-error" data-error-for="name"></p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary">Enregistrer</button>
+        <button type="button" class="btn-ghost" data-modal-close>Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── CATEGORY DELETE ── #}
+<div class="modal-overlay" id="categoryDeleteModal" role="dialog" aria-modal="true" aria-labelledby="categoryDeleteTitle" data-prestations-modal>
+  <div class="modal modal--wide">
+    <button type="button" class="modal-close" aria-label="Fermer" data-modal-close>×</button>
+    <p class="modal-eyebrow">Supprimer la catégorie</p>
+    <h2 class="modal-title" id="categoryDeleteTitle">Supprimer cette catégorie ?</h2>
+
+    <form novalidate data-category-delete-form>
+      <p class="form-error" data-error-for="form"></p>
+      <div class="form-field" data-category-delete-choices>
+        <p class="form-label">Que faire de ses prestations ?</p>
+        <div class="choice-group">
+          <label class="choice">
+            <input type="radio" name="servicesMode" value="keep" checked>
+            <span>
+              <strong>Supprimer la catégorie et conserver ses prestations</strong>
+              <span>Les prestations sont déplacées dans « Sans catégorie » et restent publiées ou en brouillon.</span>
+            </span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="servicesMode" value="delete">
+            <span>
+              <strong>Supprimer la catégorie et ses prestations</strong>
+              <span data-category-delete-count></span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <p class="delete-warning">
+        Les rendez-vous existants ne sont ni annulés, ni déplacés, ni modifiés : ils conservent le nom de la
+        catégorie et des prestations réservées.
+      </p>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-danger">Supprimer la catégorie</button>
+        <button type="button" class="btn-ghost" data-modal-close>Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── SERVICE FORM ── #}
+<div class="modal-overlay" id="serviceModal" role="dialog" aria-modal="true" aria-labelledby="serviceModalTitle" data-prestations-modal>
+  <div class="modal modal--wide">
+    <button type="button" class="modal-close" aria-label="Fermer" data-modal-close>×</button>
+    <p class="modal-eyebrow">Prestation</p>
+    <h2 class="modal-title" id="serviceModalTitle">Nouvelle prestation</h2>
+
+    <div class="notice-banner" hidden data-service-version-notice></div>
+
+    <form novalidate data-service-form>
+      <p class="form-error" data-error-for="form"></p>
+
+      <div class="form-field">
+        <label class="form-label" for="service-name">Nom</label>
+        <input class="form-input" type="text" id="service-name" name="name" maxlength="50" required>
+        <p class="field-error" data-error-for="name"></p>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="service-description">Description</label>
+        <textarea class="form-input" id="service-description" name="description" maxlength="500"></textarea>
+        <p class="field-error" data-error-for="description"></p>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label" for="service-price">Prix (€)</label>
+          <input class="form-input" type="text" inputmode="decimal" id="service-price" name="price" placeholder="45,00" required>
+          <p class="field-error" data-error-for="price"></p>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="service-duration">Durée (minutes)</label>
+          <input class="form-input" type="number" id="service-duration" name="durationMinutes" min="5" max="720" step="5" required>
+          <p class="field-error" data-error-for="durationMinutes"></p>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="service-category">Catégorie</label>
+        <select class="form-input" id="service-category" name="categoryId" data-service-category-select></select>
+        <p class="field-error" data-error-for="categoryId"></p>
+      </div>
+
+      <div class="form-field">
+        <p class="form-label">Statut</p>
+        <div class="choice-group choice-group--inline">
+          <label class="choice">
+            <input type="radio" name="publication" value="draft" checked>
+            <span><strong>Brouillon</strong><span>Visible uniquement dans votre espace.</span></span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="publication" value="published">
+            <span><strong>Publiée</strong><span>Visible et réservable sur votre site.</span></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <p class="form-label">Images</p>
+        <div class="img-grid" data-image-grid></div>
+        <p class="form-hint">2 images maximum, 5 Mo maximum par image (JPEG, PNG ou WebP).</p>
+        <p class="field-error" data-error-for="images"></p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary">Enregistrer</button>
+        <button type="button" class="btn-ghost" data-modal-close>Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── SERVICE DELETE ── #}
+<div class="modal-overlay" id="serviceDeleteModal" role="dialog" aria-modal="true" aria-labelledby="serviceDeleteTitle" data-prestations-modal>
+  <div class="modal">
+    <button type="button" class="modal-close" aria-label="Fermer" data-modal-close>×</button>
+    <p class="modal-eyebrow">Supprimer la prestation</p>
+    <h2 class="modal-title" id="serviceDeleteTitle">Supprimer cette prestation ?</h2>
+    <p class="delete-warning" data-service-delete-text></p>
+
+    <form novalidate data-service-delete-form>
+      <p class="form-error" data-error-for="form"></p>
+      <div class="modal-actions">
+        <button type="submit" class="btn-danger">Oui, supprimer</button>
+        <button type="button" class="btn-ghost" data-modal-close>Conserver</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+{% verbatim %}
+(() => {
+  const root = document.querySelector('[data-prestations-root]');
+
+  if (!root) {
+    return;
+  }
+
+  const MAX_IMAGES = 2;
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const GENERIC_ERROR = 'Une erreur est survenue. Réessayez dans un instant.';
+  const NETWORK_ERROR = 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.';
+
+  /* ── DATA SOURCES ──
+     Both sources return promises and reject with { status }, using the backend API statuses. */
+  const apiSource = (urls) => {
+    const request = (url, options) => {
+      return fetch(url, Object.assign({ credentials: 'same-origin' }, options))
+        .catch(() => {
+          throw { status: 0 };
+        })
+        .then((response) => {
+          if (response.status === 401) {
+            if (urls.loginUrl) {
+              window.location.replace(urls.loginUrl);
+            }
+
+            throw { status: 401 };
+          }
+
+          if (!response.ok) {
+            throw { status: response.status };
+          }
+
+          return response.status === 200 ? response.json() : null;
+        });
+    };
+    const sendJson = (method, url, body) => request(url, {
+      body: JSON.stringify(body),
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      method,
+    });
+    const serviceFormData = (input) => {
+      const data = new FormData();
+      data.append('name', input.name);
+      data.append('description', input.description);
+      data.append('durationMin', String(input.durationMin));
+      data.append('priceCents', String(input.priceCents));
+      data.append('published', input.published ? '1' : '0');
+
+      if (input.categoryId !== null) {
+        data.append('categoryId', String(input.categoryId));
+      }
+
+      input.keptImageIds.forEach((id) => data.append('keptImageIds[]', String(id)));
+      input.newFiles.forEach((file) => data.append('images[]', file, file.name));
+
+      return data;
+    };
+
+    return {
+      createCategory: (name) => sendJson('POST', urls.createCategoryUrl, { name }),
+      createService: (input) => request(urls.createServiceUrl, {
+        body: serviceFormData(input),
+        headers: { Accept: 'application/json' },
+        method: 'POST',
+      }),
+      deleteCategory: (id, keepServices) => sendJson('DELETE', urls.deleteCategoryUrl, {
+        keepServices,
+        serviceCategoryId: id,
+      }),
+      deleteService: (id) => sendJson('DELETE', urls.deleteServiceUrl, { serviceId: id }),
+      loadCatalog: () => request(urls.catalogUrl, { headers: { Accept: 'application/json' } }),
+      onExternalChange: () => {},
+      renameCategory: (id, name) => sendJson('PUT', urls.renameCategoryUrl, { name, serviceCategoryId: id }),
+      updateService: (id, input) => {
+        const data = serviceFormData(input);
+        data.append('serviceId', String(id));
+
+        return request(urls.updateServiceUrl, {
+          body: data,
+          headers: { Accept: 'application/json' },
+          method: 'POST',
+        });
+      },
+    };
+  };
+
+  /* Demo: the browser store plays the backend. Pictures are resized so they fit in browser storage. */
+  const demoSource = (store) => {
+    if (!store) {
+      return null;
+    }
+
+    const settle = (result) => {
+      return result.ok ? Promise.resolve(null) : Promise.reject({ status: result.status || 422 });
+    };
+    const readImage = (file) => new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const image = new Image();
+
+      image.onload = () => {
+        const scale = Math.min(1, 900 / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#FAF6F1';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        resolve({
+          mimeType: file.type,
+          originalName: file.name,
+          sizeBytes: file.size,
+          src: canvas.toDataURL('image/jpeg', 0.8),
+        });
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject({ status: 422 });
+      };
+      image.src = url;
+    });
+    const save = (id, input) => {
+      return Promise.all(input.newFiles.map(readImage)).then((newImages) => settle(store.saveService(id, {
+        categoryId: input.categoryId,
+        description: input.description,
+        durationMinutes: String(input.durationMin),
+        keptFileIds: input.keptImageIds,
+        name: input.name,
+        newImages,
+        price: String(input.priceCents / 100),
+        published: input.published,
+      })));
+    };
+
+    return {
+      createCategory: (name) => settle(store.createCategory(name)),
+      createService: (input) => save(null, input),
+      deleteCategory: (id, keepServices) => settle(store.deleteCategory(id, keepServices)),
+      deleteService: (id) => settle(store.deleteService(id)),
+      loadCatalog: () => Promise.resolve(store.catalog()),
+      onExternalChange: store.onExternalChange,
+      renameCategory: (id, name) => settle(store.renameCategory(id, name)),
+      reset: () => {
+        store.reset();
+
+        return Promise.resolve(null);
+      },
+      updateService: (id, input) => save(id, input),
+    };
+  };
+
+  const source = root.dataset.prestationsSource === 'api'
+    ? apiSource(root.dataset)
+    : demoSource(window.G4sDemoPrestations);
+
+  if (!source) {
+    return;
+  }
+
+  const list = root.querySelector('[data-prestations-list]');
+  const toast = document.querySelector('[data-demo-toast]');
+  const pencilIcon = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M11 2l3 3L5 14H2v-3L11 2z"/></svg>';
+  const binIcon = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 4h12M6 4V2h4v2M5 4l1 10h4l1-10"/></svg>';
+  const collator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+
+  let catalog = { categories: [], uncategorized: [] };
+
+  const plural = (count, singular, pluralForm) => count + ' ' + (count > 1 ? pluralForm : singular);
+
+  const formatPrice = (priceCents) => {
+    if (priceCents === null || priceCents === undefined) {
+      return 'Prix non renseigné';
+    }
+
+    const hasCents = priceCents % 100 !== 0;
+
+    return new Intl.NumberFormat('fr-FR', {
+      currency: 'EUR',
+      maximumFractionDigits: hasCents ? 2 : 0,
+      minimumFractionDigits: hasCents ? 2 : 0,
+      style: 'currency',
+    }).format(priceCents / 100);
+  };
+
+  let toastTimer = null;
+  const showToast = (message) => {
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 5200);
+  };
+
+  const element = (tagName, className, text) => {
+    const node = document.createElement(tagName);
+
+    if (className) {
+      node.className = className;
+    }
+
+    if (text !== undefined && text !== null) {
+      node.textContent = text;
+    }
+
+    return node;
+  };
+
+  const iconButton = (className, label, icon, onClick) => {
+    const button = element('button', className);
+    button.type = 'button';
+    button.setAttribute('aria-label', label);
+    button.innerHTML = icon;
+    button.addEventListener('click', onClick);
+
+    return button;
+  };
+
+  const allServices = () => {
+    const services = catalog.uncategorized.slice();
+    catalog.categories.forEach((category) => services.push(...category.services));
+
+    return services;
+  };
+  const findService = (id) => allServices().find((service) => service.id === id) || null;
+  const findCategory = (id) => catalog.categories.find((category) => category.id === id) || null;
+
+  /* ── MODALS ── */
+  const openModal = (modal) => {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    const focusTarget = modal.querySelector('input[type="text"], textarea, select, button[type="submit"]');
+
+    if (focusTarget) {
+      window.setTimeout(() => focusTarget.focus(), 50);
+    }
+  };
+
+  const closeModal = (modal) => {
+    modal.classList.remove('open');
+
+    if (!document.querySelector('.modal-overlay.open')) {
+      document.body.style.overflow = '';
+    }
+  };
+
+  document.querySelectorAll('[data-prestations-modal]').forEach((modal) => {
+    modal.querySelectorAll('[data-modal-close]').forEach((button) => {
+      button.addEventListener('click', () => closeModal(modal));
+    });
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal(modal);
+      }
+    });
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      document.querySelectorAll('[data-prestations-modal].open').forEach(closeModal);
+    }
+  });
+
+  const clearErrors = (form) => {
+    form.querySelectorAll('[data-error-for]').forEach((node) => {
+      node.textContent = '';
+    });
+  };
+
+  const showError = (form, field, message) => {
+    const target = form.querySelector('[data-error-for="' + field + '"]');
+
+    if (target) {
+      target.textContent = message;
+    }
+  };
+
+  /* Prevents double submissions while a request is running. */
+  const withBusyForm = (form, promise) => {
+    const submit = form.querySelector('button[type="submit"]');
+    submit.disabled = true;
+
+    return promise.finally(() => {
+      submit.disabled = false;
+    });
+  };
+
+  /* ── LIST ── */
+  const serviceRow = (service) => {
+    const images = service.images || [];
+    const row = element('li', 'svc-row' + (service.published ? '' : ' is-draft'));
+    const thumb = element('div', 'svc-thumb');
+
+    if (images.length > 0) {
+      const image = element('img');
+      image.src = images[0].url;
+      image.alt = '';
+      image.loading = 'lazy';
+      thumb.append(image);
+    } else {
+      thumb.textContent = '✦';
+    }
+
+    const info = element('div', 'svc-info');
+    const name = element('p', 'svc-name');
+    name.append(
+      element('span', 'svc-name-text', service.name),
+      element(
+        'span',
+        'state-pill ' + (service.published ? 'is-published' : 'is-draft'),
+        service.published ? 'Publiée' : 'Brouillon'
+      )
+    );
+
+    const meta = [];
+
+    if (service.duration_min !== null) {
+      meta.push(service.duration_min + ' min');
+    }
+
+    meta.push(formatPrice(service.price_cents));
+
+    if (images.length > 0) {
+      meta.push(plural(images.length, 'image', 'images'));
+    }
+
+    if (service.appointment_count > 0) {
+      meta.push(plural(service.appointment_count, 'rendez-vous lié', 'rendez-vous liés'));
+    }
+
+    info.append(name, element('p', 'svc-meta', meta.join(' · ')));
+
+    const actions = element('div', 'appt-actions');
+    actions.append(
+      iconButton('icon-btn', 'Modifier la prestation ' + service.name, pencilIcon, () => openServiceForm(service.id, null)),
+      iconButton('icon-btn danger', 'Supprimer la prestation ' + service.name, binIcon, () => openServiceDelete(service.id))
+    );
+
+    row.append(thumb, info, actions);
+
+    return row;
+  };
+
+  const categoryBlock = (title, category, services) => {
+    const isInactive = category !== null && !category.is_active;
+    const block = element('section', 'cat-block' + (isInactive ? ' is-inactive' : ''));
+    const head = element('header', 'cat-head');
+    const titleWrap = element('div', 'cat-title');
+
+    titleWrap.append(element('h2', 'cat-name', title));
+
+    if (category) {
+      titleWrap.append(element(
+        'span',
+        'state-pill ' + (category.is_active ? 'is-active' : 'is-inactive'),
+        category.is_active ? 'Active' : 'Inactive'
+      ));
+    }
+
+    titleWrap.append(element('span', 'cat-count', plural(services.length, 'prestation', 'prestations')));
+
+    const actions = element('div', 'cat-actions');
+    const addButton = element('button', 'btn-small', '+ Ajouter une prestation');
+    addButton.type = 'button';
+    addButton.addEventListener('click', () => openServiceForm(null, category ? category.id : null));
+    actions.append(addButton);
+
+    if (category) {
+      actions.append(
+        iconButton('icon-btn', 'Modifier la catégorie ' + category.name, pencilIcon, () => openCategoryForm(category.id)),
+        iconButton('icon-btn danger', 'Supprimer la catégorie ' + category.name, binIcon, () => openCategoryDelete(category.id))
+      );
+    }
+
+    head.append(titleWrap, actions);
+    block.append(head);
+
+    if (isInactive) {
+      block.append(element('p', 'cat-hint', 'Masquée sur votre site : aucune prestation publiée dans cette catégorie.'));
+    }
+
+    if (services.length === 0) {
+      block.append(element('p', 'svc-empty', 'Aucune prestation dans cette catégorie.'));
+    } else {
+      const servicesList = element('ul', 'svc-list');
+      services.forEach((service) => servicesList.append(serviceRow(service)));
+      block.append(servicesList);
+    }
+
+    return block;
+  };
+
+  const renderMessage = (message, withRetry) => {
+    list.textContent = '';
+
+    const empty = element('div', 'empty');
+    empty.append(element('span', 'empty-mark', '✦'), element('p', null, message));
+
+    if (withRetry) {
+      const retry = element('button', 'btn-ghost', 'Réessayer');
+      retry.type = 'button';
+      retry.style.marginTop = '16px';
+      retry.addEventListener('click', () => reload());
+      empty.append(retry);
+    }
+
+    list.append(empty);
+  };
+
+  const render = () => {
+    list.textContent = '';
+
+    if (catalog.categories.length === 0 && catalog.uncategorized.length === 0) {
+      renderMessage('Aucune prestation pour le moment. Créez une catégorie ou une prestation pour commencer.', false);
+
+      return;
+    }
+
+    catalog.categories.forEach((category) => {
+      list.append(categoryBlock(category.name, category, category.services));
+    });
+
+    if (catalog.uncategorized.length > 0) {
+      list.append(categoryBlock('Sans catégorie', null, catalog.uncategorized));
+    }
+  };
+
+  const reload = () => {
+    return source.loadCatalog()
+      .then((loaded) => {
+        catalog = {
+          categories: Array.isArray(loaded && loaded.categories) ? loaded.categories : [],
+          uncategorized: Array.isArray(loaded && loaded.uncategorized) ? loaded.uncategorized : [],
+        };
+        render();
+      })
+      .catch((error) => {
+        if (error && error.status === 401) {
+          return;
+        }
+
+        renderMessage('Impossible de charger vos prestations.', true);
+      });
+  };
+
+  /* A resource changed meanwhile (404): show the current list again. */
+  const reloadAfterConflict = (modal) => {
+    closeModal(modal);
+    reload();
+  };
+
+  /* ── CATEGORY FORM ── */
+  const categoryModal = document.getElementById('categoryModal');
+  const categoryForm = categoryModal.querySelector('[data-category-form]');
+  const categoryNotice = categoryModal.querySelector('[data-category-version-notice]');
+  let editingCategoryId = null;
+
+  const openCategoryForm = (categoryId) => {
+    const category = categoryId === null ? null : findCategory(categoryId);
+    const appointmentCount = category ? category.appointment_count : 0;
+
+    editingCategoryId = category ? category.id : null;
+    clearErrors(categoryForm);
+    categoryForm.reset();
+    categoryForm.elements.name.value = category ? category.name : '';
+    categoryModal.querySelector('.modal-title').textContent = category ? 'Modifier la catégorie' : 'Nouvelle catégorie';
+    categoryNotice.hidden = appointmentCount === 0;
+    categoryNotice.textContent = appointmentCount === 0 ? '' : 'Cette catégorie est liée à '
+      + plural(appointmentCount, 'rendez-vous', 'rendez-vous')
+      + '. Si vous changez son nom, une nouvelle version sera créée : les rendez-vous existants garderont l’ancien nom. '
+      + 'Ses prestations déjà réservées seront aussi remplacées par une nouvelle version ; les autres seront simplement '
+      + 'rattachées à la catégorie renommée.';
+    openModal(categoryModal);
+  };
+
+  categoryForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    clearErrors(categoryForm);
+
+    const name = categoryForm.elements.name.value.trim();
+
+    if (name === '') {
+      showError(categoryForm, 'name', 'Le nom de la catégorie est obligatoire.');
+
+      return;
+    }
+
+    if (name.length > 100) {
+      showError(categoryForm, 'name', 'Le nom de la catégorie ne doit pas dépasser 100 caractères.');
+
+      return;
+    }
+
+    const category = editingCategoryId === null ? null : findCategory(editingCategoryId);
+    const versioned = category !== null && category.appointment_count > 0 && category.name !== name;
+    const replacedServices = category === null ? 0 : category.services.filter((service) => {
+      return service.appointment_count > 0;
+    }).length;
+    const action = category === null
+      ? source.createCategory(name)
+      : source.renameCategory(category.id, name);
+
+    withBusyForm(categoryForm, action)
+      .then(() => {
+        closeModal(categoryModal);
+
+        if (category === null) {
+          showToast('Catégorie « ' + name + ' » créée. Elle restera inactive tant qu’elle ne contient aucune prestation publiée.');
+        } else if (versioned) {
+          showToast('Catégorie renommée. Une nouvelle version a été créée : les rendez-vous existants conservent l’ancien nom'
+            + (replacedServices > 0
+              ? ' et ' + plural(replacedServices, 'prestation réservée a été remplacée', 'prestations réservées ont été remplacées') + '.'
+              : '.'));
+        } else {
+          showToast('Catégorie enregistrée.');
+        }
+
+        return reload();
+      })
+      .catch((error) => {
+        const status = error && error.status;
+
+        if (status === 401) {
+          return;
+        }
+
+        if (status === 409) {
+          showError(categoryForm, 'name', 'Une catégorie porte déjà ce nom.');
+        } else if (status === 404) {
+          showToast('Cette catégorie a été supprimée ou modifiée entre-temps. La liste a été mise à jour.');
+          reloadAfterConflict(categoryModal);
+        } else if (status === 422) {
+          showError(categoryForm, 'name', 'Vérifiez le nom de la catégorie.');
+        } else if (status === 507) {
+          showError(categoryForm, 'form', 'Le stockage de la démo est plein. Retirez une image ou réinitialisez la démo.');
+        } else {
+          showError(categoryForm, 'form', status === 0 ? NETWORK_ERROR : GENERIC_ERROR);
+        }
+      });
+  });
+
+  /* ── CATEGORY DELETE ── */
+  const categoryDeleteModal = document.getElementById('categoryDeleteModal');
+  const categoryDeleteForm = categoryDeleteModal.querySelector('[data-category-delete-form]');
+  const categoryDeleteChoices = categoryDeleteModal.querySelector('[data-category-delete-choices]');
+  let deletingCategoryId = null;
+
+  const openCategoryDelete = (categoryId) => {
+    const category = findCategory(categoryId);
+    const serviceCount = category ? category.services.length : 0;
+
+    deletingCategoryId = categoryId;
+    clearErrors(categoryDeleteForm);
+    categoryDeleteForm.reset();
+    categoryDeleteModal.querySelector('.modal-title').textContent = 'Supprimer « ' + category.name + ' » ?';
+    categoryDeleteChoices.hidden = serviceCount === 0;
+    categoryDeleteModal.querySelector('[data-category-delete-count]').textContent = serviceCount === 0 ? ''
+      : (serviceCount > 1 ? 'Les ' + serviceCount + ' prestations de cette catégorie seront supprimées'
+        : 'La prestation de cette catégorie sera supprimée') + ' et retirées de votre site.';
+    openModal(categoryDeleteModal);
+  };
+
+  categoryDeleteForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    clearErrors(categoryDeleteForm);
+
+    const category = findCategory(deletingCategoryId);
+    const keepServices = categoryDeleteForm.elements.servicesMode.value !== 'delete';
+    const replacedServices = category === null ? 0 : category.services.filter((service) => {
+      return service.appointment_count > 0;
+    }).length;
+
+    withBusyForm(categoryDeleteForm, source.deleteCategory(deletingCategoryId, keepServices))
+      .then(() => {
+        closeModal(categoryDeleteModal);
+
+        if (!keepServices) {
+          showToast('Catégorie et prestations supprimées. Les rendez-vous existants conservent leurs informations.');
+        } else {
+          showToast('Catégorie supprimée. Ses prestations sont maintenant dans « Sans catégorie »'
+            + (replacedServices > 0
+              ? ' (' + plural(replacedServices, 'prestation réservée remplacée', 'prestations réservées remplacées') + ' par une nouvelle version).'
+              : '.'));
+        }
+
+        return reload();
+      })
+      .catch((error) => {
+        const status = error && error.status;
+
+        if (status === 401) {
+          return;
+        }
+
+        if (status === 404) {
+          showToast('Cette catégorie a déjà été supprimée. La liste a été mise à jour.');
+          reloadAfterConflict(categoryDeleteModal);
+        } else {
+          showError(categoryDeleteForm, 'form', status === 0 ? NETWORK_ERROR : GENERIC_ERROR);
+        }
+      });
+  });
+
+  /* ── SERVICE FORM ── */
+  const serviceModal = document.getElementById('serviceModal');
+  const serviceForm = serviceModal.querySelector('[data-service-form]');
+  const serviceNotice = serviceModal.querySelector('[data-service-version-notice]');
+  const categorySelect = serviceModal.querySelector('[data-service-category-select]');
+  const imageGrid = serviceModal.querySelector('[data-image-grid]');
+  const imageError = serviceModal.querySelector('[data-error-for="images"]');
+  const formState = {
+    keptImages: [],
+    newImages: [],
+    original: null,
+  };
+
+  const normalizePrice = (value) => {
+    const text = String(value || '').trim().replace(',', '.');
+
+    if (!/^\d{1,5}(\.\d{1,2})?$/.test(text)) {
+      return null;
+    }
+
+    const cents = Math.round(Number(text) * 100);
+
+    return cents <= 1000000 ? cents : null;
+  };
+
+  const selectedCategoryId = () => (categorySelect.value === '' ? null : Number(categorySelect.value));
+
+  const historicalChanged = () => {
+    const original = formState.original;
+
+    if (!original) {
+      return false;
+    }
+
+    return serviceForm.elements.name.value.trim() !== original.name
+      || serviceForm.elements.description.value.trim() !== (original.description || '')
+      || normalizePrice(serviceForm.elements.price.value) !== original.price_cents
+      || Number(serviceForm.elements.durationMinutes.value) !== original.duration_min
+      || selectedCategoryId() !== original.category_id;
+  };
+
+  const appointmentCount = () => (formState.original ? formState.original.appointment_count : 0);
+
+  const updateVersionNotice = () => {
+    if (appointmentCount() === 0) {
+      serviceNotice.hidden = true;
+
+      return;
+    }
+
+    const linked = 'Cette prestation est liée à ' + plural(appointmentCount(), 'rendez-vous', 'rendez-vous')
+      + ' (passés, à venir ou annulés). ';
+
+    serviceNotice.hidden = false;
+    serviceNotice.classList.toggle('is-strong', historicalChanged());
+    serviceNotice.textContent = historicalChanged()
+      ? linked + 'À l’enregistrement, une nouvelle version sera créée : les rendez-vous existants garderont le nom, '
+        + 'la description, le prix, la durée et la catégorie d’origine. Ils ne seront ni annulés ni modifiés.'
+      : linked + 'Modifier le nom, la description, le prix, la durée ou la catégorie créera une nouvelle version ; '
+        + 'les rendez-vous existants garderont la version d’origine. Changer le statut ou les images ne crée pas de '
+        + 'nouvelle version.';
+  };
+
+  const fillCategorySelect = (selectedId) => {
+    categorySelect.textContent = '';
+
+    const none = element('option', null, 'Sans catégorie');
+    none.value = '';
+    categorySelect.append(none);
+
+    catalog.categories
+      .slice()
+      .sort((first, second) => collator.compare(first.name, second.name) || first.id - second.id)
+      .forEach((category) => {
+        const option = element('option', null, category.name);
+        option.value = String(category.id);
+        categorySelect.append(option);
+      });
+
+    categorySelect.value = selectedId === null ? '' : String(selectedId);
+  };
+
+  const releasePreviews = () => {
+    formState.newImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+  };
+
+  const renderImages = () => {
+    imageGrid.textContent = '';
+
+    const tile = (src, onRemove, label) => {
+      const node = element('div', 'img-tile');
+      const image = element('img');
+      image.src = src;
+      image.alt = label;
+      const remove = element('button', 'img-remove', 'Retirer');
+      remove.type = 'button';
+      remove.setAttribute('aria-label', 'Retirer ' + label);
+      remove.addEventListener('click', onRemove);
+      node.append(image, remove);
+
+      return node;
+    };
+
+    formState.keptImages.forEach((image, index) => {
+      imageGrid.append(tile(image.url, () => {
+        formState.keptImages = formState.keptImages.filter((item) => item.id !== image.id);
+        renderImages();
+      }, 'l’image ' + (index + 1)));
+    });
+
+    formState.newImages.forEach((image) => {
+      imageGrid.append(tile(image.previewUrl, () => {
+        URL.revokeObjectURL(image.previewUrl);
+        formState.newImages = formState.newImages.filter((item) => item !== image);
+        renderImages();
+      }, image.file.name));
+    });
+
+    if (formState.keptImages.length + formState.newImages.length < MAX_IMAGES) {
+      const add = element('label', 'img-add');
+      const input = element('input');
+      input.type = 'file';
+      input.accept = ALLOWED_IMAGE_TYPES.join(',');
+      input.multiple = true;
+      input.addEventListener('change', () => addFiles(Array.from(input.files || [])));
+      add.append(element('span', null, '+ Ajouter une image'), element('span', 'form-hint', 'JPEG, PNG ou WebP · 5 Mo max'), input);
+      imageGrid.append(add);
+    }
+  };
+
+  const addFiles = (files) => {
+    imageError.textContent = '';
+
+    files.forEach((file) => {
+      if (formState.keptImages.length + formState.newImages.length >= MAX_IMAGES) {
+        imageError.textContent = 'Une prestation peut avoir 2 images au maximum.';
+
+        return;
+      }
+
+      if (ALLOWED_IMAGE_TYPES.indexOf(file.type) === -1) {
+        imageError.textContent = 'Format non accepté. Utilisez une image JPEG, PNG ou WebP.';
+
+        return;
+      }
+
+      if (file.size > MAX_IMAGE_BYTES) {
+        imageError.textContent = 'Chaque image doit peser 5 Mo au maximum.';
+
+        return;
+      }
+
+      formState.newImages.push({ file, previewUrl: URL.createObjectURL(file) });
+    });
+
+    renderImages();
+  };
+
+  const openServiceForm = (serviceId, presetCategoryId) => {
+    const service = serviceId === null ? null : findService(serviceId);
+
+    releasePreviews();
+    formState.original = service;
+    formState.keptImages = service ? service.images.slice() : [];
+    formState.newImages = [];
+
+    clearErrors(serviceForm);
+    serviceForm.reset();
+    serviceModal.querySelector('.modal-title').textContent = service ? 'Modifier la prestation' : 'Nouvelle prestation';
+    serviceForm.elements.name.value = service ? service.name : '';
+    serviceForm.elements.description.value = service ? (service.description || '') : '';
+    serviceForm.elements.price.value = service && service.price_cents !== null
+      ? String(service.price_cents / 100).replace('.', ',')
+      : '';
+    serviceForm.elements.durationMinutes.value = service && service.duration_min !== null
+      ? String(service.duration_min)
+      : '60';
+    serviceForm.elements.publication.value = service && service.published ? 'published' : 'draft';
+    fillCategorySelect(service ? service.category_id : presetCategoryId);
+    renderImages();
+    updateVersionNotice();
+    openModal(serviceModal);
+  };
+
+  serviceForm.addEventListener('input', updateVersionNotice);
+  serviceForm.addEventListener('change', updateVersionNotice);
+
+  const validateServiceForm = () => {
+    const errors = {};
+    const name = serviceForm.elements.name.value.trim();
+    const description = serviceForm.elements.description.value.trim();
+    const durationText = String(serviceForm.elements.durationMinutes.value).trim();
+    const duration = Number(durationText);
+
+    if (name === '') {
+      errors.name = 'Le nom de la prestation est obligatoire.';
+    } else if (name.length > 50) {
+      errors.name = 'Le nom ne doit pas dépasser 50 caractères.';
+    }
+
+    if (description.length > 500) {
+      errors.description = 'La description ne doit pas dépasser 500 caractères.';
+    }
+
+    if (normalizePrice(serviceForm.elements.price.value) === null) {
+      errors.price = 'Indiquez un prix valide entre 0 et 10 000 €, par exemple 45 ou 45,50.';
+    }
+
+    if (!/^\d+$/.test(durationText) || duration < 5 || duration > 720 || duration % 5 !== 0) {
+      errors.durationMinutes = 'La durée doit être un multiple de 5 minutes, entre 5 et 720.';
+    }
+
+    return errors;
+  };
+
+  serviceForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    clearErrors(serviceForm);
+
+    const errors = validateServiceForm();
+
+    if (Object.keys(errors).length > 0) {
+      Object.keys(errors).forEach((field) => showError(serviceForm, field, errors[field]));
+
+      return;
+    }
+
+    const original = formState.original;
+    const versioned = original !== null && original.appointment_count > 0 && historicalChanged();
+    const input = {
+      categoryId: selectedCategoryId(),
+      description: serviceForm.elements.description.value.trim(),
+      durationMin: Number(serviceForm.elements.durationMinutes.value),
+      keptImageIds: formState.keptImages.map((image) => image.id),
+      name: serviceForm.elements.name.value.trim(),
+      newFiles: formState.newImages.map((image) => image.file),
+      priceCents: normalizePrice(serviceForm.elements.price.value),
+      published: serviceForm.elements.publication.value === 'published',
+    };
+    const action = original === null ? source.createService(input) : source.updateService(original.id, input);
+
+    withBusyForm(serviceForm, action)
+      .then(() => {
+        closeModal(serviceModal);
+        releasePreviews();
+        formState.newImages = [];
+
+        if (original === null) {
+          showToast('Prestation créée.');
+        } else if (versioned) {
+          showToast('Prestation enregistrée. Une nouvelle version a été créée : '
+            + (original.appointment_count > 1
+              ? 'les ' + original.appointment_count + ' rendez-vous existants conservent'
+              : 'le rendez-vous existant conserve')
+            + ' la version précédente.');
+        } else {
+          showToast('Prestation enregistrée.');
+        }
+
+        return reload();
+      })
+      .catch((error) => {
+        const status = error && error.status;
+
+        if (status === 401) {
+          return;
+        }
+
+        if (status === 404) {
+          showToast('Cette prestation ou sa catégorie a été supprimée ou modifiée entre-temps. La liste a été mise à jour.');
+          reloadAfterConflict(serviceModal);
+        } else if (status === 409) {
+          showError(serviceForm, 'images', 'Une prestation peut avoir 2 images au maximum.');
+        } else if (status === 413) {
+          showError(serviceForm, 'images', 'Les images envoyées sont trop lourdes (5 Mo maximum par image).');
+        } else if (status === 422) {
+          showError(serviceForm, 'form', 'Vérifiez les informations saisies et les images (JPEG, PNG ou WebP, 5 Mo maximum).');
+        } else if (status === 507) {
+          showError(serviceForm, 'form', 'Le stockage de la démo est plein. Retirez une image ou réinitialisez la démo.');
+        } else {
+          showError(serviceForm, 'form', status === 0 ? NETWORK_ERROR : GENERIC_ERROR);
+        }
+      });
+  });
+
+  /* ── SERVICE DELETE ── */
+  const serviceDeleteModal = document.getElementById('serviceDeleteModal');
+  const serviceDeleteForm = serviceDeleteModal.querySelector('[data-service-delete-form]');
+  let deletingServiceId = null;
+
+  const openServiceDelete = (serviceId) => {
+    const service = findService(serviceId);
+    const count = service ? service.appointment_count : 0;
+
+    deletingServiceId = serviceId;
+    clearErrors(serviceDeleteForm);
+    serviceDeleteModal.querySelector('.modal-title').textContent = 'Supprimer « ' + service.name + ' » ?';
+    serviceDeleteModal.querySelector('[data-service-delete-text]').textContent =
+      'La prestation sera retirée de votre site et de cette liste.'
+      + (count > 0
+        ? ' ' + (count > 1 ? 'Les ' + count + ' rendez-vous liés ne seront' : 'Le rendez-vous lié ne sera')
+          + ' ni annulés ni modifiés : ils conservent les informations de la prestation.'
+        : '');
+    openModal(serviceDeleteModal);
+  };
+
+  serviceDeleteForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    clearErrors(serviceDeleteForm);
+
+    withBusyForm(serviceDeleteForm, source.deleteService(deletingServiceId))
+      .then(() => {
+        closeModal(serviceDeleteModal);
+        showToast('Prestation supprimée.');
+
+        return reload();
+      })
+      .catch((error) => {
+        const status = error && error.status;
+
+        if (status === 401) {
+          return;
+        }
+
+        if (status === 404) {
+          showToast('Cette prestation a déjà été supprimée. La liste a été mise à jour.');
+          reloadAfterConflict(serviceDeleteModal);
+        } else {
+          showError(serviceDeleteForm, 'form', status === 0 ? NETWORK_ERROR : GENERIC_ERROR);
+        }
+      });
+  });
+
+  /* ── TOOLBAR ── */
+  root.querySelector('[data-add-category]').addEventListener('click', () => openCategoryForm(null));
+  root.querySelector('[data-add-service]').addEventListener('click', () => openServiceForm(null, null));
+
+  const resetButton = root.querySelector('[data-reset-demo]');
+
+  if (resetButton && source.reset) {
+    resetButton.addEventListener('click', () => {
+      if (window.confirm('Réinitialiser la démo ? Toutes vos modifications de prestations seront effacées.')) {
+        source.reset().then(() => {
+          showToast('Démo réinitialisée.');
+
+          return reload();
+        });
+      }
+    });
+  }
+
+  source.onExternalChange(reload);
+  reload();
+})();
+{% endverbatim %}
+</script>

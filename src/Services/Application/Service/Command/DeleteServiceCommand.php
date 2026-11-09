@@ -2,11 +2,17 @@
 
 namespace App\Services\Application\Service\Command;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * Mapped from the JSON body of DELETE /api/pro/service/delete.
+ */
 final class DeleteServiceCommand
 {
     public function __construct(
-        public int $id,
-        public int $proId
+        #[Assert\NotNull]
+        #[Assert\Positive]
+        public readonly ?int $serviceId = null
     ) {
     }
 }

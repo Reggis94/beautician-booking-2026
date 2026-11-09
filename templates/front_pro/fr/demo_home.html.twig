@@ -45,37 +45,42 @@
                 <p class="service-categories__sub">Choisissez une prestation et demandez un rendez-vous.</p>
             </div>
 
-            <div class="service-categories__list">
-                {% for category in demo_service_categories %}
+            {# Demo: rendered in the browser from the shared demo prestations store, so changes made on the
+               Prestations page appear here. Only published, non-deleted services are shown. #}
+            <div class="service-categories__list" data-public-prestations-list>
+                <noscript><p class="service-categories__sub">Activez JavaScript pour voir les prestations.</p></noscript>
+            </div>
+
+            <template data-public-category-template>
                     <article class="service-category">
                         <button class="service-category__toggle" type="button" aria-expanded="true">
                             <span class="service-category__main">
                                 <span class="service-category__arrow">&#8964;</span>
-                                <span class="service-category__name">{{ category.name }}</span>
+                                <span class="service-category__name" data-category-name></span>
                             </span>
-                            <span class="service-category__count">
-                                {{ category.services|length }} {{ category.services|length > 1 ? 'prestations' : 'prestation' }}
-                            </span>
+                            <span class="service-category__count" data-category-count></span>
                         </button>
 
-                        <div class="service-category__services">
-                            {% for service in category.services %}
+                        <div class="service-category__services" data-category-services></div>
+                    </article>
+            </template>
+
+            <template data-public-service-template>
                                 <article class="service-card">
+                                    <div class="service-card__images" hidden data-card-images></div>
                                     <div class="service-card__header">
-                                        <h3 class="service-card__name">{{ service.name }}</h3>
-                                        <span class="service-card__price">{{ service.price }} €</span>
+                                        <h3 class="service-card__name" data-card-name></h3>
+                                        <span class="service-card__price" data-card-price></span>
                                     </div>
-                                    <p class="service-card__description">{{ service.description }}</p>
+                                    <p class="service-card__description" data-card-description></p>
                                     <div class="service-card__meta">
-                                        <span class="service-card__meta-pill">{{ service.durationMinutes }} min</span>
+                                        <span class="service-card__meta-pill" data-card-duration></span>
                                         <span class="service-card__meta-pill">Disponibilités</span>
                                     </div>
                                     <button
                                         class="service-card__book"
                                         type="button"
                                         data-demo-booking
-                                        data-service-id="{{ service.id }}"
-                                        data-service-name="{{ service.name }}"
                                     >
                                         Réserver cette prestation
                                     </button>
@@ -105,7 +110,7 @@
                                         <form class="service-card__booking-form" hidden data-booking-form>
                                             <p class="service-card__booking-form-title" data-booking-form-title></p>
                                             <input type="hidden" name="proId" value="1">
-                                            <input type="hidden" name="serviceId" value="{{ service.id }}">
+                                            <input type="hidden" name="serviceId" value="">
                                             <input type="hidden" name="startDateTimeLocal">
 
                                             <div class="service-card__booking-fields">
@@ -134,11 +139,78 @@
                                         </form>
                                     </div>
                                 </article>
-                            {% endfor %}
-                        </div>
-                    </article>
-                {% endfor %}
-            </div>
+            </template>
+
+            {% include 'demo/fr/_prestations_store.html.twig' %}
+            <script>
+                (() => {
+                    const store = window.G4sDemoPrestations;
+                    const list = document.querySelector('[data-public-prestations-list]');
+                    const categoryTemplate = document.querySelector('[data-public-category-template]');
+                    const serviceTemplate = document.querySelector('[data-public-service-template]');
+
+                    if (!store || !list || !categoryTemplate || !serviceTemplate) {
+                        return;
+                    }
+
+                    const buildService = (service) => {
+                        const card = serviceTemplate.content.firstElementChild.cloneNode(true);
+                        const images = store.imagesOf(service.id);
+                        const gallery = card.querySelector('[data-card-images]');
+                        const bookButton = card.querySelector('[data-demo-booking]');
+
+                        card.querySelector('[data-card-name]').textContent = service.name;
+                        card.querySelector('[data-card-price]').textContent = store.formatPrice(service.priceCents);
+                        card.querySelector('[data-card-description]').textContent = service.description;
+                        card.querySelector('[data-card-duration]').textContent = service.durationMinutes + ' min';
+                        card.querySelector('input[name="serviceId"]').value = String(service.id);
+                        bookButton.dataset.serviceId = String(service.id);
+                        bookButton.dataset.serviceName = service.name;
+
+                        images.forEach((image) => {
+                            const picture = document.createElement('img');
+                            picture.src = image.src;
+                            picture.alt = service.name;
+                            picture.loading = 'lazy';
+                            gallery.append(picture);
+                        });
+                        gallery.hidden = images.length === 0;
+
+                        return card;
+                    };
+
+                    const buildCategory = (name, services) => {
+                        const block = categoryTemplate.content.firstElementChild.cloneNode(true);
+                        const container = block.querySelector('[data-category-services]');
+
+                        block.querySelector('[data-category-name]').textContent = name;
+                        block.querySelector('[data-category-count]').textContent =
+                            services.length + ' ' + (services.length > 1 ? 'prestations' : 'prestation');
+                        services.forEach((service) => container.append(buildService(service)));
+
+                        return block;
+                    };
+
+                    const view = store.buildPublicView();
+
+                    list.textContent = '';
+                    view.groups.forEach((group) => list.append(buildCategory(group.category.name, group.services)));
+
+                    if (view.uncategorized.length > 0) {
+                        list.append(buildCategory('Autres prestations', view.uncategorized));
+                    }
+
+                    if (list.children.length === 0) {
+                        const empty = document.createElement('p');
+                        empty.className = 'service-categories__sub';
+                        empty.textContent = 'Aucune prestation n’est disponible pour le moment.';
+                        list.append(empty);
+                    }
+
+                    /* Booking panels are bound once on load: reload to show changes made in another tab. */
+                    store.onExternalChange(() => window.location.reload());
+                })();
+            </script>
             </section>
         {% endif %}
 
@@ -405,6 +477,19 @@
             transition: background .18s;
         }
         .service-card:hover { background: #FEFCF9; }
+        .service-card__images {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: repeat(2, minmax(0, 160px));
+            margin-bottom: 14px;
+        }
+        .service-card__images[hidden] { display: none; }
+        .service-card__images img {
+            aspect-ratio: 3 / 2;
+            display: block;
+            object-fit: cover;
+            width: 100%;
+        }
 
         .service-card__header {
             display: flex;

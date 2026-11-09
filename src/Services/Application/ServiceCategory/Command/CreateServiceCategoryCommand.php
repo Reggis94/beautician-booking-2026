@@ -2,14 +2,17 @@
 
 namespace App\Services\Application\ServiceCategory\Command;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * Mapped from the JSON body of POST /api/pro/service/category/new.
+ */
 final class CreateServiceCategoryCommand
 {
-    public readonly string $name;
-    public readonly int $proId;
-
-    public function __construct(string $name, int $proId)
-    {
-        $this->name = trim($name);
-        $this->proId = $proId;
+    public function __construct(
+        #[Assert\NotBlank(normalizer: 'trim')]
+        #[Assert\Length(max: 100, normalizer: 'trim')]
+        public readonly string $name = ''
+    ) {
     }
 }

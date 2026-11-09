@@ -13,7 +13,6 @@ security:
     access_control:
         - { path: ^/api/auth/me$, roles: ROLE_PRO }
         - { path: ^/api/pro/, roles: ROLE_PRO }
-        - { path: ^/api/pro-admin/, roles: ROLE_PRO }
         - { path: ^/api/availabilities$, roles: ROLE_PRO }
         - { path: ^/api/upsert-week-availability$, roles: ROLE_PRO }
         - { path: ^/pro/, roles: ROLE_PRO }

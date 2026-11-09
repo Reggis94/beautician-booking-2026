@@ -2,32 +2,41 @@
 
 namespace App\Services\Application\ServiceCategory\CommandHandler;
 
-use App\Dao\ProDaoInterface;
 use App\Services\Application\ServiceCategory\Command\CreateServiceCategoryCommand;
-use App\Services\Application\ServiceCategory\Dao\ServiceCategoryDaoInterface;
+use App\Services\Domain\Entity\ServiceCategory;
+use App\Services\Domain\Exception\ServiceCategoryNameAlreadyUsedException;
+use App\Services\Domain\Repository\ServiceCategoryRepositoryInterface;
+use App\Services\Domain\Repository\ServiceRepositoryInterface;
 
 final class CreateServiceCategoryCommandHandler
 {
     public function __construct(
-        private readonly ServiceCategoryDaoInterface $dao,
-        private readonly ProDaoInterface $proDao
+        private readonly ServiceRepositoryInterface $services,
+        private readonly ServiceCategoryRepositoryInterface $categories
     ) {
     }
 
-    public function __invoke(CreateServiceCategoryCommand $command): void
+    /**
+     * @throws ServiceCategoryNameAlreadyUsedException
+     */
+    public function __invoke(CreateServiceCategoryCommand $command, int $proId): void
     {
-        $name = trim($command->name);
-        if ($name === '') {
-            throw new \InvalidArgumentException('Category name cannot be empty.');
-        }
-        $length = function_exists('mb_strlen') ? mb_strlen($name) : strlen($name);
-        if ($length > 100) {
-            throw new \InvalidArgumentException('Category name must be at most 100 characters.');
-        }
-        if (!$this->proDao->existsById($command->proId)) {
-            throw new \DomainException('Unknown professional.');
-        }
+        $this->services->beginTransaction();
 
-        $this->dao->create($command->proId, $name);
+        try {
+            $this->services->lockCatalog($proId);
+
+            $category = ServiceCategory::create($proId, $command->name);
+            if ($this->categories->isNameUsed($proId, $category->getName(), null)) {
+                throw new ServiceCategoryNameAlreadyUsedException();
+            }
+
+            $this->categories->save($category);
+            $this->services->commit();
+        } catch (\Throwable $exception) {
+            $this->services->rollBack();
+
+            throw $exception;
+        }
     }
 }

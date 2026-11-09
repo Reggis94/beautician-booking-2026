@@ -18,22 +18,28 @@ Some domains have a dedicated `Domain` layer, others do not. We use full DDD onl
 
 Full DDD:
 - `Availability`
+- `Services`
 
 DDD-lite:
 - `ProfilePro`
-- `Services`
 - `Booking`
 - `Tracking`
 - `Store`
 - `ProAuth`
 
-Service categories are modeled inside the `Services` domain under `ServiceCategory`.
+Service categories are entities of the `Services` domain (`ServiceCategory`). Services and categories are
+versioned: content with appointment history is replaced, never overwritten, and catalog writes are serialized
+per professional with the booking lock; see ADR 0022. Full-DDD repositories also use explicit DBAL SQL.
 DDD-lite persistence prefers narrow application DAO contracts implemented with
 explicit Doctrine DBAL SQL; see ADR 0015.
 
 ## Partial Hexagonal Architecture (ProfilePro)
 
 ProfilePro applies a partial hexagonal (ports and adapters) approach. For example, the application defines a `TimezoneResolverPortInterface` and provides a `TimezoneDbAdapter` for the TimezoneDb API. This keeps the core logic independent from a specific provider and makes it possible to swap to another timezone API with minimal change.
+
+`Services` also uses a partial hexagonal port for service image files (`ServiceImageStorageInterface`, local
+filesystem adapter). Files live outside the project in `SERVICE_IMAGE_STORAGE_DIRECTORY` (default `../pro-banners`),
+live under `services/<pro-id>/`, removed ones in the shared `services/deleted/` folder.
 
 ## ProAuth (Passwordless Beautician Authentication)
 
@@ -87,3 +93,4 @@ This project includes Architecture Decision Records under `docs/adr`:
 - 0019: Tenant Identity From the Authenticated Session
 - 0020: ProAuth Tests as Executable Requirements
 - 0021: French Pages Use French URLs
+- 0022: Versioned Service Catalog in a Full-DDD Services Domain

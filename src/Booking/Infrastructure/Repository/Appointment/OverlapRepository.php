@@ -2,6 +2,7 @@
 
 namespace App\Booking\Infrastructure\Repository\Appointment;
 
+use App\Booking\Application\Exception\ServiceDoesNotBelongToProException;
 use App\Booking\Application\Repository\Appointment\OverlapRepositoryInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
@@ -14,10 +15,13 @@ final class OverlapRepository implements OverlapRepositoryInterface
 
     public function doesServiceBelongsToPro(int $serviceId, int $proId): bool
     {
+        // Only published, not deleted service versions can be booked: drafts, deleted and replaced versions cannot.
         $sql = 'SELECT 1
                 FROM service
                 WHERE id = :service_id
                   AND pro_id = :pro_id
+                  AND deleted_at IS NULL
+                  AND published_at IS NOT NULL
                 LIMIT 1';
 
         return (bool) $this->connection->fetchOne(
@@ -43,8 +47,10 @@ final class OverlapRepository implements OverlapRepositoryInterface
             throw new \InvalidArgumentException('datetimeStart must be in UTC.');
         }
 
+        // Checked again under the pro lock taken by the booking flow, which service catalog writes also take:
+        // a service deleted, replaced or unpublished in the meantime is refused here.
         if (! $this->doesServiceBelongsToPro($serviceId, $proId)) {
-            throw new \LogicException('Service does not belong to the pro.');
+            throw new ServiceDoesNotBelongToProException();
         }
 
         // Appointment overlap checks compare UTC instants.

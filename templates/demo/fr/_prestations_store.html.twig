@@ -1,0 +1,745 @@
+{#
+  Demo-only prestations store (French customer demo).
+
+  Simulates the service and category lifecycle in the browser so the demo can be
+  clicked through without a backend: drafts and publication, versioning of
+  services and categories referenced by appointments, explicit deletion versus
+  automatic replacement, category deletion with or without its services, and
+  service images (2 per service, 5 MB each, soft-deleted records, files moved
+  to the professional's deleted/ folder, files reused across versions).
+
+  State is kept in localStorage so the ProAdmin pages and the public demo page
+  share it. Nothing is sent to the server. The real application will implement
+  these rules in the backend; this file must not be treated as an API contract.
+#}
+<script>
+{% verbatim %}
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'g4s.demo.fr.prestations.v1';
+  const PRO_ID = 1;
+  const MAX_IMAGES_PER_SERVICE = 2;
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const IMAGE_LIMIT_MESSAGE = 'Une prestation peut avoir 2 images au maximum.';
+  const IMAGE_EXTENSIONS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+  const baseCollator = new Intl.Collator('fr', { sensitivity: 'base', numeric: true });
+  const variantCollator = new Intl.Collator('fr', { sensitivity: 'variant', numeric: true });
+
+  /* Deterministic French-aware ordering with a stable tie-breaker. */
+  const compareNames = (first, second, firstId, secondId) => {
+    return baseCollator.compare(first, second)
+      || variantCollator.compare(first, second)
+      || firstId - secondId;
+  };
+
+  const placeholderImage = (label, from, to) => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">'
+      + '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0" stop-color="' + from + '"/><stop offset="1" stop-color="' + to + '"/>'
+      + '</linearGradient></defs><rect width="600" height="400" fill="url(#g)"/>'
+      + '<text x="300" y="214" font-family="Georgia, serif" font-size="38" fill="#FAF6F1" text-anchor="middle">'
+      + label + '</text></svg>';
+
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  };
+
+  const randomStorageName = (mimeType) => {
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+
+    return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')
+      + '.' + (IMAGE_EXTENSIONS[mimeType] || 'jpg');
+  };
+
+  const seedState = () => {
+    const seededAt = '2026-01-05T09:00:00Z';
+    const category = (id, name) => ({
+      createdAt: seededAt, deletedAt: null, deletionReason: null, id, lineageId: id, name, replacedById: null,
+    });
+    const service = (id, categoryId, name, priceCents, durationMinutes, published, description) => ({
+      categoryId,
+      createdAt: seededAt,
+      deletedAt: null,
+      deletionReason: null,
+      description,
+      durationMinutes,
+      id,
+      lineageId: id,
+      name,
+      priceCents,
+      publishedAt: published ? seededAt : null,
+      replacedById: null,
+    });
+    const file = (id, label, from, to) => ({
+      id,
+      mimeType: 'image/jpeg',
+      movedToDeletedAt: null,
+      originalName: label + '.jpg',
+      sizeBytes: 182000,
+      src: placeholderImage(label, from, to),
+      storageName: randomStorageName('image/jpeg'),
+    });
+    const appointment = (id, serviceId, categoryId, clientName, status, deletedAt) => ({
+      categoryId, clientName, deletedAt, id, serviceId, status,
+    });
+
+    return {
+      appointments: [
+        appointment(101, 301, 11, 'Amelia Stone', 'confirmed', null),
+        appointment(102, 302, 12, 'Maya Bennett', 'confirmed', null),
+        appointment(103, 303, 13, 'Sofia Garcia', 'confirmed', null),
+        appointment(104, 304, 13, 'Claire Martin', 'confirmed', null),
+        appointment(201, 306, 12, 'Nora Lewis', 'confirmed', null),
+        appointment(202, 309, 14, 'Elena Brooks', 'confirmed', null),
+        appointment(203, 308, 13, 'Isabelle Wright', 'confirmed', null),
+        appointment(204, 312, null, 'Julie Moreau', 'cancelled', null),
+        /* Soft-deleted appointment: hidden everywhere, still counts for versioning. */
+        appointment(901, 310, 14, 'Léa Dubois', 'confirmed', seededAt),
+      ],
+      categories: [
+        category(11, 'Soins du visage'),
+        category(12, 'Sourcils et cils'),
+        category(13, 'Coiffure et maquillage'),
+        category(14, 'Ongles'),
+        category(15, 'Épilation'),
+        category(16, 'Massages'),
+      ],
+      files: [
+        file(501, 'Soin du visage', '#D4998A', '#B8765F'),
+        file(502, 'Rituel éclat', '#E7C3B4', '#A89890'),
+        file(503, 'Gloss et coiffage', '#6B5F58', '#D4998A'),
+      ],
+      images: [
+        { deletedAt: null, fileId: 501, id: 601, serviceId: 301 },
+        { deletedAt: null, fileId: 502, id: 602, serviceId: 301 },
+        { deletedAt: null, fileId: 503, id: 603, serviceId: 303 },
+      ],
+      nextId: 1000,
+      services: [
+        service(301, 11, 'Soin du visage signature', 9500, 60, true,
+          'Un soin sur mesure avec nettoyage doux, exfoliation et finition hydratante pour un teint lumineux.'),
+        service(305, 11, 'Peeling doux', 7000, 45, false,
+          'Un peeling léger pour affiner le grain de peau sans irritation.'),
+        service(302, 12, 'Restructuration des sourcils', 4200, 45, true,
+          'Une mise en forme précise pour définir les sourcils tout en conservant un résultat naturel et soigné.'),
+        service(306, 12, 'Rehaussement de cils', 6500, 50, true,
+          'Un rehaussement qui courbe et sublime les cils naturels pendant plusieurs semaines.'),
+        service(307, 12, 'Teinture des sourcils', 2000, 20, true,
+          'Une teinture adaptée à votre carnation pour intensifier le regard.'),
+        service(303, 13, 'Gloss et coiffage', 13500, 90, true,
+          'Un soin gloss et un coiffage conçus pour lisser les cheveux, renforcer leur brillance et parfaire le résultat.'),
+        service(304, 13, 'Séance de maquillage', 12000, 75, true,
+          'Un maquillage personnalisé pour une finition élégante, adaptée à la cliente et à l’occasion.'),
+        service(308, 13, 'Essai maquillage de mariée', 15000, 120, true,
+          'Un essai complet pour définir le maquillage idéal du grand jour.'),
+        service(309, 14, 'Manucure classique', 3500, 60, true,
+          'Limage, soin des cuticules et pose de vernis classique.'),
+        service(310, 14, 'Pose de vernis semi-permanent', 4500, 60, true,
+          'Une tenue longue durée et une brillance intacte pendant plusieurs semaines.'),
+        service(311, 15, 'Épilation des jambes', 3000, 30, false,
+          'Une épilation complète des jambes à la cire tiède.'),
+        service(312, null, 'Massage relaxant', 8000, 60, true,
+          'Un massage du corps aux huiles chaudes pour relâcher les tensions.'),
+        service(313, null, 'Coupe enfant', 2500, 30, false,
+          'Une coupe rapide et douce pour les enfants de moins de 12 ans.'),
+      ],
+      version: 1,
+    };
+  };
+
+  /* ── PERSISTENCE ── */
+  /* In-memory fallback when the browser blocks localStorage (private mode, previews). */
+  let memoryState = null;
+
+  const clone = (state) => JSON.parse(JSON.stringify(state));
+
+  const current = () => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+
+      if (parsed && parsed.version === 1) {
+        return parsed;
+      }
+    } catch (error) {
+      /* Storage blocked or corrupted: use the in-memory copy or the seed. */
+    }
+
+    return memoryState ? clone(memoryState) : seedState();
+  };
+
+  /* Returns 'stored', 'memory' (storage blocked) or 'full' (quota exceeded). */
+  const save = (state) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+      return 'stored';
+    } catch (error) {
+      try {
+        window.localStorage.getItem(STORAGE_KEY);
+
+        return 'full';
+      } catch (accessError) {
+        memoryState = clone(state);
+
+        return 'memory';
+      }
+    }
+  };
+
+  const reset = () => {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      /* Nothing to clear. */
+    }
+    memoryState = null;
+  };
+
+  /* Each operation reads a fresh copy and only saves when it fully succeeds:
+     a failed validation leaves the stored state untouched (atomic operation). */
+  const mutate = (operation) => {
+    const state = current();
+    const result = operation(state);
+
+    if (!result.ok) {
+      return result;
+    }
+
+    if (save(state) === 'full') {
+      return {
+        errors: { form: 'Le stockage de la démo est plein. Retirez une image ou réinitialisez la démo.' },
+        ok: false,
+        status: 507,
+      };
+    }
+
+    return result;
+  };
+
+  const nextId = (state) => {
+    state.nextId += 1;
+
+    return state.nextId;
+  };
+
+  const now = () => new Date().toISOString();
+
+  /* ── READ HELPERS ── */
+  const findById = (items, id) => items.find((item) => item.id === id) || null;
+  const isPublished = (service) => service.publishedAt !== null && service.deletedAt === null;
+  const isNotDeleted = (item) => item.deletedAt === null;
+
+  /* All appointments count, including past, future, cancelled and soft-deleted ones. */
+  const serviceAppointmentCount = (state, serviceId) => {
+    return state.appointments.filter((item) => item.serviceId === serviceId).length;
+  };
+  const categoryAppointmentCount = (state, categoryId) => {
+    return state.appointments.filter((item) => item.categoryId === categoryId).length;
+  };
+
+  const activeImages = (state, serviceId) => {
+    return state.images.filter((image) => image.serviceId === serviceId && image.deletedAt === null);
+  };
+
+  const filePath = (file) => {
+    return 'services/' + PRO_ID + '/' + (file.movedToDeletedAt ? 'deleted/' : '') + file.storageName;
+  };
+
+  const imagesOf = (state, serviceId) => {
+    return activeImages(state, serviceId).map((image) => {
+      const file = findById(state.files, image.fileId);
+
+      return { fileId: image.fileId, imageId: image.id, path: file ? filePath(file) : '', src: file ? file.src : '' };
+    });
+  };
+
+  const sortServices = (services) => {
+    return services.slice().sort((first, second) => {
+      return Number(isPublished(second)) - Number(isPublished(first))
+        || compareNames(first.name, second.name, first.id, second.id);
+    });
+  };
+
+  const buildAdminView = (state) => {
+    const notDeletedServices = state.services.filter(isNotDeleted);
+    const groups = state.categories.filter(isNotDeleted).map((category) => {
+      const services = sortServices(notDeletedServices.filter((service) => service.categoryId === category.id));
+
+      return { category, isActive: services.some(isPublished), services };
+    });
+
+    groups.sort((first, second) => {
+      return Number(second.isActive) - Number(first.isActive)
+        || compareNames(first.category.name, second.category.name, first.category.id, second.category.id);
+    });
+
+    return {
+      groups,
+      uncategorized: sortServices(notDeletedServices.filter((service) => service.categoryId === null)),
+    };
+  };
+
+  /* Public presentation: only published, non-deleted services; categories are visible
+     only when they contain one. Category published_at plays no role. */
+  const buildPublicView = (state) => {
+    const published = state.services.filter(isPublished);
+    const byName = (first, second) => compareNames(first.name, second.name, first.id, second.id);
+    const groups = state.categories.filter(isNotDeleted)
+      .map((category) => ({
+        category,
+        services: published.filter((service) => service.categoryId === category.id).sort(byName),
+      }))
+      .filter((group) => group.services.length > 0)
+      .sort((first, second) => byName(first.category, second.category));
+
+    return {
+      groups,
+      uncategorized: published.filter((service) => service.categoryId === null).sort(byName),
+    };
+  };
+
+  /* ── VALIDATION ── */
+  const validateCategoryName = (state, name, ignoredId) => {
+    const trimmed = String(name || '').trim();
+
+    if (trimmed === '') {
+      return { error: 'Le nom de la catégorie est obligatoire.' };
+    }
+
+    if (trimmed.length > 100) {
+      return { error: 'Le nom de la catégorie ne doit pas dépasser 100 caractères.' };
+    }
+
+    const duplicate = state.categories.some((category) => {
+      return isNotDeleted(category) && category.id !== ignoredId && baseCollator.compare(category.name, trimmed) === 0;
+    });
+
+    if (duplicate) {
+      return { error: 'Une catégorie porte déjà ce nom.', status: 409 };
+    }
+
+    return { value: trimmed };
+  };
+
+  const validateImageUpload = (upload) => {
+    if (!upload || ALLOWED_IMAGE_TYPES.indexOf(upload.mimeType) === -1) {
+      return 'Format non accepté. Utilisez une image JPEG, PNG ou WebP.';
+    }
+
+    if (upload.sizeBytes > MAX_IMAGE_BYTES) {
+      return 'Chaque image doit peser 5 Mo au maximum.';
+    }
+
+    return null;
+  };
+
+  const validateService = (state, input) => {
+    const errors = {};
+    const name = String(input.name || '').trim();
+    const description = String(input.description || '').trim();
+    const priceText = String(input.price || '').trim().replace(',', '.');
+    const durationText = String(input.durationMinutes || '').trim();
+
+    if (name === '') {
+      errors.name = 'Le nom de la prestation est obligatoire.';
+    } else if (name.length > 50) {
+      errors.name = 'Le nom ne doit pas dépasser 50 caractères.';
+    }
+
+    if (description.length > 500) {
+      errors.description = 'La description ne doit pas dépasser 500 caractères.';
+    }
+
+    let priceCents = null;
+
+    if (!/^\d{1,5}(\.\d{1,2})?$/.test(priceText)) {
+      errors.price = 'Indiquez un prix valide, par exemple 45 ou 45,50.';
+    } else {
+      priceCents = Math.round(Number(priceText) * 100);
+    }
+
+    let durationMinutes = null;
+
+    if (!/^\d+$/.test(durationText) || Number(durationText) < 5 || Number(durationText) > 720
+      || Number(durationText) % 5 !== 0) {
+      errors.durationMinutes = 'La durée doit être un multiple de 5 minutes, entre 5 et 720.';
+    } else {
+      durationMinutes = Number(durationText);
+    }
+
+    let categoryId = null;
+
+    if (input.categoryId !== null && input.categoryId !== '' && input.categoryId !== undefined) {
+      const category = findById(state.categories, Number(input.categoryId));
+
+      if (!category || !isNotDeleted(category)) {
+        errors.categoryId = 'Cette catégorie n’existe plus. Choisissez-en une autre.';
+      } else {
+        categoryId = category.id;
+      }
+    }
+
+    const keptFileIds = Array.isArray(input.keptFileIds) ? input.keptFileIds : [];
+    const newImages = Array.isArray(input.newImages) ? input.newImages : [];
+
+    if (keptFileIds.length + newImages.length > MAX_IMAGES_PER_SERVICE) {
+      errors.images = IMAGE_LIMIT_MESSAGE;
+    } else {
+      newImages.some((upload) => {
+        const imageError = validateImageUpload(upload);
+
+        if (imageError) {
+          errors.images = imageError;
+        }
+
+        return imageError !== null;
+      });
+    }
+
+    return {
+      errors,
+      values: {
+        categoryId, description, durationMinutes, keptFileIds, name, newImages, priceCents,
+        published: input.published === true,
+      },
+    };
+  };
+
+  /* Same statuses as the backend: unknown category 404, image limit 409, other invalid input 422. */
+  const serviceErrorStatus = (errors) => {
+    if (errors.categoryId) {
+      return 404;
+    }
+
+    return errors.images === IMAGE_LIMIT_MESSAGE ? 409 : 422;
+  };
+
+  /* Catalog in the shape of GET /api/pro/service/catalog, so the Prestations page uses one
+     rendering path for the demo and for the backend. In the demo, an image id is its file id. */
+  const buildCatalog = (state) => {
+    const view = buildAdminView(state);
+    const serviceView = (service) => ({
+      appointment_count: serviceAppointmentCount(state, service.id),
+      category_id: service.categoryId,
+      description: service.description,
+      duration_min: service.durationMinutes,
+      id: service.id,
+      images: imagesOf(state, service.id).map((image) => ({ id: image.fileId, url: image.src })),
+      name: service.name,
+      price_cents: service.priceCents,
+      published: service.publishedAt !== null,
+    });
+
+    return {
+      categories: view.groups.map((group) => ({
+        appointment_count: categoryAppointmentCount(state, group.category.id),
+        id: group.category.id,
+        is_active: group.isActive,
+        name: group.category.name,
+        services: group.services.map(serviceView),
+      })),
+      uncategorized: view.uncategorized.map(serviceView),
+    };
+  };
+
+  /* ── WRITE HELPERS ── */
+  const softDeleteImage = (state, image, timestamp) => {
+    image.deletedAt = timestamp;
+
+    const stillUsed = state.images.some((other) => other.fileId === image.fileId && other.deletedAt === null);
+    const file = findById(state.files, image.fileId);
+
+    /* Files are never removed: they move to deleted/ once no active association needs them. */
+    if (!stillUsed && file && file.movedToDeletedAt === null) {
+      file.movedToDeletedAt = timestamp;
+    }
+  };
+
+  const addImage = (state, serviceId, upload) => {
+    if (activeImages(state, serviceId).length >= MAX_IMAGES_PER_SERVICE) {
+      return false;
+    }
+
+    const file = {
+      id: nextId(state),
+      mimeType: upload.mimeType,
+      movedToDeletedAt: null,
+      originalName: upload.originalName,
+      sizeBytes: upload.sizeBytes,
+      src: upload.src,
+      storageName: randomStorageName(upload.mimeType),
+    };
+
+    state.files.push(file);
+    state.images.push({ deletedAt: null, fileId: file.id, id: nextId(state), serviceId });
+
+    return true;
+  };
+
+  /* Replacement version: the old row keeps every appointment reference and its images;
+     the new row reuses the same physical files through new image records. */
+  const replaceService = (state, service, changes, timestamp) => {
+    const replacement = Object.assign({}, service, changes, {
+      createdAt: timestamp,
+      deletedAt: null,
+      deletionReason: null,
+      id: nextId(state),
+      replacedById: null,
+    });
+
+    service.deletedAt = timestamp;
+    service.deletionReason = 'replaced';
+    service.replacedById = replacement.id;
+    state.services.push(replacement);
+
+    activeImages(state, service.id).forEach((image) => {
+      state.images.push({ deletedAt: null, fileId: image.fileId, id: nextId(state), serviceId: replacement.id });
+    });
+
+    return replacement;
+  };
+
+  /* ── OPERATIONS ── */
+  const createCategory = (name) => mutate((state) => {
+    const validation = validateCategoryName(state, name, null);
+
+    if (validation.error) {
+      return { errors: { name: validation.error }, ok: false, status: validation.status || 422 };
+    }
+
+    const id = nextId(state);
+
+    state.categories.push({
+      createdAt: now(), deletedAt: null, deletionReason: null, id, lineageId: id, name: validation.value,
+      replacedById: null,
+    });
+
+    return { categoryId: id, ok: true };
+  });
+
+  const renameCategory = (categoryId, name) => mutate((state) => {
+    const category = findById(state.categories, categoryId);
+
+    if (!category || !isNotDeleted(category)) {
+      return { errors: { form: 'Cette catégorie a été supprimée ou modifiée entre-temps. Rechargez la page.' }, ok: false, status: 404 };
+    }
+
+    const validation = validateCategoryName(state, name, categoryId);
+
+    if (validation.error) {
+      return { errors: { name: validation.error }, ok: false, status: validation.status || 422 };
+    }
+
+    if (validation.value === category.name) {
+      return { ok: true, replacedServices: 0, versioned: false };
+    }
+
+    if (categoryAppointmentCount(state, categoryId) === 0) {
+      category.name = validation.value;
+
+      return { ok: true, replacedServices: 0, versioned: false };
+    }
+
+    const timestamp = now();
+    const replacement = Object.assign({}, category, {
+      createdAt: timestamp, deletedAt: null, deletionReason: null, id: nextId(state), name: validation.value,
+      replacedById: null,
+    });
+
+    category.deletedAt = timestamp;
+    category.deletionReason = 'replaced';
+    category.replacedById = replacement.id;
+    state.categories.push(replacement);
+
+    let replacedServices = 0;
+
+    state.services
+      .filter((service) => isNotDeleted(service) && service.categoryId === categoryId)
+      .forEach((service) => {
+        if (serviceAppointmentCount(state, service.id) > 0) {
+          replaceService(state, service, { categoryId: replacement.id }, timestamp);
+          replacedServices += 1;
+        } else {
+          service.categoryId = replacement.id;
+        }
+      });
+
+    return { ok: true, replacedServices, versioned: true };
+  });
+
+  const deleteCategory = (categoryId, keepServices) => mutate((state) => {
+    const category = findById(state.categories, categoryId);
+
+    if (!category || !isNotDeleted(category)) {
+      return { errors: { form: 'Cette catégorie a déjà été supprimée.' }, ok: false, status: 404 };
+    }
+
+    const timestamp = now();
+    let replacedServices = 0;
+
+    category.deletedAt = timestamp;
+    category.deletionReason = 'deleted';
+
+    state.services
+      .filter((service) => isNotDeleted(service) && service.categoryId === categoryId)
+      .forEach((service) => {
+        if (!keepServices) {
+          service.deletedAt = timestamp;
+          service.deletionReason = 'deleted';
+        } else if (serviceAppointmentCount(state, service.id) > 0) {
+          replaceService(state, service, { categoryId: null }, timestamp);
+          replacedServices += 1;
+        } else {
+          service.categoryId = null;
+        }
+      });
+
+    return { ok: true, replacedServices };
+  });
+
+  const saveService = (serviceId, input) => mutate((state) => {
+    const validation = validateService(state, input);
+
+    if (Object.keys(validation.errors).length > 0) {
+      return { errors: validation.errors, ok: false, status: serviceErrorStatus(validation.errors) };
+    }
+
+    const values = validation.values;
+    const timestamp = now();
+
+    if (serviceId === null) {
+      const id = nextId(state);
+
+      state.services.push({
+        categoryId: values.categoryId,
+        createdAt: timestamp,
+        deletedAt: null,
+        deletionReason: null,
+        description: values.description,
+        durationMinutes: values.durationMinutes,
+        id,
+        lineageId: id,
+        name: values.name,
+        priceCents: values.priceCents,
+        publishedAt: values.published ? timestamp : null,
+        replacedById: null,
+      });
+
+      values.newImages.forEach((upload) => addImage(state, id, upload));
+
+      return { appointmentCount: 0, ok: true, serviceId: id, versioned: false };
+    }
+
+    const service = findById(state.services, serviceId);
+
+    if (!service || !isNotDeleted(service)) {
+      return {
+        errors: { form: 'Cette prestation a été supprimée ou modifiée entre-temps. Rechargez la page.' },
+        ok: false,
+        status: 404,
+      };
+    }
+
+    const historicalChanges = {
+      categoryId: values.categoryId,
+      description: values.description,
+      durationMinutes: values.durationMinutes,
+      name: values.name,
+      priceCents: values.priceCents,
+    };
+    const hasHistoricalChange = Object.keys(historicalChanges).some((key) => historicalChanges[key] !== service[key]);
+    const appointmentCount = serviceAppointmentCount(state, service.id);
+    let target = service;
+    let versioned = false;
+
+    if (hasHistoricalChange && appointmentCount > 0) {
+      target = replaceService(state, service, historicalChanges, timestamp);
+      versioned = true;
+    } else if (hasHistoricalChange) {
+      Object.assign(service, historicalChanges);
+    }
+
+    /* Publication and images never create a version. */
+    if (values.published && target.publishedAt === null) {
+      target.publishedAt = timestamp;
+    } else if (!values.published) {
+      target.publishedAt = null;
+    }
+
+    activeImages(state, target.id)
+      .filter((image) => values.keptFileIds.indexOf(image.fileId) === -1)
+      .forEach((image) => softDeleteImage(state, image, timestamp));
+
+    const added = values.newImages.every((upload) => addImage(state, target.id, upload));
+
+    if (!added) {
+      return { errors: { images: IMAGE_LIMIT_MESSAGE }, ok: false, status: 409 };
+    }
+
+    return { appointmentCount, ok: true, serviceId: target.id, versioned };
+  });
+
+  const deleteService = (serviceId) => mutate((state) => {
+    const service = findById(state.services, serviceId);
+
+    if (!service || !isNotDeleted(service)) {
+      return { errors: { form: 'Cette prestation a déjà été supprimée.' }, ok: false, status: 404 };
+    }
+
+    service.deletedAt = now();
+    service.deletionReason = 'deleted';
+
+    return { ok: true };
+  });
+
+  const formatPrice = (priceCents) => {
+    return new Intl.NumberFormat('fr-FR', {
+      currency: 'EUR',
+      maximumFractionDigits: priceCents % 100 === 0 ? 0 : 2,
+      minimumFractionDigits: priceCents % 100 === 0 ? 0 : 2,
+      style: 'currency',
+    }).format(priceCents / 100);
+  };
+
+  const onExternalChange = (listener) => {
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY || event.key === null) {
+        listener();
+      }
+    });
+  };
+
+  window.G4sDemoPrestations = {
+    ALLOWED_IMAGE_TYPES,
+    MAX_IMAGE_BYTES,
+    MAX_IMAGES_PER_SERVICE,
+    buildAdminView: () => buildAdminView(current()),
+    catalog: () => buildCatalog(current()),
+    buildPublicView: () => buildPublicView(current()),
+    categoryAppointmentCount: (categoryId) => categoryAppointmentCount(current(), categoryId),
+    createCategory,
+    deleteCategory,
+    deleteService,
+    findCategory: (categoryId) => findById(current().categories, categoryId),
+    findService: (serviceId) => findById(current().services, serviceId),
+    formatPrice,
+    imagesOf: (serviceId) => imagesOf(current(), serviceId),
+    notDeletedCategories: () => {
+      return current().categories.filter(isNotDeleted).sort((first, second) => {
+        return compareNames(first.name, second.name, first.id, second.id);
+      });
+    },
+    onExternalChange,
+    renameCategory,
+    reset,
+    saveService,
+    serviceAppointmentCount: (serviceId) => serviceAppointmentCount(current(), serviceId),
+    validateImageUpload,
+  };
+})();
+{% endverbatim %}
+</script>

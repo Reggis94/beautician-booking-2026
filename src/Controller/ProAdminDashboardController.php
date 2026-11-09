@@ -80,6 +80,56 @@ final class ProAdminDashboardController extends AbstractController
     {
         $response = $this->render('pro_admin/fr/dashboard.html.twig', [
             'activeTab' => 'upcoming',
+            'upcomingAppointmentsApiUrl' => $this->generateUrl('api_pro_list_upcoming_appointments'),
+        ] + $this->connectedDashboardParameters($authenticatedPro));
+        $response->headers->set('Cache-Control', 'no-store');
+
+        return $response;
+    }
+
+    /**
+     * Backend-connected Prestations page: services and categories of the logged-in beautician.
+     *
+     * Same layout and wording as the demo Prestations page; the data comes from the Services API
+     * (GET /api/pro/service/catalog and the /api/pro/service/* write routes). Requires the beautician
+     * session (signed-out visitors are redirected to the login page). Development only, like the Services
+     * API routes it calls (ADR 0014). French URL (ADR 0021).
+     */
+    #[Route(
+        '/fr/pro/tableau-de-bord/prestations',
+        name: 'pro_admin_services_index_fr',
+        methods: ['GET'],
+        env: 'dev'
+    )]
+    public function connectedServices(#[CurrentUser] AuthenticatedPro $authenticatedPro): Response
+    {
+        $response = $this->render('pro_admin/fr/dashboard.html.twig', [
+            'activeTab' => 'services',
+            'prestationsApi' => [
+                'catalogUrl' => $this->generateUrl('api_pro_get_service_catalog'),
+                'createCategoryUrl' => $this->generateUrl('api_pro_create_service_category'),
+                'createServiceUrl' => $this->generateUrl('api_pro_create_service'),
+                'deleteCategoryUrl' => $this->generateUrl('api_pro_delete_service_category'),
+                'deleteServiceUrl' => $this->generateUrl('api_pro_delete_service'),
+                'loginUrl' => $this->generateUrl('pro_auth_login_page_fr'),
+                'renameCategoryUrl' => $this->generateUrl('api_pro_rename_service_category'),
+                'updateServiceUrl' => $this->generateUrl('api_pro_update_service'),
+            ],
+        ] + $this->connectedDashboardParameters($authenticatedPro));
+        $response->headers->set('Cache-Control', 'no-store');
+
+        return $response;
+    }
+
+    /**
+     * Navigation and session data shared by the backend-connected dashboard pages.
+     * Pages not connected to the backend yet still link to their demo version.
+     *
+     * @return array<string, mixed>
+     */
+    private function connectedDashboardParameters(AuthenticatedPro $authenticatedPro): array
+    {
+        return [
             'calendarUrl' => $this->generateUrl('demo_pro_admin_calendar_fr'),
             'dashboardUrl' => $this->generateUrl('pro_admin_appointments_upcoming_fr'),
             'frontUrl' => $this->generateUrl('front_pro_home', [
@@ -92,15 +142,10 @@ final class ProAdminDashboardController extends AbstractController
             'pastAppointments' => [],
             'pastUrl' => $this->generateUrl('demo_pro_admin_appointments_past_fr'),
             'proName' => $this->proName($authenticatedPro),
-            'services' => [],
-            'servicesUrl' => $this->generateUrl('demo_pro_admin_services_index_fr'),
+            'servicesUrl' => $this->generateUrl('pro_admin_services_index_fr'),
             'upcomingAppointments' => [],
-            'upcomingAppointmentsApiUrl' => $this->generateUrl('api_pro_admin_appointments_upcoming'),
             'upcomingUrl' => $this->generateUrl('pro_admin_appointments_upcoming_fr'),
-        ]);
-        $response->headers->set('Cache-Control', 'no-store');
-
-        return $response;
+        ];
     }
 
     private function proName(AuthenticatedPro $authenticatedPro): string
@@ -222,7 +267,6 @@ final class ProAdminDashboardController extends AbstractController
         return $this->render('pro_admin/fr/dashboard.html.twig', [
             'activeTab' => $activeTab,
             'pastAppointments' => $this->fakePastAppointmentsFr(),
-            'services' => $this->fakeServicesFr(),
             'upcomingAppointments' => $this->fakeUpcomingAppointmentsFr(),
         ] + $this->getDemoUrlsFr($request));
     }
@@ -440,11 +484,25 @@ final class ProAdminDashboardController extends AbstractController
     }
 
     /**
-     * @return list<array{id: int, clientName: string, clientPhone: string, serviceName: string, date: DateTimeImmutable, durationMinutes: int}>
+     * Appointment IDs match the demo prestations store (templates/demo/fr/_prestations_store.html.twig),
+     * where they count toward service and category versioning.
+     *
+     * @return list<array{id: int, clientName: string, clientPhone: string, serviceName: string, date: DateTimeImmutable, durationMinutes: int, status?: string}>
      */
     private function fakePastAppointmentsFr(): array
     {
-        return $this->translateAppointments($this->fakePastAppointments());
+        $appointments = $this->translateAppointments($this->fakePastAppointments());
+        $appointments[] = [
+            'clientName' => 'Julie Moreau',
+            'clientPhone' => '+33 6 12 34 56 78',
+            'date' => new DateTimeImmutable('-6 days 15:00'),
+            'durationMinutes' => 60,
+            'id' => 204,
+            'serviceName' => 'Massage relaxant',
+            'status' => 'cancelled',
+        ];
+
+        return $appointments;
     }
 
     /**
@@ -468,42 +526,5 @@ final class ProAdminDashboardController extends AbstractController
 
             return $appointment;
         }, $appointments);
-    }
-
-    /**
-     * @return list<array{id: int, name: string, description: string, durationMinutes: int, price: string}>
-     */
-    private function fakeServicesFr(): array
-    {
-        return [
-            [
-                'description' => 'Un soin sur mesure avec nettoyage doux, exfoliation et finition hydratante pour un teint lumineux.',
-                'durationMinutes' => 60,
-                'id' => 301,
-                'name' => 'Soin du visage signature',
-                'price' => '95',
-            ],
-            [
-                'description' => 'Une mise en forme précise pour définir les sourcils tout en conservant un résultat naturel et soigné.',
-                'durationMinutes' => 45,
-                'id' => 302,
-                'name' => 'Restructuration des sourcils',
-                'price' => '42',
-            ],
-            [
-                'description' => 'Un soin gloss et un coiffage pour lisser les cheveux, renforcer leur brillance et parfaire le résultat.',
-                'durationMinutes' => 90,
-                'id' => 303,
-                'name' => 'Gloss et coiffage',
-                'price' => '135',
-            ],
-            [
-                'description' => 'Un maquillage personnalisé pour une finition élégante, adaptée à la cliente et à l’occasion.',
-                'durationMinutes' => 75,
-                'id' => 304,
-                'name' => 'Séance de maquillage',
-                'price' => '120',
-            ],
-        ];
     }
 }
