@@ -212,77 +212,13 @@ ALTER TABLE service_category
 UPDATE service SET deletion_reason = 'deleted' WHERE deleted_at IS NOT NULL AND deletion_reason IS NULL;
 UPDATE service_category SET deletion_reason = 'deleted' WHERE deleted_at IS NOT NULL AND deletion_reason IS NULL;
 
--- Dropped first so a database holding an earlier definition gets this one. deletion_reason IS NOT NULL is required:
--- "NULL IN (...)" is NULL, and a CHECK that evaluates to NULL passes.
-ALTER TABLE service DROP CONSTRAINT IF EXISTS ck_service_deletion_reason;
-ALTER TABLE service
-  ADD CONSTRAINT ck_service_deletion_reason
-  CHECK (
-    (deleted_at IS NULL AND deletion_reason IS NULL)
-    OR (deleted_at IS NOT NULL AND deletion_reason IS NOT NULL AND deletion_reason IN ('deleted', 'replaced'))
-  );
-
-ALTER TABLE service_category DROP CONSTRAINT IF EXISTS ck_service_category_deletion_reason;
-ALTER TABLE service_category
-  ADD CONSTRAINT ck_service_category_deletion_reason
-  CHECK (
-    (deleted_at IS NULL AND deletion_reason IS NULL)
-    OR (deleted_at IS NOT NULL AND deletion_reason IS NOT NULL AND deletion_reason IN ('deleted', 'replaced'))
-  );
-
--- An old version always has deleted_at: a version with a newer version pointing to it is retired for good.
--- A CHECK constraint cannot compare two rows, so triggers enforce it on both tables. Existing rows that break
--- the rule are retired first; the newer version is the one still in use.
-UPDATE service old_version
-SET deleted_at = NOW(), deletion_reason = 'replaced'
-WHERE old_version.deleted_at IS NULL
-  AND EXISTS (SELECT 1 FROM service newer WHERE newer.previous_version_id = old_version.id);
-
-UPDATE service_category old_version
-SET deleted_at = NOW(), deletion_reason = 'replaced'
-WHERE old_version.deleted_at IS NULL
-  AND EXISTS (SELECT 1 FROM service_category newer WHERE newer.previous_version_id = old_version.id);
-
-CREATE OR REPLACE FUNCTION assert_old_version_has_deleted_at() RETURNS trigger AS $$
-DECLARE
-  is_violated BOOLEAN;
-BEGIN
-  IF NEW.previous_version_id IS NOT NULL THEN
-    EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND deleted_at IS NULL)', TG_TABLE_NAME)
-      INTO is_violated
-      USING NEW.previous_version_id;
-
-    IF is_violated THEN
-      RAISE EXCEPTION 'The old version % of % must have deleted_at before a new version references it.',
-        NEW.previous_version_id, TG_TABLE_NAME
-        USING ERRCODE = 'check_violation';
-    END IF;
-  END IF;
-
-  IF TG_OP = 'UPDATE' AND OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
-    EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE previous_version_id = $1)', TG_TABLE_NAME)
-      INTO is_violated
-      USING NEW.id;
-
-    IF is_violated THEN
-      RAISE EXCEPTION 'The old version % of % must keep its deleted_at.', NEW.id, TG_TABLE_NAME
-        USING ERRCODE = 'check_violation';
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
+-- Catalog lifecycle rules are enforced by the application, not by database checks or triggers.
+-- Drop earlier enforcement when updating an existing database as well as building a fresh one.
 DROP TRIGGER IF EXISTS trg_service_old_version_deleted_at ON service;
-CREATE TRIGGER trg_service_old_version_deleted_at
-  BEFORE INSERT OR UPDATE ON service
-  FOR EACH ROW EXECUTE FUNCTION assert_old_version_has_deleted_at();
-
 DROP TRIGGER IF EXISTS trg_service_category_old_version_deleted_at ON service_category;
-CREATE TRIGGER trg_service_category_old_version_deleted_at
-  BEFORE INSERT OR UPDATE ON service_category
-  FOR EACH ROW EXECUTE FUNCTION assert_old_version_has_deleted_at();
+DROP FUNCTION IF EXISTS assert_old_version_has_deleted_at();
+ALTER TABLE service DROP CONSTRAINT IF EXISTS ck_service_deletion_reason;
+ALTER TABLE service_category DROP CONSTRAINT IF EXISTS ck_service_category_deletion_reason;
 
 CREATE INDEX IF NOT EXISTS idx_service_pro_not_deleted
   ON service (pro_id, category_id)

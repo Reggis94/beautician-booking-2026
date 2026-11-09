@@ -23,8 +23,9 @@ Lifecycle:
   others move to the new version. Deleting a category either deletes its services or keeps them without a
   category (booked services through a replacement).
 - An explicit deletion has `deletion_reason = 'deleted'`, distinct from a replacement.
-- An old version (one that `previous_version_id` points to) always has `deleted_at`. Database triggers on
-  `service` and `service_category` enforce it, so a new version must be saved after its old version is retired.
+- An old version (one that `previous_version_id` points to) always has `deleted_at`. The application enforces
+  this rule and keeps `deleted_at` consistent with the `deleted` or `replaced` deletion reason; the database
+  does not enforce these lifecycle rules with checks or triggers.
 - "Not deleted" means `deleted_at IS NULL`: neither explicitly deleted nor replaced. For a service, it covers
   both drafts and published services.
 - Publication and image changes never create a version.
